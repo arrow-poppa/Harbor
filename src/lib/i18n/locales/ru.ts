@@ -1,3 +1,4 @@
+import wordAudioSources from "./ru/word-audio-sources";
 import subtitleDictionary from "./ru/subtitle-dictionary";
 import aiExplanation from "./ru/ai-explanation";
 import ankiMining from "./ru/anki-mining";
@@ -440,6 +441,7 @@ const ru: Record<string, string> = {
   ...ankiMining,
   ...immersionHotkeys,
   ...controllerPlayer,
+  ...wordAudioSources,
 };
 
 export default ru;

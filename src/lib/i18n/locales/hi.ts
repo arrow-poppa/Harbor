@@ -1,3 +1,4 @@
+import wordAudioSources from "./hi/word-audio-sources";
 import subtitleDictionary from "./hi/subtitle-dictionary";
 import aiExplanation from "./hi/ai-explanation";
 import ankiMining from "./hi/anki-mining";
@@ -372,6 +373,7 @@ const hi: Record<string, string> = {
   ...ankiMining,
   ...immersionHotkeys,
   ...controllerPlayer,
+  ...wordAudioSources,
 };
 
 export default hi;

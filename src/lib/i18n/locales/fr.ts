@@ -1,3 +1,4 @@
+import wordAudioSources from "./fr/word-audio-sources";
 import subtitleDictionary from "./fr/subtitle-dictionary";
 import aiExplanation from "./fr/ai-explanation";
 import ankiMining from "./fr/anki-mining";
@@ -425,6 +426,7 @@ const fr: Record<string, string> = {
   ...ankiMining,
   ...immersionHotkeys,
   ...controllerPlayer,
+  ...wordAudioSources,
 };
 
 export default fr;

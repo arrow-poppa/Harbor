@@ -1,6 +1,6 @@
 import { open } from "@tauri-apps/plugin-dialog";
-import { Loader2, Plus, RefreshCw, Trash2, Wand2 } from "lucide-react";
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { ChevronDown, ChevronUp, Loader2, Plus, RefreshCw, Trash2, Wand2 } from "lucide-react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useSettings, type AnkiFieldSource, type Settings } from "@/lib/settings";
 import { useT } from "@/lib/i18n";
 import {
@@ -20,6 +20,15 @@ import {
 import { isOpenRouterEndpoint, validateBodyJson } from "@/lib/mining/ai-explain";
 import { AI_EXPLAIN_DEFAULT_PROMPT } from "@/lib/settings/defaults";
 import { POPUP_SIZE_MAX, POPUP_SIZE_MIN } from "@/lib/player/lookup-popup-size";
+import { fetchEdgeNarrationVoices, type EdgeNarrationVoice } from "@/lib/ebook/narration";
+import { WORD_AUDIO_SOURCE_NAMES } from "@/lib/mining/word-audio";
+import {
+  moveWordAudioSource,
+  sanitizeWordAudioSources,
+  wordAudioLanguage,
+  type WordAudioSource,
+  type WordAudioSourceType,
+} from "@/lib/mining/word-audio-core";
 import { Section, ToggleRow } from "../shared";
 
 const LANGUAGES = [
@@ -570,9 +579,66 @@ function TextAreaRow({
   );
 }
 
+// Every Edge voice by locale, the lookup language's locales first.
+function groupEdgeVoices(voices: EdgeNarrationVoice[], iso: string) {
+  let names: Intl.DisplayNames | null = null;
+  try {
+    names = new Intl.DisplayNames(undefined, { type: "language" });
+  } catch {
+    names = null;
+  }
+  const byLocale = new Map<string, EdgeNarrationVoice[]>();
+  for (const v of voices) {
+    const list = byLocale.get(v.locale);
+    if (list) list.push(v);
+    else byLocale.set(v.locale, [v]);
+  }
+  const own = (locale: string) => locale.toLowerCase().startsWith(`${iso}-`);
+  return Array.from(byLocale, ([locale, list]) => {
+    let label = locale;
+    try {
+      const name = names?.of(locale);
+      if (name && name !== locale) label = `${name} (${locale})`;
+    } catch {
+      /* keep the code */
+    }
+    return { locale, label, voices: list };
+  }).sort(
+    (a, b) => Number(own(b.locale)) - Number(own(a.locale)) || a.label.localeCompare(b.label),
+  );
+}
+
+const WORD_AUDIO_DESCRIPTIONS: Record<WordAudioSourceType, string> = {
+  local:
+    "A local-audio-yomichan database (Forvo, NHK16, Shinmeikai8, JPod101). Pick android.db, or entries.db next to its *_files folders. The Flatpak build can only read android.db.",
+  jpod101: "Recorded Japanese words from JapanesePod101.",
+  languagepod101: "Recorded words from the LanguagePod101 sites, in about 35 languages.",
+  jisho: "Recorded Japanese words from Jisho.org.",
+  "lingua-libre": "Recordings shared on Wikimedia Commons by Lingua Libre speakers.",
+  wiktionary: "Wiktionary recordings on Wikimedia Commons.",
+  "edge-tts": "Microsoft Edge's online neural voices, the same ones the eBook narration uses.",
+  custom: "An audio file at your own URL. {term}, {reading} and {language} are filled in.",
+  "custom-json":
+    "A URL that answers with a list of audio files, such as a local audio server. {term}, {reading} and {language} are filled in.",
+};
+
 function WordAudioSection() {
   const { settings, update } = useSettings();
   const t = useT();
+  const sources = sanitizeWordAudioSources(settings.wordAudioSources);
+  const save = (next: WordAudioSource[]) => update({ wordAudioSources: next });
+  const patch = (i: number, p: Partial<WordAudioSource>) =>
+    save(sources.map((s, j) => (j === i ? { ...s, ...p } : s)));
+  const edgeOn = sources.some((s) => s.type === "edge-tts" && s.enabled);
+  const [voices, setVoices] = useState<EdgeNarrationVoice[] | null>(null);
+  useEffect(() => {
+    if (!edgeOn || voices) return;
+    fetchEdgeNarrationVoices()
+      .then(setVoices)
+      .catch(() => setVoices([]));
+  }, [edgeOn, voices]);
+  const iso = wordAudioLanguage(settings.subLookupLanguage || "japanese").iso;
+  const voiceGroups = useMemo(() => groupEdgeVoices(voices ?? [], iso), [voices, iso]);
   const pick = async () => {
     const picked = await open({
       multiple: false,
@@ -580,32 +646,119 @@ function WordAudioSection() {
     }).catch(() => null);
     if (typeof picked === "string") update({ localAudioDbPath: picked });
   };
+  const arrowBtn =
+    "flex h-5 w-6 items-center justify-center rounded text-ink-muted transition-colors hover:bg-ink/10 hover:text-ink disabled:opacity-30";
   return (
     <Section
       title={t("Word audio")}
       subtitle={t(
-        "Plays and mines pronunciations from a local-audio-yomichan database (Forvo, NHK16, Shinmeikai8, JPod101). Pick android.db, or entries.db next to its *_files folders. The Flatpak build can only read android.db.",
+        "Plays the looked-up word and adds it to Anki cards. Sources are tried from top to bottom, and pressing the audio button again plays the next voice. Online sources send the word to their site.",
       )}
     >
-      <div className="flex items-center justify-between gap-3 rounded-xl border border-edge-soft bg-canvas/40 px-4 py-3">
-        <span className="truncate font-mono text-[13px] text-ink" title={settings.localAudioDbPath}>
-          {settings.localAudioDbPath || t("No database selected")}
-        </span>
-      </div>
-      <div className="flex flex-wrap items-center gap-2">
-        <button type="button" onClick={pick} className={primaryBtn}>
-          {t("Choose database")}
-        </button>
-        {settings.localAudioDbPath && (
-          <button
-            type="button"
-            onClick={() => update({ localAudioDbPath: "" })}
-            className={ghostBtn}
-          >
-            {t("Clear")}
-          </button>
-        )}
-      </div>
+      {sources.map((s, i) => (
+        <div key={s.type} className="flex flex-col gap-2">
+          <div className="flex items-center gap-2">
+            <div className="flex shrink-0 flex-col">
+              <button
+                type="button"
+                title={t("Move up")}
+                aria-label={t("Move up")}
+                disabled={i === 0}
+                onClick={() => save(moveWordAudioSource(sources, i, -1))}
+                className={arrowBtn}
+              >
+                <ChevronUp size={14} strokeWidth={2.4} />
+              </button>
+              <button
+                type="button"
+                title={t("Move down")}
+                aria-label={t("Move down")}
+                disabled={i === sources.length - 1}
+                onClick={() => save(moveWordAudioSource(sources, i, 1))}
+                className={arrowBtn}
+              >
+                <ChevronDown size={14} strokeWidth={2.4} />
+              </button>
+            </div>
+            <div className="min-w-0 flex-1">
+              <ToggleRow
+                label={t(WORD_AUDIO_SOURCE_NAMES[s.type])}
+                sub={t(WORD_AUDIO_DESCRIPTIONS[s.type])}
+                value={s.enabled}
+                onChange={(v) => patch(i, { enabled: v })}
+              />
+            </div>
+          </div>
+          {s.enabled && s.type === "local" && (
+            <div className="flex flex-wrap items-center gap-2 pl-4">
+              <span
+                className="min-w-0 flex-1 truncate font-mono text-[13px] text-ink"
+                title={settings.localAudioDbPath}
+              >
+                {settings.localAudioDbPath || t("No database selected")}
+              </span>
+              <button type="button" onClick={pick} className={primaryBtn}>
+                {t("Choose database")}
+              </button>
+              {settings.localAudioDbPath && (
+                <button
+                  type="button"
+                  onClick={() => update({ localAudioDbPath: "" })}
+                  className={ghostBtn}
+                >
+                  {t("Clear")}
+                </button>
+              )}
+            </div>
+          )}
+          {s.enabled && s.type === "edge-tts" && (
+            <>
+              <Row label={t("Voice")} sub={t("Automatic picks a voice for the lookup language.")}>
+                <select
+                  value={s.voice ?? ""}
+                  onChange={(e) => patch(i, { voice: e.target.value })}
+                  className={selectCls}
+                >
+                  <option value="">{t("Automatic")}</option>
+                  {voiceGroups.map((g) => (
+                    <optgroup key={g.locale} label={g.label}>
+                      {g.voices.map((v) => (
+                        <option key={v.id} value={v.id}>
+                          {v.name || v.id}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </select>
+              </Row>
+              <Row label={t("Read")}>
+                <select
+                  value={s.speak ?? "reading"}
+                  onChange={(e) =>
+                    patch(i, { speak: e.target.value === "term" ? "term" : "reading" })
+                  }
+                  className={selectCls}
+                >
+                  <option value="reading">{t("The reading (kana), when there is one")}</option>
+                  <option value="term">{t("The word as written")}</option>
+                </select>
+              </Row>
+            </>
+          )}
+          {s.enabled && (s.type === "custom" || s.type === "custom-json") && (
+            <TextRow
+              label={t("URL")}
+              value={s.url ?? ""}
+              placeholder={
+                s.type === "custom"
+                  ? "https://example.com/audio?term={term}&reading={reading}"
+                  : "http://localhost:5050/?term={term}&reading={reading}"
+              }
+              onCommit={(v) => patch(i, { url: v.trim() })}
+            />
+          )}
+        </div>
+      ))}
     </Section>
   );
 }

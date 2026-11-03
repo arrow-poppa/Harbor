@@ -3,7 +3,7 @@ import type { AnkiFieldSource, Settings } from "@/lib/settings";
 import type { DictTerm } from "./dictionary";
 import { aiTextToHtml } from "./ai-explain";
 import { escapeHtml, termGlossaryHtml } from "./glossary-html";
-import { audioExtension, findWordAudio, wordAudioDataUrl } from "./local-audio";
+import { firstWordAudio } from "./word-audio";
 
 export function ankiInvoke<T = unknown>(
   settings: Settings,
@@ -34,7 +34,7 @@ export const ANKI_FIELD_SOURCES: { id: AnkiFieldSource; label: string }[] = [
   { id: "sentence", label: "Sentence (word in bold)" },
   { id: "sentence-cloze", label: "Sentence (word as cloze)" },
   { id: "sentence-audio", label: "Sentence audio" },
-  { id: "word-audio", label: "Word audio (local)" },
+  { id: "word-audio", label: "Word audio" },
   { id: "picture", label: "Screenshot" },
   { id: "clip", label: "Animated clip of the line (AVIF/WebP/GIF)" },
   { id: "frequency", label: "Frequency" },
@@ -254,13 +254,12 @@ async function fieldValue(
       return `[sound:${name}]`;
     }
     case "word-audio": {
-      const entries = await findWordAudio(settings.localAudioDbPath, t.headword, t.reading);
-      if (!entries.length) return "";
-      const url = await wordAudioDataUrl(settings.localAudioDbPath, entries[0]);
+      const audio = await firstWordAudio(settings, t.headword, t.reading);
+      if (!audio) return "";
       const name = await storeMedia(
         settings,
-        `harbor_word_${stamp()}.${audioExtension(entries[0].file)}`,
-        dataUrlBase64(url),
+        `harbor_word_${stamp()}.${audio.ext}`,
+        audio.dataBase64,
       );
       return `[sound:${name}]`;
     }

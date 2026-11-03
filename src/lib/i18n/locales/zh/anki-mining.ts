@@ -4,8 +4,6 @@ const ankiMining: Record<string, string> = {
     "将鼠标悬停在字幕中的单词上，即可在 Yomitan 词典中查询、收听发音并添加到 Anki。使用 Manatan 的词典引擎。",
   "Open the popup for words no dictionary contains, with only the AI explanation, so they can still go to Anki.":
     "对任何词典都没有的单词，也只用 AI 解释打开弹窗，以便仍能加入 Anki。",
-  "Plays and mines pronunciations from a local-audio-yomichan database (Forvo, NHK16, Shinmeikai8, JPod101). Pick android.db, or entries.db next to its *_files folders. The Flatpak build can only read android.db.":
-    "从 local-audio-yomichan 数据库（Forvo、NHK16、Shinmeikai8、JPod101）播放并提取发音。请选择 android.db，或位于 *_files 文件夹旁的 entries.db。Flatpak 版只能读取 android.db。",
   "Connected to Anki": "已连接到 Anki",
   Anki: "Anki",
   "Adds cards through AnkiConnect with the word, sentence, definitions, a screenshot, the sentence audio and the word audio. Anki must be open with the AnkiConnect add-on.":
@@ -38,7 +36,6 @@ const ankiMining: Record<string, string> = {
   "Sentence (word in bold)": "句子（单词加粗）",
   "Sentence (word as cloze)": "句子（单词挖空）",
   "Sentence audio": "句子音频",
-  "Word audio (local)": "单词音频（本地）",
   "Animated clip of the line (AVIF/WebP/GIF)": "该行的动态片段（AVIF/WebP/GIF）",
   Frequency: "词频",
   "Pitch accent": "音高重音",
