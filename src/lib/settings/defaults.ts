@@ -119,6 +119,7 @@ export const DEFAULT: Settings = {
   controllerCursorImage: "",
   controllerCursorSize: DEFAULT_CONTROLLER_CURSOR_SIZE,
   controllerCursorEnabled: true,
+  controllerTouchpadPointer: false,
   controllerCursorHideMs: DEFAULT_CONTROLLER_CURSOR_HIDE_MS,
   controllerKeyboardSize: 100,
   controllerRepeatMs: 140,
