@@ -9,7 +9,9 @@ export function DictionaryPanel() {
     return (
       <Section
         title={t("Desktop only")}
-        subtitle={t("Subtitle dictionary lookups and word audio run in the Harbor desktop app.")}
+        subtitle={t(
+          "Subtitle dictionary lookups, word audio and Anki mining run in the Harbor desktop app.",
+        )}
       >
         <span className="text-[13px] text-ink-subtle">
           {t("Download the desktop app to look up words while you watch.")}

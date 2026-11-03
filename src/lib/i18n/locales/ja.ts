@@ -5,6 +5,7 @@ import controllerTouchpad from "./ja/controller-touchpad";
 import controllerHotkeys from "./ja/controller-hotkeys";
 import subtitleDictionary from "./ja/subtitle-dictionary";
 import aiExplanation from "./ja/ai-explanation";
+import ankiMining from "./ja/anki-mining";
 import reviews from "./ja/reviews";
 import playOrders from "./ja/play-orders";
 import gameRomLibrary from "./ja/game-rom-library";
@@ -430,6 +431,7 @@ const ja: Record<string, string> = {
   ...controllerTouchpad,
   ...subtitleDictionary,
   ...aiExplanation,
+  ...ankiMining,
 };
 
 export default ja;

@@ -1,6 +1,7 @@
 // Renders Yomitan glossary entries (plain strings or "structured-content")
 // to an HTML string. Only whitelisted tags are emitted and every text and
 // attribute value is escaped, so the result is safe to inject.
+import type { DictTerm } from "./dictionary";
 
 const ALLOWED_TAGS = new Set([
   "br",
@@ -135,6 +136,19 @@ export function glossaryEntryHtml(content: unknown[], opts: GlossaryHtmlOptions)
   const items = content.map((c) => render(parseEntry(c), opts, 0)).filter((h) => h.trim() !== "");
   if (items.length <= 1) return items.join("");
   return `<ul class="hb-gloss-list">${items.map((h) => `<li>${h}</li>`).join("")}</ul>`;
+}
+
+// Glossary HTML for an Anki field, Yomitan-style: one <li> per sense, tagged with
+// its part-of-speech and dictionary.
+export function termGlossaryHtml(term: DictTerm, firstOnly = false): string {
+  const groups = firstOnly ? term.glossary.slice(0, 1) : term.glossary;
+  const items = groups.map((g) => {
+    const tags = [...g.tags.filter((t) => !/^\d+$/.test(t)), g.dictionaryName].join(", ");
+    const body = glossaryEntryHtml(g.content, { images: false, dictionary: g.dictionaryName });
+    return `<li><i>(${escapeHtml(tags)})</i> ${body}</li>`;
+  });
+  if (firstOnly) return items.join("").replace(/^<li>|<\/li>$/g, "");
+  return `<div style="text-align: left;"><ol>${items.join("")}</ol></div>`;
 }
 
 // Scopes a dictionary's styles.css under its container so it cannot restyle the app.

@@ -42,12 +42,6 @@ const subtitleDictionary: Record<string, string> = {
   Latin: "Latin",
   Controller: "Kontroler",
   Dictionary: "Kamus",
-  "Hover a word in the subtitles to look it up in your Yomitan dictionaries and hear it. Uses Manatan's dictionary engine.":
-    "Arahkan kursor ke kata di subtitel untuk mencarinya di kamus Yomitan Anda dan mendengarnya. Memakai mesin kamus Manatan.",
-  "Plays pronunciations from a local-audio-yomichan database (Forvo, NHK16, Shinmeikai8, JPod101). Pick android.db, or entries.db next to its *_files folders. The Flatpak build can only read android.db.":
-    "Memutar pelafalan dari database local-audio-yomichan (Forvo, NHK16, Shinmeikai8, JPod101). Pilih android.db, atau entries.db di samping folder *_files. Versi Flatpak hanya bisa membaca android.db.",
-  "Subtitle dictionary lookups and word audio run in the Harbor desktop app.":
-    "Pencarian kamus subtitel dan audio kata berjalan di aplikasi desktop Harbor.",
 };
 
 export default subtitleDictionary;
