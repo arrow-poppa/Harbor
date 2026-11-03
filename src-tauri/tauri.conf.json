@@ -99,7 +99,11 @@
           "gstreamer1.0-plugins-bad",
           "gstreamer1.0-libav"
         ],
-        "desktopTemplate": "main.desktop"
+        "desktopTemplate": "main.desktop",
+        "files": {
+          "/usr/lib/udev/rules.d/70-harbor-playstation-touchpad.rules": "udev/70-harbor-playstation-touchpad.rules"
+        },
+        "postInstallScript": "udev/harbor-postinst.sh"
       },
       "rpm": {
         "depends": [
@@ -111,7 +115,11 @@
           "openssl-libs",
           "ca-certificates"
         ],
-        "desktopTemplate": "main.desktop"
+        "desktopTemplate": "main.desktop",
+        "files": {
+          "/usr/lib/udev/rules.d/70-harbor-playstation-touchpad.rules": "udev/70-harbor-playstation-touchpad.rules"
+        },
+        "postInstallScript": "udev/harbor-postinst.sh"
       }
     },
     "macOS": {
