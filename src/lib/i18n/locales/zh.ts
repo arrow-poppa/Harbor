@@ -1,5 +1,6 @@
 import subtitleDictionary from "./zh/subtitle-dictionary";
 import aiExplanation from "./zh/ai-explanation";
+import ankiMining from "./zh/anki-mining";
 import reviews from "./zh/reviews";
 import playOrders from "./zh/play-orders";
 import gameRomLibrary from "./zh/game-rom-library";
@@ -373,6 +374,7 @@ const zh: Record<string, string> = {
   ...liveWeb,
   ...subtitleDictionary,
   ...aiExplanation,
+  ...ankiMining,
 };
 
 export default zh;
