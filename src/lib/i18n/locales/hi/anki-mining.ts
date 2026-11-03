@@ -4,8 +4,6 @@ const ankiMining: Record<string, string> = {
     "सबटाइटल के किसी शब्द पर माउस ले जाएँ ताकि उसे अपने Yomitan शब्दकोशों में देख सकें, सुन सकें और Anki में जोड़ सकें. Manatan का शब्दकोश इंजन इस्तेमाल करता है.",
   "Open the popup for words no dictionary contains, with only the AI explanation, so they can still go to Anki.":
     "जो शब्द किसी शब्दकोश में नहीं हैं उनके लिए भी सिर्फ़ AI व्याख्या के साथ पॉपअप खोलता है, ताकि वे फिर भी Anki में जा सकें.",
-  "Plays and mines pronunciations from a local-audio-yomichan database (Forvo, NHK16, Shinmeikai8, JPod101). Pick android.db, or entries.db next to its *_files folders. The Flatpak build can only read android.db.":
-    "local-audio-yomichan डेटाबेस (Forvo, NHK16, Shinmeikai8, JPod101) से उच्चारण चलाता और जोड़ता है. android.db चुनें, या *_files फ़ोल्डरों के पास वाला entries.db. Flatpak संस्करण केवल android.db पढ़ सकता है.",
   "Connected to Anki": "Anki से जुड़ गया",
   Anki: "Anki",
   "Adds cards through AnkiConnect with the word, sentence, definitions, a screenshot, the sentence audio and the word audio. Anki must be open with the AnkiConnect add-on.":
@@ -40,7 +38,6 @@ const ankiMining: Record<string, string> = {
   "Sentence (word in bold)": "वाक्य (शब्द बोल्ड में)",
   "Sentence (word as cloze)": "वाक्य (शब्द क्लोज़ के रूप में)",
   "Sentence audio": "वाक्य का ऑडियो",
-  "Word audio (local)": "शब्द का ऑडियो (लोकल)",
   "Animated clip of the line (AVIF/WebP/GIF)": "पंक्ति की एनिमेटेड क्लिप (AVIF/WebP/GIF)",
   Frequency: "आवृत्ति",
   "Pitch accent": "पिच एक्सेंट",

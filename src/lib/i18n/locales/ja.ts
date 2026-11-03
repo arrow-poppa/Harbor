@@ -1,3 +1,4 @@
+import wordAudioSources from "./ja/word-audio-sources";
 import subtitleDictionary from "./ja/subtitle-dictionary";
 import aiExplanation from "./ja/ai-explanation";
 import ankiMining from "./ja/anki-mining";
@@ -426,6 +427,7 @@ const ja: Record<string, string> = {
   ...ankiMining,
   ...immersionHotkeys,
   ...controllerPlayer,
+  ...wordAudioSources,
 };
 
 export default ja;
