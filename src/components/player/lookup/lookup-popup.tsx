@@ -1,7 +1,24 @@
-import { Loader2, RotateCw, Sparkles, Volume2, X } from "lucide-react";
+import {
+  Check,
+  Copy,
+  ExternalLink,
+  Loader2,
+  Plus,
+  RotateCw,
+  Sparkles,
+  Volume2,
+  X,
+} from "lucide-react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useSettings } from "@/lib/settings";
+import {
+  addNoteFromLookup,
+  findDuplicateNotes,
+  findWordNotesEverywhere,
+  openNotesInAnki,
+  type MiningContext,
+} from "@/lib/mining/anki";
 import {
   AiCancelledError,
   AiTimeoutError,
@@ -21,8 +38,7 @@ const MAX_TERMS = 8;
 // across a subtitle does not fire one per word.
 const AI_AUTO_DELAY_MS = 450;
 
-// The subtitle line the word was looked up in.
-type PopupMining = { sentence: string };
+type PopupMining = Omit<MiningContext, "term" | "aiExplanation" | "popupSelection">;
 
 type Props = {
   result: DictLookupResult;
@@ -53,6 +69,11 @@ export function LookupPopup({ result, anchor, mining, onEnter, onLeave, onClose 
   const aiOn = settings.subLookupAiEnabled;
   const aiProblem = aiOn ? aiExplainProblem(settings) : null;
   const ai = useAiExplanation(aiOn && !aiProblem ? aiInput : null, settings.subLookupAiAuto);
+  const termMining = useMemo<Omit<MiningContext, "term">>(
+    () => ({ ...mining, aiExplanation: aiOn && !aiProblem ? ai.finalText : undefined }),
+    [mining, aiOn, aiProblem, ai.finalText],
+  );
+  const aiMining = useMemo(() => ({ ...termMining, definitionFromAi: true }), [termMining]);
 
   useLayoutEffect(() => {
     const place = () => {
@@ -116,9 +137,19 @@ export function LookupPopup({ result, anchor, mining, onEnter, onLeave, onClose 
       {css && <style>{css}</style>}
       <style>{POPUP_CSS}</style>
       <div className="flex flex-col divide-y divide-edge-soft">
-        {aiOn && <AiExplanationBox ai={ai} problem={aiProblem} />}
+        {aiOn && (
+          <AiExplanationBox
+            ai={ai}
+            problem={aiProblem}
+            anki={
+              terms[0] && !aiProblem ? (
+                <AnkiButton term={terms[0]} mining={aiMining} compact />
+              ) : undefined
+            }
+          />
+        )}
         {terms.map((t, i) => (
-          <TermEntry key={`${t.headword}|${t.reading}|${i}`} term={t} />
+          <TermEntry key={`${t.headword}|${t.reading}|${i}`} term={t} mining={termMining} />
         ))}
       </div>
     </div>,
@@ -223,15 +254,21 @@ function useAiExplanation(input: AiExplainInput | null, auto: boolean) {
     if (inputKey) cancelAiExplanation(inputKey);
   }, [inputKey]);
 
-  return { state, text, error, generate, cancel };
+  // Anki export: the finished text, generating it first if needed.
+  const finalText = useCallback(() => generate(false), [generate]);
+
+  return { state, text, error, generate, cancel, finalText };
 }
 
 function AiExplanationBox({
   ai,
   problem,
+  anki,
 }: {
   ai: ReturnType<typeof useAiExplanation>;
   problem: string | null;
+  // Adds the word's card with the explanation as its selected definition.
+  anki?: React.ReactNode;
 }) {
   const busy = ai.state === "loading" || ai.state === "streaming";
   const hasText = (ai.state === "streaming" || ai.state === "done") && !!ai.text;
@@ -244,6 +281,7 @@ function AiExplanationBox({
         </span>
         {!problem && (
           <div className="flex items-center gap-1">
+            {anki}
             {busy && (
               <button
                 type="button"
@@ -316,7 +354,7 @@ function AiText({ text }: { text: string }) {
   );
 }
 
-function TermEntry({ term }: { term: DictTerm }) {
+function TermEntry({ term, mining }: { term: DictTerm; mining: Omit<MiningContext, "term"> }) {
   const { settings } = useSettings();
   const pitches = useMemo(
     () =>
@@ -368,6 +406,7 @@ function TermEntry({ term }: { term: DictTerm }) {
           {settings.localAudioDbPath && (
             <WordAudioButton term={term} dbPath={settings.localAudioDbPath} />
           )}
+          <AnkiButton term={term} mining={mining} />
         </div>
       </div>
       {term.synthetic && (
@@ -477,6 +516,186 @@ function WordAudioButton({ term, dbPath }: { term: DictTerm; dbPath: string }) {
       <Volume2 size={15} strokeWidth={2.2} />
     </button>
   );
+}
+
+// Notes added from any Anki button, so the entry's button and the AI
+// explanation's button show the same cards for a word.
+const noteAddedListeners = new Set<(word: string, noteId: number) => void>();
+const wordKey = (term: DictTerm) => `${term.headword}\u0000${term.reading}`;
+
+function AnkiButton({
+  term,
+  mining,
+  compact,
+}: {
+  term: DictTerm;
+  mining: Omit<MiningContext, "term">;
+  // The AI explanation's button, next to Regenerate, in that box's style.
+  compact?: boolean;
+}) {
+  const { settings } = useSettings();
+  const [state, setState] = useState<"idle" | "busy" | "done" | "error">("idle");
+  const [msg, setMsg] = useState(
+    compact ? "Add to Anki with the AI explanation as the selected definition" : "Add to Anki",
+  );
+  // Notes already in the deck for this word (Anki's duplicate rule: same
+  // first field), plus any added from this popup.
+  const [notes, setNotes] = useState<number[]>([]);
+  // Notes with this word in any deck, when the count covers every deck.
+  const [everywhere, setEverywhere] = useState<number[] | null>(null);
+  const countAll = settings.ankiNoteCount === "all";
+
+  useEffect(() => {
+    let alive = true;
+    setNotes([]);
+    setEverywhere(null);
+    findDuplicateNotes(settings, { ...mining, term })
+      .then((ids) => alive && setNotes(ids))
+      .catch(() => {});
+    if (countAll)
+      findWordNotesEverywhere(settings, term)
+        .then((ids) => alive && setEverywhere(ids))
+        .catch(() => {});
+    return () => {
+      alive = false;
+    };
+    // Re-check only when the word or the deck/note type changes.
+  }, [
+    term.headword,
+    term.reading,
+    mining.sentence,
+    settings.ankiDeck,
+    settings.ankiModel,
+    settings.ankiUrl,
+    countAll,
+  ]);
+
+  useEffect(() => {
+    const key = wordKey(term);
+    const onAdded = (word: string, noteId: number) => {
+      if (word !== key) return;
+      setNotes((n) => (n.includes(noteId) ? n : [...n, noteId]));
+      setEverywhere((n) => (n && !n.includes(noteId) ? [...n, noteId] : n));
+    };
+    noteAddedListeners.add(onAdded);
+    return () => {
+      noteAddedListeners.delete(onAdded);
+    };
+  }, [term.headword, term.reading]);
+
+  const duplicate = notes.length > 0 && state !== "done";
+  const blocked = duplicate && !settings.ankiAllowDuplicates;
+
+  const add = async () => {
+    if (state === "busy") return;
+    if (blocked) {
+      void openNotesInAnki(settings, notes).catch((e) => {
+        setState("error");
+        setMsg(String(e).replace(/^Error:\s*/, ""));
+      });
+      return;
+    }
+    setState("busy");
+    setMsg("Adding…");
+    try {
+      const res = await addNoteFromLookup(settings, {
+        ...mining,
+        term,
+        popupSelection: selectionInPopup(),
+      });
+      setState("done");
+      for (const notify of noteAddedListeners) notify(wordKey(term), res.noteId);
+      setMsg(
+        res.warnings.length ? `Added, with issues: ${res.warnings.join("; ")}` : "Added to Anki",
+      );
+    } catch (e) {
+      setState("error");
+      setMsg(String(e).replace(/^Error:\s*/, ""));
+    }
+  };
+
+  // Every note with the word, counting the ones in the mining deck once.
+  const total = everywhere ? new Set([...everywhere, ...notes]).size : null;
+  const count =
+    total != null && total > 0
+      ? `${notes.length} · ${total}`
+      : notes.length > 0
+        ? String(notes.length)
+        : "";
+  const countTitle =
+    total != null && total > 0 ? `${notes.length} in this deck, ${total} in all decks. ` : "";
+  const title =
+    countTitle +
+    (state === "idle" && duplicate
+      ? blocked
+        ? `Already in your deck (${notes.length}). Click to open it in Anki.`
+        : `Already in your deck (${notes.length}). Click to add another card.`
+      : msg);
+  const icon = compact ? 12 : 14;
+
+  return (
+    <div className="flex items-center gap-1">
+      {notes.length > 0 && (
+        <button
+          type="button"
+          title={
+            notes.length > 1 ? `Open the ${notes.length} notes in Anki` : "Open the note in Anki"
+          }
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => void openNotesInAnki(settings, notes).catch(() => {})}
+          className={
+            compact
+              ? "flex h-6 w-6 items-center justify-center rounded-md text-ink-muted hover:bg-ink/10 hover:text-ink"
+              : "flex h-8 w-8 items-center justify-center rounded-lg border border-edge-soft text-ink-muted transition-colors hover:border-edge hover:text-ink"
+          }
+        >
+          <ExternalLink size={icon} strokeWidth={2.2} />
+        </button>
+      )}
+      <button
+        type="button"
+        // Keep a text selection made in the popup: it can be exported to Anki.
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={add}
+        title={title}
+        aria-label={compact ? title : undefined}
+        className={`flex items-center gap-1 font-semibold transition-colors ${
+          compact ? "h-6 rounded-md px-1.5 text-[11px]" : "h-8 rounded-lg px-2.5 text-[12px]"
+        } ${
+          state === "done"
+            ? "bg-success/20 text-success"
+            : state === "error"
+              ? "bg-danger/15 text-danger"
+              : duplicate
+                ? "bg-amber-300/20 text-amber-300 hover:bg-amber-300/30"
+                : compact
+                  ? "text-ink-muted hover:bg-ink/10 hover:text-ink"
+                  : "bg-ink text-canvas hover:opacity-90"
+        }`}
+      >
+        {state === "busy" ? (
+          <Loader2 size={icon} className="animate-spin" />
+        ) : state === "done" ? (
+          <Check size={icon} strokeWidth={2.6} />
+        ) : duplicate ? (
+          <Copy size={icon} strokeWidth={2.4} />
+        ) : (
+          <Plus size={icon} strokeWidth={2.6} />
+        )}
+        Anki
+        {count && <span className="font-medium opacity-80">· {count}</span>}
+      </button>
+    </div>
+  );
+}
+
+function selectionInPopup(): string {
+  const sel = window.getSelection();
+  if (!sel || sel.isCollapsed) return "";
+  const node = sel.anchorNode;
+  const el = node && (node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement);
+  if (!el?.closest(".hb-lookup-popup")) return "";
+  return sel.toString().trim();
 }
 
 const POPUP_CSS = `

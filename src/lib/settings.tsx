@@ -38,6 +38,7 @@ import { SYNCED_SETTINGS_FIELDS } from "./layout-sync/sections";
 import { startTrayMenuBridge, type TrayMenuBridge } from "./tray-menu-bridge";
 
 export type {
+  AnkiFieldSource,
   ContentCategory,
   ContentFilters,
   Settings,
