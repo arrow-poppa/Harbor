@@ -1,4 +1,6 @@
-export type HotkeyScope = "Player" | "Global" | "Manga";
+// Lookup bindings apply only while picking a word in the subtitles, so they
+// can reuse keys the player already uses (the arrows, Enter, Escape).
+export type HotkeyScope = "Player" | "Global" | "Manga" | "Lookup";
 
 export type HotkeyId =
   | "playerClose"
@@ -18,6 +20,31 @@ export type HotkeyId =
   | "playerPip"
   | "playerSubtitleCycle"
   | "playerSubtitleCycleAlt"
+  | "playerSubtitleToggle"
+  | "playerSubNext"
+  | "playerSubPrev"
+  | "playerSubReplay"
+  | "playerHalfSpeed"
+  | "playerAnkiNewCard"
+  | "playerAnkiUpdateLast"
+  | "playerAnkiAudioCard"
+  | "playerRecordNew"
+  | "playerRecordUpdate"
+  | "playerRecordAudio"
+  | "playerLookupMode"
+  | "playerPopupBigger"
+  | "playerPopupSmaller"
+  | "lookupNextWord"
+  | "lookupPrevWord"
+  | "lookupPrevLine"
+  | "lookupNextLine"
+  | "lookupOpenPopup"
+  | "lookupAddAnki"
+  | "lookupAiExplain"
+  | "lookupWordAudio"
+  | "lookupScrollDown"
+  | "lookupScrollUp"
+  | "lookupExit"
   | "playerNextEpisode"
   | "playerPrevEpisode"
   | "playerPrevChannel"
@@ -282,16 +309,16 @@ export const HOTKEYS: HotkeyDef[] = [
     id: "playerSeekBack30",
     scope: "Player",
     group: "Seeking",
-    label: "Seek back 30s",
-    description: "Jump back thirty seconds.",
+    label: "Long seek back",
+    description: "Jump back by the Long seek step set under Behavior (30 seconds by default).",
     defaultBinding: ",",
   },
   {
     id: "playerSeekForward30",
     scope: "Player",
     group: "Seeking",
-    label: "Seek forward 30s",
-    description: "Jump forward thirty seconds.",
+    label: "Long seek forward",
+    description: "Jump forward by the Long seek step set under Behavior (30 seconds by default).",
     defaultBinding: ".",
   },
   {
@@ -369,6 +396,40 @@ export const HOTKEYS: HotkeyDef[] = [
     defaultBinding: "c",
   },
   {
+    id: "playerSubtitleToggle",
+    scope: "Player",
+    group: "Tracks",
+    label: "Toggle subtitles on/off",
+    description:
+      "Hide every subtitle (primary and secondary), or show the primary again. Hidden subtitles still work for line seeking, replay and Anki cards.",
+    defaultBinding: "",
+  },
+  {
+    id: "playerSubNext",
+    scope: "Player",
+    group: "Tracks",
+    label: "Next subtitle line",
+    description: "Jump to the start of the next subtitle line.",
+    defaultBinding: "",
+  },
+  {
+    id: "playerSubPrev",
+    scope: "Player",
+    group: "Tracks",
+    label: "Previous subtitle line",
+    description: "Jump to the start of the previous subtitle line.",
+    defaultBinding: "",
+  },
+  {
+    id: "playerSubReplay",
+    scope: "Player",
+    group: "Tracks",
+    label: "Replay current subtitle",
+    description:
+      "Go back to the start of the line on screen and play it again, or of the last line shown when there is none.",
+    defaultBinding: "",
+  },
+  {
     id: "playerSubDelayDown",
     scope: "Player",
     group: "Tracks",
@@ -415,7 +476,7 @@ export const HOTKEYS: HotkeyDef[] = [
     scope: "Player",
     group: "Speed",
     label: "Speed down",
-    description: "Slow playback by 0.25x.",
+    description: "Slow playback by the Speed step set under Behavior (0.25x by default).",
     defaultBinding: "[",
   },
   {
@@ -423,8 +484,187 @@ export const HOTKEYS: HotkeyDef[] = [
     scope: "Player",
     group: "Speed",
     label: "Speed up",
-    description: "Speed playback up by 0.25x.",
+    description: "Speed playback up by the Speed step set under Behavior (0.25x by default).",
     defaultBinding: "]",
+  },
+  {
+    id: "playerHalfSpeed",
+    scope: "Player",
+    group: "Speed",
+    label: "Toggle slow speed",
+    description:
+      "Switch between normal speed and the slow speed set under Behavior (0.5x by default).",
+    defaultBinding: "",
+  },
+
+  {
+    id: "playerAnkiNewCard",
+    scope: "Player",
+    group: "Immersion",
+    label: "Anki: card from the subtitle",
+    description:
+      "Add a card from the line on screen with its sentence, audio and picture, using the deck and fields under Dictionary & Anki. With a word selected in the subtitles, the word and its definitions go on the card too. mpv only.",
+    defaultBinding: "",
+  },
+  {
+    id: "playerAnkiUpdateLast",
+    scope: "Player",
+    group: "Immersion",
+    label: "Anki: update last card",
+    description:
+      "Put the line on screen (sentence, audio, picture) into the newest card of the deck, if it was added in the last few minutes. With a word selected, the word and its definitions too. mpv only.",
+    defaultBinding: "",
+  },
+  {
+    id: "playerAnkiAudioCard",
+    scope: "Player",
+    group: "Immersion",
+    label: "Anki: audio card",
+    description:
+      "Add an audio-only card from the line on screen, using the audio card deck. mpv only.",
+    defaultBinding: "",
+  },
+  {
+    id: "playerRecordNew",
+    scope: "Player",
+    group: "Immersion",
+    label: "Record → new card",
+    description:
+      "Press once to start recording, again to stop and add a card with that stretch. Works without subtitles. With a word selected when you stop, the word and its definitions go on the card too. mpv only.",
+    defaultBinding: "",
+  },
+  {
+    id: "playerRecordUpdate",
+    scope: "Player",
+    group: "Immersion",
+    label: "Record → update last card",
+    description:
+      "Press once to start recording, again to stop and put that stretch into the newest card. Works without subtitles. With a word selected when you stop, the word and its definitions too. mpv only.",
+    defaultBinding: "",
+  },
+  {
+    id: "playerRecordAudio",
+    scope: "Player",
+    group: "Immersion",
+    label: "Record → audio card",
+    description:
+      "Press once to start recording, again to stop and add an audio card with that stretch. Works without subtitles. mpv only.",
+    defaultBinding: "",
+  },
+  {
+    id: "playerLookupMode",
+    scope: "Player",
+    group: "Immersion",
+    label: "Pick a word in the subtitles",
+    description:
+      "Pause and select the first word of the subtitle to look it up without the mouse. Move between words with the Word lookup keys; press again to leave.",
+    defaultBinding: "",
+  },
+  {
+    id: "playerPopupBigger",
+    scope: "Player",
+    group: "Immersion",
+    label: "Bigger dictionary popup",
+    description: "Make the subtitle dictionary popup 10% bigger. Saved as the Popup size setting.",
+    defaultBinding: "",
+  },
+  {
+    id: "playerPopupSmaller",
+    scope: "Player",
+    group: "Immersion",
+    label: "Smaller dictionary popup",
+    description: "Make the subtitle dictionary popup 10% smaller. Saved as the Popup size setting.",
+    defaultBinding: "",
+  },
+
+  {
+    id: "lookupNextWord",
+    scope: "Lookup",
+    group: "Words",
+    label: "Next word",
+    description: "Select and look up the next word.",
+    defaultBinding: "ArrowRight",
+  },
+  {
+    id: "lookupPrevWord",
+    scope: "Lookup",
+    group: "Words",
+    label: "Previous word",
+    description: "Select and look up the previous word.",
+    defaultBinding: "ArrowLeft",
+  },
+  {
+    id: "lookupPrevLine",
+    scope: "Lookup",
+    group: "Words",
+    label: "Line above",
+    description: "Go to the first word of the subtitle line above.",
+    defaultBinding: "ArrowUp",
+  },
+  {
+    id: "lookupNextLine",
+    scope: "Lookup",
+    group: "Words",
+    label: "Line below",
+    description: "Go to the first word of the subtitle line below.",
+    defaultBinding: "ArrowDown",
+  },
+  {
+    id: "lookupOpenPopup",
+    scope: "Lookup",
+    group: "Popup",
+    label: "Show the popup",
+    description:
+      "Open or close the dictionary popup for the selected word. Moving to another word closes it.",
+    defaultBinding: "Enter",
+  },
+  {
+    id: "lookupAddAnki",
+    scope: "Lookup",
+    group: "Popup",
+    label: "Add to Anki",
+    description: "Add the selected word to Anki, like the Anki button in the popup.",
+    defaultBinding: "a",
+  },
+  {
+    id: "lookupAiExplain",
+    scope: "Lookup",
+    group: "Popup",
+    label: "Generate AI explanation",
+    description: "Generate the AI explanation of the word, or generate it again.",
+    defaultBinding: "g",
+  },
+  {
+    id: "lookupWordAudio",
+    scope: "Lookup",
+    group: "Popup",
+    label: "Play word audio",
+    description: "Play the word's local audio; press again for the next voice.",
+    defaultBinding: "p",
+  },
+  {
+    id: "lookupScrollDown",
+    scope: "Lookup",
+    group: "Popup",
+    label: "Scroll popup down",
+    description: "Scroll the definitions down. On a controller the right stick scrolls too.",
+    defaultBinding: "shift+ArrowDown",
+  },
+  {
+    id: "lookupScrollUp",
+    scope: "Lookup",
+    group: "Popup",
+    label: "Scroll popup up",
+    description: "Scroll the definitions up.",
+    defaultBinding: "shift+ArrowUp",
+  },
+  {
+    id: "lookupExit",
+    scope: "Lookup",
+    group: "Popup",
+    label: "Leave word lookup",
+    description: "Close the popup and resume playback if picking a word paused it.",
+    defaultBinding: "Escape",
   },
 
   {
@@ -527,7 +767,20 @@ export function isTypingTarget(e: KeyboardEvent): boolean {
   return role === "textbox" || role === "searchbox" || role === "combobox";
 }
 
+// While the settings panel records a new binding, every key belongs to it:
+// navigation and other hotkeys must not act on the key being recorded.
+let bindingCapture = false;
+
+export function setBindingCapture(on: boolean): void {
+  bindingCapture = on;
+}
+
+export function isBindingCapture(): boolean {
+  return bindingCapture;
+}
+
 export function shouldHandleGlobalKeyboardEvent(e: KeyboardEvent): boolean {
+  if (bindingCapture) return false;
   if (typeof document !== "undefined" && !document.hasFocus()) return false;
   return !e.isComposing && e.key !== "Process" && !isTypingTarget(e);
 }
@@ -538,7 +791,8 @@ export function matchesBinding(e: KeyboardEvent, binding: string): boolean {
 
 export function effectiveBinding(id: HotkeyId, overrides: Record<string, string>): string {
   const ov = overrides[id];
-  if (typeof ov === "string" && ov.length > 0) return ov;
+  // An empty override is a shortcut the user cleared: no key at all.
+  if (typeof ov === "string") return ov;
   return HOTKEY_MAP[id].defaultBinding;
 }
 
