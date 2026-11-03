@@ -42,10 +42,6 @@ const aiExplanation: Record<string, string> = {
   "Between 0 and 2. Lower is more deterministic.": "介于 0 到 2 之间。越低越确定。",
   "AI explanation": "AI 解释",
   "Not a valid JSON object.": "不是有效的 JSON 对象。",
-  "Look up words in subtitles with your Yomitan dictionaries, hear them and get AI explanations.":
-    "在 Yomitan 词典中查询字幕里的单词、收听发音并获取 AI 解释。",
-  "Open the popup for words no dictionary contains, with only the AI explanation.":
-    "对任何词典都没有的单词，也只用 AI 解释打开弹窗。",
 };
 
 export default aiExplanation;

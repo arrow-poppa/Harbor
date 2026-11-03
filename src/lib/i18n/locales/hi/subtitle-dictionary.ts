@@ -43,12 +43,6 @@ const subtitleDictionary: Record<string, string> = {
   Latin: "लैटिन",
   Controller: "कंट्रोलर",
   Dictionary: "शब्दकोश",
-  "Hover a word in the subtitles to look it up in your Yomitan dictionaries and hear it. Uses Manatan's dictionary engine.":
-    "सबटाइटल के किसी शब्द पर माउस ले जाएँ ताकि उसे अपने Yomitan शब्दकोशों में देख और सुन सकें. Manatan का शब्दकोश इंजन इस्तेमाल करता है.",
-  "Plays pronunciations from a local-audio-yomichan database (Forvo, NHK16, Shinmeikai8, JPod101). Pick android.db, or entries.db next to its *_files folders. The Flatpak build can only read android.db.":
-    "local-audio-yomichan डेटाबेस (Forvo, NHK16, Shinmeikai8, JPod101) से उच्चारण चलाता है. android.db चुनें, या *_files फ़ोल्डरों के पास वाला entries.db. Flatpak संस्करण केवल android.db पढ़ सकता है.",
-  "Subtitle dictionary lookups and word audio run in the Harbor desktop app.":
-    "सबटाइटल शब्दकोश खोज और शब्द ऑडियो Harbor डेस्कटॉप ऐप में चलते हैं.",
 };
 
 export default subtitleDictionary;

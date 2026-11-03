@@ -45,10 +45,6 @@ const aiExplanation: Record<string, string> = {
   "Between 0 and 2. Lower is more deterministic.": "Entre 0 y 2. Más bajo es más determinista.",
   "AI explanation": "Explicación con IA",
   "Not a valid JSON object.": "No es un objeto JSON válido.",
-  "Look up words in subtitles with your Yomitan dictionaries, hear them and get AI explanations.":
-    "Busca palabras de los subtítulos en tus diccionarios de Yomitan, escúchalas y obtén explicaciones con IA.",
-  "Open the popup for words no dictionary contains, with only the AI explanation.":
-    "Abre la ventana emergente para palabras que ningún diccionario contiene, solo con la explicación con IA.",
 };
 
 export default aiExplanation;

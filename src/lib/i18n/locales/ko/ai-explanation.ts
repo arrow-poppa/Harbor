@@ -43,10 +43,6 @@ const aiExplanation: Record<string, string> = {
   "Between 0 and 2. Lower is more deterministic.": "0에서 2 사이. 낮을수록 더 결정적입니다.",
   "AI explanation": "AI 설명",
   "Not a valid JSON object.": "올바른 JSON 객체가 아닙니다.",
-  "Look up words in subtitles with your Yomitan dictionaries, hear them and get AI explanations.":
-    "자막의 단어를 Yomitan 사전에서 찾아보고, 들어 보고, AI 설명을 받아 보세요.",
-  "Open the popup for words no dictionary contains, with only the AI explanation.":
-    "어느 사전에도 없는 단어도 AI 설명만으로 팝업을 엽니다.",
 };
 
 export default aiExplanation;

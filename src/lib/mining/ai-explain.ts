@@ -46,9 +46,10 @@ export function isOpenRouterEndpoint(endpoint: string): boolean {
 
 /** Why the AI explanation cannot run, or null when it is ready. */
 export function aiExplainProblem(settings: Settings): string | null {
-  if (!settings.aiExplainEndpoint.trim()) return "Set the AI endpoint in Settings → Dictionary.";
-  if (!settings.aiExplainKey.trim()) return "Set the AI API key in Settings → Dictionary.";
-  if (!settings.aiExplainModel.trim()) return "Set the AI model in Settings → Dictionary.";
+  if (!settings.aiExplainEndpoint.trim())
+    return "Set the AI endpoint in Settings → Dictionary & Anki.";
+  if (!settings.aiExplainKey.trim()) return "Set the AI API key in Settings → Dictionary & Anki.";
+  if (!settings.aiExplainModel.trim()) return "Set the AI model in Settings → Dictionary & Anki.";
   return null;
 }
 
@@ -493,4 +494,13 @@ function errorMessage(body: string): string {
     /* not JSON */
   }
   return body.slice(0, 300);
+}
+
+/** Minimal Markdown (bold, italics, line breaks) to HTML for Anki fields. */
+export function aiTextToHtml(text: string): string {
+  const esc = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  return esc
+    .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
+    .replace(/(^|[^*])\*([^*\n]+)\*/g, "$1<i>$2</i>")
+    .replace(/\r?\n/g, "<br>");
 }

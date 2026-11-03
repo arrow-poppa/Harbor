@@ -1,5 +1,6 @@
 import subtitleDictionary from "./it/subtitle-dictionary";
 import aiExplanation from "./it/ai-explanation";
+import ankiMining from "./it/anki-mining";
 import reviews from "./it/reviews";
 import playOrders from "./it/play-orders";
 import gameRomLibrary from "./it/game-rom-library";
@@ -377,6 +378,7 @@ const it: Record<string, string> = {
   ...liveWeb,
   ...subtitleDictionary,
   ...aiExplanation,
+  ...ankiMining,
 };
 
 export default it;

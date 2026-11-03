@@ -242,8 +242,8 @@ const SECTION_META: Record<SectionId, { label: string; sub: string }> = {
     sub: "Match the picture quality to your computer, smooth out weak connections, and fine-tune the mpv engine with plain-language controls.",
   },
   dictionary: {
-    label: "Dictionary",
-    sub: "Look up words in subtitles with your Yomitan dictionaries, hear them and get AI explanations.",
+    label: "Dictionary & Anki",
+    sub: "Look up words in subtitles with your Yomitan dictionaries, hear them, get AI explanations and turn them into Anki cards.",
   },
   anime: {
     label: "Anime tweaks",

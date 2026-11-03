@@ -46,10 +46,6 @@ const aiExplanation: Record<string, string> = {
     "Antara 0 dan 2. Lebih rendah lebih deterministik.",
   "AI explanation": "Penjelasan AI",
   "Not a valid JSON object.": "Bukan objek JSON yang valid.",
-  "Look up words in subtitles with your Yomitan dictionaries, hear them and get AI explanations.":
-    "Cari kata di subtitel dengan kamus Yomitan Anda, dengarkan, dan dapatkan penjelasan AI.",
-  "Open the popup for words no dictionary contains, with only the AI explanation.":
-    "Membuka popup untuk kata yang tidak ada di kamus mana pun, hanya dengan penjelasan AI.",
 };
 
 export default aiExplanation;

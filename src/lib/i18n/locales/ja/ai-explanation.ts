@@ -44,10 +44,6 @@ const aiExplanation: Record<string, string> = {
   "Between 0 and 2. Lower is more deterministic.": "0〜2 の範囲。低いほど決定的になります。",
   "AI explanation": "AI 解説",
   "Not a valid JSON object.": "有効な JSON オブジェクトではありません。",
-  "Look up words in subtitles with your Yomitan dictionaries, hear them and get AI explanations.":
-    "字幕の単語を Yomitan 辞書で調べ、発音を聞き、AI 解説を表示できます。",
-  "Open the popup for words no dictionary contains, with only the AI explanation.":
-    "どの辞書にもない単語でも、AI 解説だけでポップアップを開きます。",
 };
 
 export default aiExplanation;

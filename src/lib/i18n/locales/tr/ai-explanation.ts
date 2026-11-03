@@ -45,10 +45,6 @@ const aiExplanation: Record<string, string> = {
   "Between 0 and 2. Lower is more deterministic.": "0 ile 2 arası. Düşük olan daha belirleyicidir.",
   "AI explanation": "Yapay zekâ açıklaması",
   "Not a valid JSON object.": "Geçerli bir JSON nesnesi değil.",
-  "Look up words in subtitles with your Yomitan dictionaries, hear them and get AI explanations.":
-    "Altyazıdaki kelimeleri Yomitan sözlüklerinizde arayın, dinleyin ve yapay zekâ açıklamaları alın.",
-  "Open the popup for words no dictionary contains, with only the AI explanation.":
-    "Hiçbir sözlükte olmayan kelimeler için pencereyi yalnızca yapay zekâ açıklamasıyla açar.",
 };
 
 export default aiExplanation;
