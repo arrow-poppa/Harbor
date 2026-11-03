@@ -1,6 +1,7 @@
 import subtitleDictionary from "./ja/subtitle-dictionary";
 import aiExplanation from "./ja/ai-explanation";
 import ankiMining from "./ja/anki-mining";
+import immersionHotkeys from "./ja/immersion-hotkeys";
 import reviews from "./ja/reviews";
 import playOrders from "./ja/play-orders";
 import gameRomLibrary from "./ja/game-rom-library";
@@ -422,6 +423,7 @@ const ja: Record<string, string> = {
   ...subtitleDictionary,
   ...aiExplanation,
   ...ankiMining,
+  ...immersionHotkeys,
 };
 
 export default ja;

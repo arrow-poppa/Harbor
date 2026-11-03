@@ -1,6 +1,7 @@
 import subtitleDictionary from "./ru/subtitle-dictionary";
 import aiExplanation from "./ru/ai-explanation";
 import ankiMining from "./ru/anki-mining";
+import immersionHotkeys from "./ru/immersion-hotkeys";
 import reviews from "./ru/reviews";
 import playOrders from "./ru/play-orders";
 import gameRomLibrary from "./ru/game-rom-library";
@@ -436,6 +437,7 @@ const ru: Record<string, string> = {
   ...subtitleDictionary,
   ...aiExplanation,
   ...ankiMining,
+  ...immersionHotkeys,
 };
 
 export default ru;

@@ -17,7 +17,11 @@ function emit(): void {
 
 export function setLiveButton(button: GpButton, pressed: boolean): void {
   if (!!state.buttons[button] === pressed) return;
-  state = { buttons: { ...state.buttons, [button]: pressed }, axes: state.axes, seq: state.seq + 1 };
+  state = {
+    buttons: { ...state.buttons, [button]: pressed },
+    axes: state.axes,
+    seq: state.seq + 1,
+  };
   emit();
 }
 
@@ -39,6 +43,10 @@ export function subscribeLive(cb: () => void): () => void {
   return () => {
     listeners.delete(cb);
   };
+}
+
+export function liveButtons(): LiveGamepad["buttons"] {
+  return state.buttons;
 }
 
 export function liveAxes(): LiveGamepad["axes"] {
