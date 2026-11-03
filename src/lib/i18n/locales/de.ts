@@ -5,6 +5,7 @@ import controllerTouchpad from "./de/controller-touchpad";
 import controllerHotkeys from "./de/controller-hotkeys";
 import subtitleDictionary from "./de/subtitle-dictionary";
 import aiExplanation from "./de/ai-explanation";
+import ankiMining from "./de/anki-mining";
 import reviews from "./de/reviews";
 import playOrders from "./de/play-orders";
 import gameRomLibrary from "./de/game-rom-library";
@@ -435,6 +436,7 @@ const de: Record<string, string> = {
   ...controllerTouchpad,
   ...subtitleDictionary,
   ...aiExplanation,
+  ...ankiMining,
 };
 
 export default de;

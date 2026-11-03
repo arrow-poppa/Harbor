@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { SubTiming } from "@/lib/player/sub-timing";
 import {
   codePointsToUtf16,
   lookupDictionary,
@@ -11,6 +12,10 @@ export type LookupControls = {
   togglePlay: () => void;
   // Hides/shows the subtitles mpv draws itself (ASS/native mode).
   setNativeSubVisible: (on: boolean) => void;
+  title: string;
+  mpvEngine: boolean;
+  // Current sub-delay and frame-rate correction, read when a card is added.
+  subTiming: () => SubTiming;
 };
 
 export type LookupHit = { line: number; start: number; length: number };

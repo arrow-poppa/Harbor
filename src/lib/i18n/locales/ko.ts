@@ -5,6 +5,7 @@ import controllerTouchpad from "./ko/controller-touchpad";
 import controllerHotkeys from "./ko/controller-hotkeys";
 import subtitleDictionary from "./ko/subtitle-dictionary";
 import aiExplanation from "./ko/ai-explanation";
+import ankiMining from "./ko/anki-mining";
 import reviews from "./ko/reviews";
 import playOrders from "./ko/play-orders";
 import gameRomLibrary from "./ko/game-rom-library";
@@ -389,6 +390,7 @@ const ko: Record<string, string> = {
   ...controllerTouchpad,
   ...subtitleDictionary,
   ...aiExplanation,
+  ...ankiMining,
 };
 
 export default ko;

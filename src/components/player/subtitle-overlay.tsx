@@ -15,7 +15,7 @@ type Props = {
   secondaryText?: string;
   // Dictionary lookup on hover. `native`: mpv renders this subtitle (ASS), so
   // only an invisible, hoverable copy is drawn here.
-  lookup?: { controls: LookupControls; native?: boolean; chromeVisible?: boolean };
+  lookup?: { controls: LookupControls; endSec?: number; native?: boolean; chromeVisible?: boolean };
 };
 
 export const SubtitleOverlay = memo(function SubtitleOverlay({
@@ -197,6 +197,8 @@ export const SubtitleOverlay = memo(function SubtitleOverlay({
               textStyle={baseTextStyle}
               boxStyle={boxStyle}
               controls={lookup.controls}
+              startSec={startSec}
+              endSec={lookup.endSec}
               native={!!lookup.native}
             />
           ) : (

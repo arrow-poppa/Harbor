@@ -14,6 +14,7 @@ import type { PlayerBridge, PlayerSnapshot } from "@/lib/player/bridge";
 import { writePlayerPrefs } from "@/lib/player-prefs";
 import type { PlayerSrc, PlayEpisode } from "@/lib/view";
 import { isLivePlaybackSrc } from "@/lib/player/live-src";
+import { isSubsHidden } from "@/lib/player/subs-hidden";
 import { BpTenFootLayer } from "./bp-ten-foot";
 import { CastLayer } from "./cast-layer";
 import { DragClickStage } from "./drag-click-stage";
@@ -222,15 +223,20 @@ export const PlayerOverlayLayers = memo(function PlayerOverlayLayers(p: PlayerOv
       : "top-end"
     : "top-start";
 
-  const { snapRef, playPauseToggle, bridgeRef } = p;
+  const lookupTitle = [p.src.title, p.src.subtitle].filter(Boolean).join(" · ");
+  const { snapRef, playPauseToggle, bridgeRef, engine } = p;
   // Stable across renders so the memoized subtitle layers do not re-render.
   const lookupControls = useMemo<LookupControls>(
     () => ({
       isPlaying: () => snapRef.current?.status === "playing",
       togglePlay: playPauseToggle,
-      setNativeSubVisible: (on) => bridgeRef.current?.setSubVisible(on),
+      // Hidden subtitles stay hidden however the lookup copy swaps them.
+      setNativeSubVisible: (on) => bridgeRef.current?.setSubVisible(on && !isSubsHidden()),
+      subTiming: () => snapRef.current ?? { subDelaySec: 0 },
+      title: lookupTitle,
+      mpvEngine: engine === "mpv",
     }),
-    [snapRef, playPauseToggle, bridgeRef],
+    [snapRef, playPauseToggle, bridgeRef, lookupTitle, engine],
   );
 
   return (
