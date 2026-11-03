@@ -3,6 +3,7 @@ import {
   codePointsToUtf16,
   lookupDictionary,
   type DictLookupResult,
+  type DictTerm,
 } from "@/lib/mining/dictionary";
 
 export type LookupControls = {
@@ -105,6 +106,30 @@ const SCAN_KEY_NAMES: Record<Exclude<ScanKey, "none">, string[]> = {
   alt: ["Alt"],
 };
 
+// The word starting at `index` in a space-delimited script, without edge
+// apostrophes or hyphens; "" in no-space scripts, where a word's end is unknown.
+export function wordAt(text: string, index: number): string {
+  if (NO_SPACE_CHAR.test(text[index] ?? "")) return "";
+  let end = index;
+  while (end < text.length && WORD_CHAR.test(text[end]) && !NO_SPACE_CHAR.test(text[end])) end++;
+  return text.slice(index, end).replace(/^['’-]+|['’-]+$/g, "");
+}
+
+function unknownWordTerm(word: string): DictTerm {
+  return {
+    headword: word,
+    reading: "",
+    furigana: [],
+    glossary: [],
+    frequencies: [],
+    pitchAccents: [],
+    forms: [],
+    termTags: [],
+    matchLen: Array.from(word).length,
+    synthetic: true,
+  };
+}
+
 const CLOSE_GRACE_MS = 280;
 
 // Maps a pointer position to a UTF-16 offset inside one rendered subtitle line.
@@ -140,6 +165,7 @@ export function useSubtitleLookup({
   controls,
   scanKey = "none",
   scanDelayMs = 20,
+  unknownWords = false,
 }: {
   lines: string[];
   language: string;
@@ -148,6 +174,8 @@ export function useSubtitleLookup({
   scanKey?: ScanKey;
   // Wait before a hover lookup; only used when no scan key is required.
   scanDelayMs?: number;
+  // Open the popup for words no dictionary knows (for the AI explanation).
+  unknownWords?: boolean;
 }) {
   const [hit, setHit] = useState<LookupHit | null>(null);
   const [result, setResult] = useState<DictLookupResult | null>(null);
@@ -196,7 +224,9 @@ export function useSubtitleLookup({
       lookupDictionary(text, index, language)
         .then((found) => {
           if (id !== reqId.current) return;
-          const res = found;
+          let res = found;
+          const word = !res.terms.length && unknownWords ? wordAt(text, index) : "";
+          if (word && /\p{L}/u.test(word)) res = { terms: [unknownWordTerm(word)], kanji: [] };
           const best = res.terms[0];
           if (!best) {
             setHit(null);
@@ -213,7 +243,7 @@ export function useSubtitleLookup({
           }
         });
     },
-    [lines, language],
+    [lines, language, unknownWords],
   );
 
   const onPointerMove = useCallback(
