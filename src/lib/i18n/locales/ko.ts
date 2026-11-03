@@ -4,6 +4,7 @@ import clearShortcut from "./ko/clear-shortcut";
 import controllerTouchpad from "./ko/controller-touchpad";
 import controllerHotkeys from "./ko/controller-hotkeys";
 import subtitleDictionary from "./ko/subtitle-dictionary";
+import aiExplanation from "./ko/ai-explanation";
 import reviews from "./ko/reviews";
 import playOrders from "./ko/play-orders";
 import gameRomLibrary from "./ko/game-rom-library";
@@ -387,6 +388,7 @@ const ko: Record<string, string> = {
   ...controllerHotkeys,
   ...controllerTouchpad,
   ...subtitleDictionary,
+  ...aiExplanation,
 };
 
 export default ko;

@@ -4,6 +4,7 @@ import clearShortcut from "./id/clear-shortcut";
 import controllerTouchpad from "./id/controller-touchpad";
 import controllerHotkeys from "./id/controller-hotkeys";
 import subtitleDictionary from "./id/subtitle-dictionary";
+import aiExplanation from "./id/ai-explanation";
 import reviews from "./id/reviews";
 import playOrders from "./id/play-orders";
 import gameRomLibrary from "./id/game-rom-library";
@@ -391,6 +392,7 @@ const id: Record<string, string> = {
   ...controllerHotkeys,
   ...controllerTouchpad,
   ...subtitleDictionary,
+  ...aiExplanation,
 };
 
 export default id;

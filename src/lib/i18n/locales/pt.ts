@@ -4,6 +4,7 @@ import clearShortcut from "./pt/clear-shortcut";
 import controllerTouchpad from "./pt/controller-touchpad";
 import controllerHotkeys from "./pt/controller-hotkeys";
 import subtitleDictionary from "./pt/subtitle-dictionary";
+import aiExplanation from "./pt/ai-explanation";
 import reviews from "./pt/reviews";
 import playOrders from "./pt/play-orders";
 import gameRomLibrary from "./pt/game-rom-library";
@@ -435,6 +436,7 @@ const pt: Record<string, string> = {
   ...controllerHotkeys,
   ...controllerTouchpad,
   ...subtitleDictionary,
+  ...aiExplanation,
 };
 
 export default pt;

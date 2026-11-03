@@ -4,6 +4,7 @@ import clearShortcut from "./zh/clear-shortcut";
 import controllerTouchpad from "./zh/controller-touchpad";
 import controllerHotkeys from "./zh/controller-hotkeys";
 import subtitleDictionary from "./zh/subtitle-dictionary";
+import aiExplanation from "./zh/ai-explanation";
 import reviews from "./zh/reviews";
 import playOrders from "./zh/play-orders";
 import gameRomLibrary from "./zh/game-rom-library";
@@ -381,6 +382,7 @@ const zh: Record<string, string> = {
   ...controllerHotkeys,
   ...controllerTouchpad,
   ...subtitleDictionary,
+  ...aiExplanation,
 };
 
 export default zh;
