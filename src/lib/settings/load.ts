@@ -9,6 +9,7 @@ import { languageName } from "@/lib/subtitles/language";
 import { ORIGINAL_AUDIO_LANG } from "@/lib/player/audio-language";
 import { sanitizeHalfSpeedRate, sanitizeSeekStep, sanitizeSpeedStep } from "@/lib/seek-step";
 import { sanitizePopupSize } from "@/lib/player/lookup-popup-size";
+import { sanitizeWordAudioSources } from "@/lib/mining/word-audio-core";
 import { migrateModelId, providerTabFor } from "@/lib/ai-models";
 import {
   sanitizeFullscreenClockFormat,
@@ -598,6 +599,7 @@ function parseStoredSettings(raw: string | null): { settings: Settings; cacheabl
       speedDownStep: sanitizeSpeedStep(parsed.speedDownStep, DEFAULT.speedDownStep),
       speedUpStep: sanitizeSpeedStep(parsed.speedUpStep, DEFAULT.speedUpStep),
       subLookupPopupSize: sanitizePopupSize(parsed.subLookupPopupSize, DEFAULT.subLookupPopupSize),
+      wordAudioSources: sanitizeWordAudioSources(parsed.wordAudioSources),
       theme: sanitizeTheme(parsed.theme),
       animeTitleLanguage:
         parsed.animeTitleLanguage === "romaji" || parsed.animeTitleLanguage === "native"

@@ -37,15 +37,6 @@ export function wordAudioDataUrl(dbPath: string, entry: LocalAudioEntry): Promis
   return p;
 }
 
-let current: HTMLAudioElement | null = null;
-
-export async function playWordAudio(dbPath: string, entry: LocalAudioEntry): Promise<void> {
-  const url = await wordAudioDataUrl(dbPath, entry);
-  current?.pause();
-  current = new Audio(url);
-  await current.play();
-}
-
 export function audioExtension(file: string): string {
   const m = /\.([a-z0-9]{2,5})$/i.exec(file);
   return m ? m[1].toLowerCase() : "mp3";
