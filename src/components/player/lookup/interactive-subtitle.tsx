@@ -1,7 +1,23 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useSettings } from "@/lib/settings";
+import { aiExplainReady } from "@/lib/mining/ai-explain";
 import { LookupPopup } from "./lookup-popup";
 import { useSubtitleLookup, type LookupControls, type LookupHit } from "./use-subtitle-lookup";
+
+// Scripts written without spaces between words (CJK, kana, Thai, Lao, Khmer).
+const NO_SPACE_CHAR =
+  /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Thai}\p{Script=Lao}\p{Script=Khmer}\u3000-\u303f\uff00-\uffef]/u;
+
+// Separator used when a subtitle's lines are joined into one sentence: none
+// between two no-space scripts, a space otherwise. Decided from the text
+// itself, so an English line is never glued even if the lookup language is
+// still set to Japanese.
+export function lineSeparator(prev: string, next: string): string {
+  const a = prev.trimEnd().slice(-1);
+  const b = next.trimStart().charAt(0);
+  if (!a || !b) return "";
+  return NO_SPACE_CHAR.test(a) && NO_SPACE_CHAR.test(b) ? "" : " ";
+}
 
 type Props = {
   lines: string[];
@@ -22,6 +38,7 @@ export function InteractiveSubtitle({ lines, textStyle, boxStyle, controls, nati
     controls,
     scanKey: settings.subLookupScanKey ?? "none",
     scanDelayMs: settings.subLookupScanDelayMs ?? 20,
+    unknownWords: settings.subLookupAiUnknown && aiExplainReady(settings),
   });
   const markRef = useRef<HTMLSpanElement>(null);
   const [anchor, setAnchor] = useState<DOMRect | null>(null);
@@ -81,6 +98,15 @@ export function InteractiveSubtitle({ lines, textStyle, boxStyle, controls, nati
     [native],
   );
 
+  const mining = useMemo(() => {
+    let sentence = "";
+    lines.forEach((line, i) => {
+      if (i > 0) sentence += lineSeparator(lines[i - 1], line);
+      sentence += line;
+    });
+    return { sentence };
+  }, [lines]);
+
   const hiddenText: React.CSSProperties = { color: "transparent", textShadow: "none" };
   return (
     <div
@@ -117,6 +143,7 @@ export function InteractiveSubtitle({ lines, textStyle, boxStyle, controls, nati
         <LookupPopup
           result={lookup.result}
           anchor={anchor}
+          mining={mining}
           onEnter={() => {
             lookup.cancelClose();
             lookup.setPinned(true);

@@ -1,4 +1,5 @@
 import subtitleDictionary from "./pl/subtitle-dictionary";
+import aiExplanation from "./pl/ai-explanation";
 import reviews from "./pl/reviews";
 import playOrders from "./pl/play-orders";
 import gameRomLibrary from "./pl/game-rom-library";
@@ -385,6 +386,7 @@ const pl: Record<string, string> = {
   ...queueBasket,
   ...liveWeb,
   ...subtitleDictionary,
+  ...aiExplanation,
 };
 
 export default pl;

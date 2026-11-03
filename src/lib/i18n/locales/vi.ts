@@ -1,4 +1,5 @@
 import subtitleDictionary from "./vi/subtitle-dictionary";
+import aiExplanation from "./vi/ai-explanation";
 import reviews from "./vi/reviews";
 import playOrders from "./vi/play-orders";
 import gameRomLibrary from "./vi/game-rom-library";
@@ -418,6 +419,7 @@ const vi: Record<string, string> = {
   ...queueBasket,
   ...liveWeb,
   ...subtitleDictionary,
+  ...aiExplanation,
 };
 
 export default vi;
