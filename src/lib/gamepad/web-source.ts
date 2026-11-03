@@ -61,7 +61,22 @@ export type WebGamepadHandlers = {
   onPads: (pads: GamepadInfo[]) => void;
   /** Gate input dispatch (e.g. on window focus loss). Defaults to always allowed. */
   inputAllowed?: () => boolean;
+  /** Pads read by another source, left out of this one. */
+  skip?: (pad: Gamepad) => boolean;
 };
+
+const SONY_VENDOR = "054c";
+// DualSense, DualSense Edge, DualShock 4 v1 and v2, and the DualShock 4 USB
+// wireless adapter: the pads Harbor reads itself (gamepad/playstation.rs).
+const PLAYSTATION_PRODUCTS = ["0ce6", "0df2", "05c4", "09cc", "0ba0"];
+
+export function isPlayStationPad(id: string): boolean {
+  const s = id.toLowerCase();
+  return (
+    s.includes(`vendor: ${SONY_VENDOR}`) &&
+    PLAYSTATION_PRODUCTS.some((p) => s.includes(`product: ${p}`))
+  );
+}
 
 export function startWebGamepadSource(h: WebGamepadHandlers): () => void {
   if (!isWindows()) return () => {};
@@ -90,8 +105,22 @@ export function startWebGamepadSource(h: WebGamepadHandlers): () => void {
     const list = readPads();
 
     const active: GamepadInfo[] = [];
+    // Skipped pads keep the poll alive, to take over if the other source drops them.
+    let skipped = false;
     for (const pad of list) {
       if (!pad || !pad.connected || handledNatively(pad) || !isLikelyGamepad(pad)) continue;
+      if (h.skip?.(pad)) {
+        skipped = true;
+        // Let go of whatever it held when another source took it over.
+        for (const [key, down] of pressed) {
+          const [index, name] = key.split(":");
+          if (down && Number(index) === pad.index) {
+            pressed.set(key, false);
+            h.onButton(name as GpButton, false);
+          }
+        }
+        continue;
+      }
       active.push({ id: WEB_ID_BASE + pad.index, name: pad.id });
 
       pad.buttons.forEach((btn, i) => {
@@ -119,7 +148,7 @@ export function startWebGamepadSource(h: WebGamepadHandlers): () => void {
       padSignature = signature;
       h.onPads(active);
     }
-    polling = active.length > 0;
+    polling = active.length > 0 || skipped;
     if (polling) raf = requestAnimationFrame(poll);
   };
 

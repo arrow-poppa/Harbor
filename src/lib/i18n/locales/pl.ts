@@ -2,6 +2,7 @@ import subtitleDictionary from "./pl/subtitle-dictionary";
 import aiExplanation from "./pl/ai-explanation";
 import ankiMining from "./pl/anki-mining";
 import immersionHotkeys from "./pl/immersion-hotkeys";
+import controllerPlayer from "./pl/controller-player";
 import reviews from "./pl/reviews";
 import playOrders from "./pl/play-orders";
 import gameRomLibrary from "./pl/game-rom-library";
@@ -391,6 +392,7 @@ const pl: Record<string, string> = {
   ...aiExplanation,
   ...ankiMining,
   ...immersionHotkeys,
+  ...controllerPlayer,
 };
 
 export default pl;

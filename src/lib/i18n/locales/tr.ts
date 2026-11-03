@@ -2,6 +2,7 @@ import subtitleDictionary from "./tr/subtitle-dictionary";
 import aiExplanation from "./tr/ai-explanation";
 import ankiMining from "./tr/anki-mining";
 import immersionHotkeys from "./tr/immersion-hotkeys";
+import controllerPlayer from "./tr/controller-player";
 import reviews from "./tr/reviews";
 import playOrders from "./tr/play-orders";
 import gameRomLibrary from "./tr/game-rom-library";
@@ -384,6 +385,7 @@ const tr: Record<string, string> = {
   ...aiExplanation,
   ...ankiMining,
   ...immersionHotkeys,
+  ...controllerPlayer,
 };
 
 export default tr;
