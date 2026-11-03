@@ -1,3 +1,4 @@
+import wordAudioSources from "./vi/word-audio-sources";
 import subtitleDictionary from "./vi/subtitle-dictionary";
 import aiExplanation from "./vi/ai-explanation";
 import ankiMining from "./vi/anki-mining";
@@ -426,6 +427,7 @@ const vi: Record<string, string> = {
   ...ankiMining,
   ...immersionHotkeys,
   ...controllerPlayer,
+  ...wordAudioSources,
 };
 
 export default vi;

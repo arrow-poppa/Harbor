@@ -1,3 +1,4 @@
+import wordAudioSources from "./es/word-audio-sources";
 import subtitleDictionary from "./es/subtitle-dictionary";
 import aiExplanation from "./es/ai-explanation";
 import ankiMining from "./es/anki-mining";
@@ -420,6 +421,7 @@ const es: Record<string, string> = {
   ...ankiMining,
   ...immersionHotkeys,
   ...controllerPlayer,
+  ...wordAudioSources,
 };
 
 export default es;

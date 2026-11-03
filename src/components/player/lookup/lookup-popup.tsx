@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { useSettings } from "@/lib/settings";
+import { useSettings, type Settings } from "@/lib/settings";
 import {
   addNoteFromLookup,
   findDuplicateNotes,
@@ -31,7 +31,14 @@ import {
 } from "@/lib/mining/ai-explain";
 import { dictionaryMedia, type DictLookupResult, type DictTerm } from "@/lib/mining/dictionary";
 import { glossaryEntryHtml, scopedDictionaryCss } from "@/lib/mining/glossary-html";
-import { findWordAudio, playWordAudio, type LocalAudioEntry } from "@/lib/mining/local-audio";
+import {
+  findWordAudioCandidates,
+  loadWordAudio,
+  playWordAudioData,
+  wordAudioConfigured,
+  wordAudioSourceEntries,
+  type WordAudioCandidate,
+} from "@/lib/mining/word-audio";
 import { onLookupCommand } from "@/lib/player/lookup-nav";
 import { POPUP_BASE_WIDTH, sanitizePopupSize } from "@/lib/player/lookup-popup-size";
 
@@ -427,9 +434,7 @@ function TermEntry({ term, mining }: { term: DictTerm; mining: Omit<MiningContex
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-1.5 pt-1">
-          {settings.localAudioDbPath && (
-            <WordAudioButton term={term} dbPath={settings.localAudioDbPath} />
-          )}
+          {wordAudioConfigured(settings) && <WordAudioButton term={term} />}
           <AnkiButton term={term} mining={mining} />
         </div>
       </div>
@@ -500,46 +505,234 @@ function GlossaryBlock({
   );
 }
 
-function WordAudioButton({ term, dbPath }: { term: DictTerm; dbPath: string }) {
-  const [entries, setEntries] = useState<LocalAudioEntry[] | null>(null);
+function WordAudioButton({ term }: { term: DictTerm }) {
+  const { settings } = useSettings();
+  const settingsRef = useRef(settings);
+  settingsRef.current = settings;
+  // Found on the first press: the online sources are only asked when wanted.
+  const [list, setList] = useState<WordAudioCandidate[] | null>(null);
   const [idx, setIdx] = useState(0);
+  const [busy, setBusy] = useState(false);
+  const [playing, setPlaying] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const sourcesKey = JSON.stringify([settings.wordAudioSources, settings.localAudioDbPath]);
 
   useEffect(() => {
+    setList(null);
+    setIdx(0);
+    setPlaying(null);
+    setErr(null);
+    setMenuOpen(false);
+  }, [term.headword, term.reading, sourcesKey]);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onDown = (e: PointerEvent) => {
+      if (!(e.target instanceof Node) || !wrapRef.current?.contains(e.target)) setMenuOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMenuOpen(false);
+    };
+    window.addEventListener("pointerdown", onDown, true);
+    window.addEventListener("keydown", onKey, true);
+    return () => {
+      window.removeEventListener("pointerdown", onDown, true);
+      window.removeEventListener("keydown", onKey, true);
+    };
+  }, [menuOpen]);
+
+  const play = async () => {
+    if (busy) return;
+    setBusy(true);
+    setErr(null);
+    try {
+      const found =
+        list ?? (await findWordAudioCandidates(settingsRef.current, term.headword, term.reading));
+      setList(found);
+      // A voice that fails to load is skipped for the next one.
+      for (let step = 0; step < found.length; step++) {
+        const at = (idx + step) % found.length;
+        try {
+          await playWordAudioData(await loadWordAudio(found[at]));
+          setPlaying(found[at].label);
+          setIdx((at + 1) % found.length);
+          return;
+        } catch {
+          /* next voice */
+        }
+      }
+      setErr("No audio found for this word");
+    } catch (e) {
+      setErr(String(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const none = list !== null && list.length === 0;
+  return (
+    <div ref={wrapRef} className="relative">
+      <button
+        type="button"
+        data-hb-word-audio=""
+        disabled={none}
+        title={
+          err ??
+          (none
+            ? "No audio found for this word"
+            : playing
+              ? `${playing} — click again for the next voice, right-click for the sources`
+              : "Play the word. Right-click for the sources.")
+        }
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={() => void play()}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          setMenuOpen((o) => !o);
+        }}
+        className="flex h-8 w-8 items-center justify-center rounded-lg border border-edge-soft text-ink-muted transition-colors hover:border-edge hover:text-ink disabled:opacity-35"
+      >
+        {busy ? (
+          <Loader2 size={15} className="animate-spin" />
+        ) : (
+          <Volume2 size={15} strokeWidth={2.2} />
+        )}
+      </button>
+      {menuOpen && <WordAudioMenu term={term} settings={settings} />}
+    </div>
+  );
+}
+
+type AudioRowStatus = "busy" | "ok" | "none";
+
+async function audioLoads(candidate: WordAudioCandidate): Promise<boolean> {
+  try {
+    await loadWordAudio(candidate);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// The enabled sources, like Yomitan's audio menu: a source plays its first
+// voice, and a source with several voices lists each of them.
+function WordAudioMenu({ term, settings }: { term: DictTerm; settings: Settings }) {
+  // The menu closes when the word or the sources change, so these stay put while it is open.
+  const [entries] = useState(() => wordAudioSourceEntries(settings, term.headword, term.reading));
+  const [found, setFound] = useState<Record<number, WordAudioCandidate[]>>({});
+  const [status, setStatus] = useState<Record<string, AudioRowStatus>>({});
+  const mark = (key: string, s: AudioRowStatus) => setStatus((m) => ({ ...m, [key]: s }));
+
+  // Every source is checked as the menu opens, so each row already shows
+  // whether it has audio. Lists and loaded audio are cached, so what the
+  // audio button already fetched is not fetched again.
+  useEffect(() => {
     let alive = true;
-    findWordAudio(dbPath, term.headword, term.reading)
-      .then((e) => alive && setEntries(e))
-      .catch((e) => alive && setErr(String(e)));
+    const set = (key: string, s: AudioRowStatus) => {
+      if (alive) setStatus((m) => ({ ...m, [key]: s }));
+    };
+    entries.forEach(async (entry, i) => {
+      set(String(i), "busy");
+      const candidates = await entry.candidates();
+      if (!alive) return;
+      setFound((f) => ({ ...f, [i]: candidates }));
+      if (candidates.length < 2) {
+        set(
+          String(i),
+          candidates.length === 1 && (await audioLoads(candidates[0])) ? "ok" : "none",
+        );
+        return;
+      }
+      candidates.forEach(async (candidate, k) => {
+        set(`${i}:${k}`, "busy");
+        set(`${i}:${k}`, (await audioLoads(candidate)) ? "ok" : "none");
+      });
+    });
     return () => {
       alive = false;
     };
-  }, [dbPath, term.headword, term.reading]);
+  }, [entries]);
 
-  const none = entries !== null && entries.length === 0;
-  const current = entries?.[idx];
-  return (
-    <button
-      type="button"
-      data-hb-word-audio=""
-      disabled={!current}
-      title={
-        err ??
-        (none
-          ? "No local audio for this word"
-          : current
-            ? `${current.label} — click again for the next voice`
-            : "")
+  const playFrom = async (key: string, candidates: WordAudioCandidate[]) => {
+    for (const c of candidates) {
+      try {
+        await playWordAudioData(await loadWordAudio(c));
+        mark(key, "ok");
+        return;
+      } catch {
+        /* next voice */
       }
-      onClick={() => {
-        if (!entries?.length) return;
-        const entry = entries[idx];
-        playWordAudio(dbPath, entry).catch((e) => setErr(String(e)));
-        setIdx((i) => (i + 1) % entries.length);
-      }}
-      className="flex h-8 w-8 items-center justify-center rounded-lg border border-edge-soft text-ink-muted transition-colors hover:border-edge hover:text-ink disabled:opacity-35"
+    }
+    mark(key, "none");
+  };
+
+  // A click while a row is still being checked waits for it and then plays.
+  const playSource = async (i: number) => {
+    const key = String(i);
+    mark(key, "busy");
+    const candidates = await entries[i].candidates();
+    setFound((f) => ({ ...f, [i]: candidates }));
+    await playFrom(key, candidates);
+  };
+
+  const playVoice = async (i: number, k: number) => {
+    const key = `${i}:${k}`;
+    mark(key, "busy");
+    await playFrom(key, [found[i][k]]);
+  };
+
+  const rows: { key: string; label: string; onClick: () => void }[] = [];
+  entries.forEach((entry, i) => {
+    const voices = found[i];
+    if (!voices || voices.length < 2) {
+      rows.push({ key: String(i), label: entry.name, onClick: () => void playSource(i) });
+      return;
+    }
+    voices.forEach((v, k) => {
+      const same = voices.filter((x) => x.label === v.label).length > 1;
+      rows.push({
+        key: `${i}:${k}`,
+        label: same ? `${v.label} ${k + 1}` : v.label,
+        onClick: () => void playVoice(i, k),
+      });
+    });
+  });
+
+  return (
+    <div
+      role="menu"
+      className="absolute right-0 top-full z-10 mt-1 flex min-w-[190px] flex-col rounded-lg border border-edge-soft bg-elevated py-1 shadow-[0_10px_30px_rgba(0,0,0,0.45)]"
     >
-      <Volume2 size={15} strokeWidth={2.2} />
-    </button>
+      {rows.map((row) => {
+        const s = status[row.key];
+        return (
+          <button
+            key={row.key}
+            type="button"
+            role="menuitem"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={row.onClick}
+            title={s === "none" ? "No audio found for this word" : undefined}
+            className={`flex items-center gap-2 px-3 py-1.5 text-left text-[13px] transition-colors hover:bg-ink/10 ${
+              s === "none" ? "text-ink-subtle" : "text-ink"
+            }`}
+          >
+            <span className="flex w-3.5 shrink-0 justify-center">
+              {s === "busy" ? (
+                <Loader2 size={12} className="animate-spin" />
+              ) : s === "ok" ? (
+                <Check size={12} strokeWidth={2.6} className="text-success" />
+              ) : s === "none" ? (
+                <X size={12} strokeWidth={2.6} className="text-danger" />
+              ) : null}
+            </span>
+            <span className="min-w-0 truncate">{row.label}</span>
+          </button>
+        );
+      })}
+    </div>
   );
 }
 
