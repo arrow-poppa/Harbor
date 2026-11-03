@@ -229,6 +229,8 @@ export type Settings = {
   controllerCursorImage: string;
   controllerCursorSize: number;
   controllerCursorEnabled: boolean;
+  /** A DualSense or DualShock 4 touchpad moves the controller cursor (inside Harbor only). */
+  controllerTouchpadPointer: boolean;
   controllerCursorHideMs: number;
   controllerKeyboardSize: number;
   controllerRepeatMs: number;

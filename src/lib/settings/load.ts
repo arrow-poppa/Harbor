@@ -500,6 +500,10 @@ export function parseStoredSettings(raw: string | null): {
         typeof parsed.controllerCursorEnabled === "boolean"
           ? parsed.controllerCursorEnabled
           : DEFAULT.controllerCursorEnabled,
+      controllerTouchpadPointer:
+        typeof parsed.controllerTouchpadPointer === "boolean"
+          ? parsed.controllerTouchpadPointer
+          : DEFAULT.controllerTouchpadPointer,
       controllerCursorHideMs: sanitizeControllerCursorHideMs(parsed.controllerCursorHideMs),
       fullscreenClockFormat: sanitizeFullscreenClockFormat(parsed.fullscreenClockFormat),
       fullscreenClockStyle: sanitizeFullscreenClockStyle(parsed.fullscreenClockStyle),

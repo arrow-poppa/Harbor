@@ -2,6 +2,7 @@ import subtitleDictionary from "./ko/subtitle-dictionary";
 import aiExplanation from "./ko/ai-explanation";
 import ankiMining from "./ko/anki-mining";
 import immersionHotkeys from "./ko/immersion-hotkeys";
+import controllerPlayer from "./ko/controller-player";
 import reviews from "./ko/reviews";
 import playOrders from "./ko/play-orders";
 import gameRomLibrary from "./ko/game-rom-library";
@@ -383,6 +384,7 @@ const ko: Record<string, string> = {
   ...aiExplanation,
   ...ankiMining,
   ...immersionHotkeys,
+  ...controllerPlayer,
 };
 
 export default ko;
