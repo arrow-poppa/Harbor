@@ -8,6 +8,7 @@ import {
   onLookupCommand,
   prevWord,
   setLookupNavActive,
+  setLookupPopupOpen,
   wordLength,
   wordOnOtherLine,
   type WordPos,
@@ -83,6 +84,7 @@ export function InteractiveSubtitle({
   const [navPopup, setNavPopup] = useState(false);
   const hitRef = useRef(lookup.hit);
   hitRef.current = lookup.hit;
+  const popupShownRef = useRef(false);
   const lookupAt = lookup.lookupAt;
   const plainClose = lookup.close;
   const setPinned = lookup.setPinned;
@@ -137,7 +139,13 @@ export function InteractiveSubtitle({
         goTo(start);
         return true;
       }
-      if (!nav) return false;
+      if (!nav) {
+        // Outside the mode, the leave key closes a popup the mouse or the
+        // controller pointer opened.
+        if (cmd !== "exit" || !popupShownRef.current) return false;
+        plainClose();
+        return true;
+      }
       if (cmd === "exit") {
         exitNav();
         return true;
@@ -175,7 +183,7 @@ export function InteractiveSubtitle({
       }
       return false;
     });
-  }, [lines, lookupAt, setPinned, exitNav]);
+  }, [lines, lookupAt, setPinned, exitNav, plainClose]);
 
   useEffect(
     () => () => {
@@ -195,6 +203,7 @@ export function InteractiveSubtitle({
   const shownHit = lookup.hit ?? navHit;
   const revealed = concealed ? !!navPos : !native || hovering || lookup.open || !!navPos;
   const popupShown = lookup.open && (!navPos || navPopup);
+  popupShownRef.current = popupShown;
 
   // With "keep open", the first click outside the subtitle and the popup only
   // dismisses it; that click is swallowed so it does not also toggle playback.
@@ -299,21 +308,27 @@ export function InteractiveSubtitle({
     });
   }, [owner, selectedTerm, selectedTarget, mining, aiOn]);
   useEffect(() => () => setWordSelection(owner, null), [owner]);
+  useEffect(() => {
+    setLookupPopupOpen(owner, popupShown);
+    return () => setLookupPopupOpen(owner, false);
+  }, [owner, popupShown]);
 
   const hiddenText: React.CSSProperties = { color: "transparent", textShadow: "none" };
   return (
     <div
       ref={rootRef}
+      data-hb-subtitle
       className={`${concealed && !navPos ? "pointer-events-none" : "pointer-events-auto"} max-w-[80%] cursor-text`}
       style={revealed ? boxStyle : undefined}
       onPointerEnter={() => {
         lookup.cancelClose();
         setHovering(true);
       }}
-      onPointerLeave={() => {
+      onPointerLeave={(e) => {
         setHovering(false);
         lookup.onPointerExit();
-        if (!lookup.pinned && !stayOpen && !navRef.current) lookup.scheduleClose();
+        if (!lookup.pinned && !stayOpen && !navRef.current)
+          lookup.scheduleClose(!e.nativeEvent.isTrusted);
       }}
       onPointerMove={lookup.onPointerMove}
       onMouseDown={(e) => e.stopPropagation()}
@@ -334,12 +349,11 @@ export function InteractiveSubtitle({
             lookup.cancelClose();
             lookup.setPinned(true);
           }}
-          onLeave={() => {
+          onLeave={(fromPad) => {
             if (navRef.current) return;
             lookup.setPinned(false);
-            if (!stayOpen) lookup.scheduleClose();
+            if (!stayOpen) lookup.scheduleClose(fromPad);
           }}
-          onClose={closeLookup}
         />
       )}
     </div>
