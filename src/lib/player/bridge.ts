@@ -78,6 +78,7 @@ export type PlayerSnapshot = {
   subtitleFps?: number;
   subText: string;
   subStartSec: number;
+  subEndSec?: number;
   secondarySubText: string;
   audioNormalize: boolean;
   videoWidth: number;

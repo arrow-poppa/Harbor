@@ -24,12 +24,22 @@ type Props = {
   textStyle: React.CSSProperties;
   boxStyle?: React.CSSProperties;
   controls: LookupControls;
+  startSec: number;
+  endSec?: number;
   // ASS/native mode: mpv draws the subtitle; this copy stays invisible until
   // hovered, then replaces mpv's rendering while the user reads/looks up.
   native: boolean;
 };
 
-export function InteractiveSubtitle({ lines, textStyle, boxStyle, controls, native }: Props) {
+export function InteractiveSubtitle({
+  lines,
+  textStyle,
+  boxStyle,
+  controls,
+  startSec,
+  endSec,
+  native,
+}: Props) {
   const { settings } = useSettings();
   const lookup = useSubtitleLookup({
     lines,
@@ -99,13 +109,33 @@ export function InteractiveSubtitle({ lines, textStyle, boxStyle, controls, nati
   );
 
   const mining = useMemo(() => {
+    const hit = lookup.hit;
     let sentence = "";
+    let matchStart = 0;
     lines.forEach((line, i) => {
       if (i > 0) sentence += lineSeparator(lines[i - 1], line);
+      if (hit && hit.line === i) matchStart = sentence.length + hit.start;
       sentence += line;
     });
-    return { sentence };
-  }, [lines]);
+    return {
+      sentence,
+      matchStart,
+      matchLength: hit?.length ?? 0,
+      title: controls.title,
+      subStartSec: startSec,
+      subEndSec: endSec,
+      subDelaySec: controls.subDelaySec,
+      mpvEngine: controls.mpvEngine,
+    };
+  }, [
+    lines,
+    lookup.hit,
+    controls.title,
+    controls.mpvEngine,
+    controls.subDelaySec,
+    startSec,
+    endSec,
+  ]);
 
   const hiddenText: React.CSSProperties = { color: "transparent", textShadow: "none" };
   return (

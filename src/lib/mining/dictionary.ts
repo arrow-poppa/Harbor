@@ -1,7 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { isLinuxDesktop, isMacDesktop, isWeb, isWindowsDesktop } from "@/lib/platform";
 
-// The dictionary engine and local audio exist in the desktop app only.
+// The dictionary engine, local audio and Anki bridge exist in the desktop app only.
 export function miningAvailable(): boolean {
   return !isWeb() && (isWindowsDesktop() || isLinuxDesktop() || isMacDesktop());
 }

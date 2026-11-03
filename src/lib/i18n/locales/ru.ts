@@ -1,5 +1,6 @@
 import subtitleDictionary from "./ru/subtitle-dictionary";
 import aiExplanation from "./ru/ai-explanation";
+import ankiMining from "./ru/anki-mining";
 import reviews from "./ru/reviews";
 import playOrders from "./ru/play-orders";
 import gameRomLibrary from "./ru/game-rom-library";
@@ -434,6 +435,7 @@ const ru: Record<string, string> = {
   ...liveWeb,
   ...subtitleDictionary,
   ...aiExplanation,
+  ...ankiMining,
 };
 
 export default ru;

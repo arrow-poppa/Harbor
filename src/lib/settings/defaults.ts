@@ -711,6 +711,17 @@ export const DEFAULT: Settings = {
   aiExplainSystemPrompt: "",
   aiExplainTemperature: 0.7,
   localAudioDbPath: "",
+  ankiUrl: "http://127.0.0.1:8765",
+  ankiDeck: "",
+  ankiModel: "",
+  ankiFieldMap: {},
+  ankiTags: "harbor",
+  ankiAudioPadSec: 0.25,
+  ankiAllowDuplicates: false,
+  ankiNoteCount: "deck",
+  ankiClipFormat: "avif",
+  ankiClipWidth: 480,
+  ankiClipFps: 12,
 };
 
 export function getSecondaryPrivileges(

@@ -11,6 +11,10 @@ export type LookupControls = {
   togglePlay: () => void;
   // Hides/shows the subtitles mpv draws itself (ASS/native mode).
   setNativeSubVisible: (on: boolean) => void;
+  title: string;
+  mpvEngine: boolean;
+  // Current sub-delay, read when a card is added.
+  subDelaySec: () => number;
 };
 
 export type LookupHit = { line: number; start: number; length: number };
