@@ -1,4 +1,5 @@
 import subtitleDictionary from "./tr/subtitle-dictionary";
+import aiExplanation from "./tr/ai-explanation";
 import reviews from "./tr/reviews";
 import playOrders from "./tr/play-orders";
 import gameRomLibrary from "./tr/game-rom-library";
@@ -378,6 +379,7 @@ const tr: Record<string, string> = {
   ...queueBasket,
   ...liveWeb,
   ...subtitleDictionary,
+  ...aiExplanation,
 };
 
 export default tr;

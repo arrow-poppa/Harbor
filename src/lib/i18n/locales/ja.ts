@@ -1,4 +1,5 @@
 import subtitleDictionary from "./ja/subtitle-dictionary";
+import aiExplanation from "./ja/ai-explanation";
 import reviews from "./ja/reviews";
 import playOrders from "./ja/play-orders";
 import gameRomLibrary from "./ja/game-rom-library";
@@ -418,6 +419,7 @@ const ja: Record<string, string> = {
   ...queueBasket,
   ...liveWeb,
   ...subtitleDictionary,
+  ...aiExplanation,
 };
 
 export default ja;

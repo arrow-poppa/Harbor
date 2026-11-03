@@ -18,6 +18,9 @@ export const DEFAULT_SECONDARY_PRIVILEGES: SecondaryProfilePrivileges = {
   canSignOutRoot: false,
 };
 
+export const AI_EXPLAIN_DEFAULT_PROMPT =
+  "Explain what '{{target}}' means in this sentence: '{{sentence}}'. Keep it short and focus on how the word is used in this context.";
+
 export const DEFAULT: Settings = {
   tvCardOptions: {
     showImdbBadge: true, showTmdbBadge: false, showRtBadge: true, showPopcornBadge: false, showMalBadge: true,
@@ -689,6 +692,24 @@ export const DEFAULT: Settings = {
   subLookupScanKey: "none",
   subLookupScanDelayMs: 20,
   subLookupLiftAboveControls: true,
+  subLookupAiEnabled: false,
+  aiExplainEndpoint: "",
+  aiExplainKey: "",
+  aiExplainModel: "",
+  aiExplainRoutingMode: "",
+  aiExplainRoutingSlugs: "",
+  aiExplainAllowFallbacks: true,
+  aiExplainThinkingMode: "",
+  aiExplainThinkingIntensity: "",
+  aiExplainThinkingValue: "",
+  aiExplainBodyJson: "",
+  subLookupAiAuto: true,
+  aiExplainStream: false,
+  aiExplainCancelPending: true,
+  subLookupAiUnknown: false,
+  aiExplainPrompt: AI_EXPLAIN_DEFAULT_PROMPT,
+  aiExplainSystemPrompt: "",
+  aiExplainTemperature: 0.7,
   localAudioDbPath: "",
 };
 
