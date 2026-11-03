@@ -4,8 +4,6 @@ const ankiMining: Record<string, string> = {
     "مرّر المؤشر فوق كلمة في الترجمة للبحث عنها في قواميس Yomitan، والاستماع إليها، وإضافتها إلى Anki. يستخدم محرك القواميس الخاص بـ Manatan.",
   "Open the popup for words no dictionary contains, with only the AI explanation, so they can still go to Anki.":
     "يفتح النافذة المنبثقة للكلمات التي لا يحتويها أي قاموس، مع شرح الذكاء الاصطناعي فقط، ليظل بالإمكان إرسالها إلى Anki.",
-  "Plays and mines pronunciations from a local-audio-yomichan database (Forvo, NHK16, Shinmeikai8, JPod101). Pick android.db, or entries.db next to its *_files folders. The Flatpak build can only read android.db.":
-    "يشغّل النطق ويضيفه من قاعدة بيانات local-audio-yomichan (Forvo وNHK16 وShinmeikai8 وJPod101). اختر android.db، أو entries.db الموجود بجانب مجلدات *_files. لا يقرأ إصدار Flatpak إلا android.db.",
   "Connected to Anki": "تم الاتصال بـ Anki",
   Anki: "Anki",
   "Adds cards through AnkiConnect with the word, sentence, definitions, a screenshot, the sentence audio and the word audio. Anki must be open with the AnkiConnect add-on.":
@@ -39,7 +37,6 @@ const ankiMining: Record<string, string> = {
   "Sentence (word in bold)": "الجملة (الكلمة بخط عريض)",
   "Sentence (word as cloze)": "الجملة (الكلمة كفراغ)",
   "Sentence audio": "صوت الجملة",
-  "Word audio (local)": "صوت الكلمة (محلي)",
   "Animated clip of the line (AVIF/WebP/GIF)": "مقطع متحرك للسطر (AVIF/WebP/GIF)",
   Frequency: "التكرار",
   "Pitch accent": "النبر الصوتي",

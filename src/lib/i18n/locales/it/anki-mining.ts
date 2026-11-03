@@ -4,8 +4,6 @@ const ankiMining: Record<string, string> = {
     "Passa il mouse su una parola dei sottotitoli per cercarla nei tuoi dizionari Yomitan, ascoltarla e aggiungerla ad Anki. Usa il motore di dizionari di Manatan.",
   "Open the popup for words no dictionary contains, with only the AI explanation, so they can still go to Anki.":
     "Apre il popup per le parole che nessun dizionario contiene, con la sola spiegazione IA, così possono comunque andare in Anki.",
-  "Plays and mines pronunciations from a local-audio-yomichan database (Forvo, NHK16, Shinmeikai8, JPod101). Pick android.db, or entries.db next to its *_files folders. The Flatpak build can only read android.db.":
-    "Riproduce ed estrae pronunce da un database local-audio-yomichan (Forvo, NHK16, Shinmeikai8, JPod101). Scegli android.db, oppure entries.db accanto alle cartelle *_files. La versione Flatpak può leggere solo android.db.",
   "Connected to Anki": "Connesso ad Anki",
   Anki: "Anki",
   "Adds cards through AnkiConnect with the word, sentence, definitions, a screenshot, the sentence audio and the word audio. Anki must be open with the AnkiConnect add-on.":
@@ -40,7 +38,6 @@ const ankiMining: Record<string, string> = {
   "Sentence (word in bold)": "Frase (parola in grassetto)",
   "Sentence (word as cloze)": "Frase (parola come cloze)",
   "Sentence audio": "Audio della frase",
-  "Word audio (local)": "Audio della parola (locale)",
   "Animated clip of the line (AVIF/WebP/GIF)": "Clip animata della riga (AVIF/WebP/GIF)",
   Frequency: "Frequenza",
   "Pitch accent": "Accento tonale",

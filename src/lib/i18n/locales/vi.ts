@@ -5,6 +5,7 @@ import controllerTouchpad from "./vi/controller-touchpad";
 import controllerHotkeys from "./vi/controller-hotkeys";
 import controllerPlayer from "./vi/controller-player";
 import immersionHotkeys from "./vi/immersion-hotkeys";
+import wordAudioSources from "./vi/word-audio-sources";
 import subtitleDictionary from "./vi/subtitle-dictionary";
 import aiExplanation from "./vi/ai-explanation";
 import ankiMining from "./vi/anki-mining";
@@ -436,6 +437,7 @@ const vi: Record<string, string> = {
   ...ankiMining,
   ...immersionHotkeys,
   ...controllerPlayer,
+  ...wordAudioSources,
 };
 
 export default vi;

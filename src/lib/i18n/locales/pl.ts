@@ -5,6 +5,7 @@ import controllerTouchpad from "./pl/controller-touchpad";
 import controllerHotkeys from "./pl/controller-hotkeys";
 import controllerPlayer from "./pl/controller-player";
 import immersionHotkeys from "./pl/immersion-hotkeys";
+import wordAudioSources from "./pl/word-audio-sources";
 import subtitleDictionary from "./pl/subtitle-dictionary";
 import aiExplanation from "./pl/ai-explanation";
 import ankiMining from "./pl/anki-mining";
@@ -403,6 +404,7 @@ const pl: Record<string, string> = {
   ...ankiMining,
   ...immersionHotkeys,
   ...controllerPlayer,
+  ...wordAudioSources,
 };
 
 export default pl;

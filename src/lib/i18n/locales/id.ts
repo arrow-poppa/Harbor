@@ -5,6 +5,7 @@ import controllerTouchpad from "./id/controller-touchpad";
 import controllerHotkeys from "./id/controller-hotkeys";
 import controllerPlayer from "./id/controller-player";
 import immersionHotkeys from "./id/immersion-hotkeys";
+import wordAudioSources from "./id/word-audio-sources";
 import subtitleDictionary from "./id/subtitle-dictionary";
 import aiExplanation from "./id/ai-explanation";
 import ankiMining from "./id/anki-mining";
@@ -399,6 +400,7 @@ const id: Record<string, string> = {
   ...ankiMining,
   ...immersionHotkeys,
   ...controllerPlayer,
+  ...wordAudioSources,
 };
 
 export default id;

@@ -4,8 +4,6 @@ const ankiMining: Record<string, string> = {
     "Arahkan kursor ke kata di subtitel untuk mencarinya di kamus Yomitan Anda, mendengarnya, dan menambahkannya ke Anki. Memakai mesin kamus Manatan.",
   "Open the popup for words no dictionary contains, with only the AI explanation, so they can still go to Anki.":
     "Membuka popup untuk kata yang tidak ada di kamus mana pun, hanya dengan penjelasan AI, agar tetap bisa masuk ke Anki.",
-  "Plays and mines pronunciations from a local-audio-yomichan database (Forvo, NHK16, Shinmeikai8, JPod101). Pick android.db, or entries.db next to its *_files folders. The Flatpak build can only read android.db.":
-    "Memutar dan mengambil pelafalan dari database local-audio-yomichan (Forvo, NHK16, Shinmeikai8, JPod101). Pilih android.db, atau entries.db di samping folder *_files. Versi Flatpak hanya bisa membaca android.db.",
   "Connected to Anki": "Terhubung ke Anki",
   Anki: "Anki",
   "Adds cards through AnkiConnect with the word, sentence, definitions, a screenshot, the sentence audio and the word audio. Anki must be open with the AnkiConnect add-on.":
@@ -40,7 +38,6 @@ const ankiMining: Record<string, string> = {
   "Sentence (word in bold)": "Kalimat (kata ditebalkan)",
   "Sentence (word as cloze)": "Kalimat (kata sebagai cloze)",
   "Sentence audio": "Audio kalimat",
-  "Word audio (local)": "Audio kata (lokal)",
   "Animated clip of the line (AVIF/WebP/GIF)": "Klip animasi baris (AVIF/WebP/GIF)",
   Frequency: "Frekuensi",
   "Pitch accent": "Aksen nada",

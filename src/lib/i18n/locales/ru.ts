@@ -5,6 +5,7 @@ import controllerTouchpad from "./ru/controller-touchpad";
 import controllerHotkeys from "./ru/controller-hotkeys";
 import controllerPlayer from "./ru/controller-player";
 import immersionHotkeys from "./ru/immersion-hotkeys";
+import wordAudioSources from "./ru/word-audio-sources";
 import subtitleDictionary from "./ru/subtitle-dictionary";
 import aiExplanation from "./ru/ai-explanation";
 import ankiMining from "./ru/anki-mining";
@@ -450,6 +451,7 @@ const ru: Record<string, string> = {
   ...ankiMining,
   ...immersionHotkeys,
   ...controllerPlayer,
+  ...wordAudioSources,
 };
 
 export default ru;
