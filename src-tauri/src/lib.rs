@@ -75,6 +75,10 @@ mod cf_solver;
 #[cfg(desktop)]
 mod desktop_notify;
 #[cfg(desktop)]
+mod dictionary;
+#[cfg(desktop)]
+mod dictionary_scan;
+#[cfg(desktop)]
 mod discord_rp;
 #[cfg(desktop)]
 mod display_fit;
@@ -99,6 +103,8 @@ mod hdr_overlay;
 mod install_features;
 #[cfg(desktop)]
 mod installer_handoff;
+#[cfg(desktop)]
+mod local_audio;
 #[cfg(desktop)]
 mod media_controls;
 mod modal_overlay;
@@ -2128,6 +2134,13 @@ pub fn run() {
             webview_helpers::webview_reapply_transparency,
             mpv::mpv_on_pip_changed,
             mpv::mpv_screenshot_data_url,
+            dictionary::dict_lookup,
+            dictionary::dict_import,
+            dictionary::dict_list,
+            dictionary::dict_manage,
+            dictionary::dict_media,
+            local_audio::local_audio_lookup,
+            local_audio::local_audio_data,
             mpv::mpv_save_screenshot,
             mpv::mpv_gif_start,
             mpv::mpv_gif_stop,

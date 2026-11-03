@@ -681,6 +681,15 @@ export const DEFAULT: Settings = {
   auddApiKey: "",
   secondaryPrivileges: { ...DEFAULT_SECONDARY_PRIVILEGES },
   nuvioSecondaryPrivileges: { ...DEFAULT_SECONDARY_PRIVILEGES },
+
+  subLookupEnabled: false,
+  subLookupLanguage: "japanese",
+  subLookupPauseOnHover: true,
+  subLookupStayOpen: false,
+  subLookupScanKey: "none",
+  subLookupScanDelayMs: 20,
+  subLookupLiftAboveControls: true,
+  localAudioDbPath: "",
 };
 
 export function getSecondaryPrivileges(
