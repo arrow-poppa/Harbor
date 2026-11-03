@@ -1,3 +1,4 @@
+import wordAudioSources from "./id/word-audio-sources";
 import subtitleDictionary from "./id/subtitle-dictionary";
 import aiExplanation from "./id/ai-explanation";
 import ankiMining from "./id/anki-mining";
@@ -389,6 +390,7 @@ const id: Record<string, string> = {
   ...ankiMining,
   ...immersionHotkeys,
   ...controllerPlayer,
+  ...wordAudioSources,
 };
 
 export default id;

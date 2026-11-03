@@ -1,3 +1,4 @@
+import wordAudioSources from "./zh/word-audio-sources";
 import subtitleDictionary from "./zh/subtitle-dictionary";
 import aiExplanation from "./zh/ai-explanation";
 import ankiMining from "./zh/anki-mining";
@@ -379,6 +380,7 @@ const zh: Record<string, string> = {
   ...ankiMining,
   ...immersionHotkeys,
   ...controllerPlayer,
+  ...wordAudioSources,
 };
 
 export default zh;

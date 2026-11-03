@@ -4,8 +4,6 @@ const ankiMining: Record<string, string> = {
     "Yomitan sözlüklerinizde aramak, dinlemek ve Anki'ye eklemek için altyazıdaki bir kelimenin üzerine gelin. Manatan'ın sözlük motorunu kullanır.",
   "Open the popup for words no dictionary contains, with only the AI explanation, so they can still go to Anki.":
     "Hiçbir sözlükte olmayan kelimeler için pencereyi yalnızca yapay zekâ açıklamasıyla açar; böylece yine de Anki'ye eklenebilirler.",
-  "Plays and mines pronunciations from a local-audio-yomichan database (Forvo, NHK16, Shinmeikai8, JPod101). Pick android.db, or entries.db next to its *_files folders. The Flatpak build can only read android.db.":
-    "Telaffuzları bir local-audio-yomichan veritabanından (Forvo, NHK16, Shinmeikai8, JPod101) çalar ve karta ekler. android.db'yi ya da *_files klasörlerinin yanındaki entries.db'yi seçin. Flatpak sürümü yalnızca android.db'yi okuyabilir.",
   "Connected to Anki": "Anki'ye bağlanıldı",
   Anki: "Anki",
   "Adds cards through AnkiConnect with the word, sentence, definitions, a screenshot, the sentence audio and the word audio. Anki must be open with the AnkiConnect add-on.":
@@ -40,7 +38,6 @@ const ankiMining: Record<string, string> = {
   "Sentence (word in bold)": "Cümle (kelime kalın)",
   "Sentence (word as cloze)": "Cümle (kelime boşluk olarak)",
   "Sentence audio": "Cümle sesi",
-  "Word audio (local)": "Kelime sesi (yerel)",
   "Animated clip of the line (AVIF/WebP/GIF)": "Satırın animasyonlu klibi (AVIF/WebP/GIF)",
   Frequency: "Sıklık",
   "Pitch accent": "Perde vurgusu",

@@ -1,3 +1,4 @@
+import wordAudioSources from "./ar/word-audio-sources";
 import subtitleDictionary from "./ar/subtitle-dictionary";
 import aiExplanation from "./ar/ai-explanation";
 import ankiMining from "./ar/anki-mining";
@@ -430,6 +431,7 @@ const ar: Record<string, string> = {
   ...ankiMining,
   ...immersionHotkeys,
   ...controllerPlayer,
+  ...wordAudioSources,
 };
 
 export default ar;

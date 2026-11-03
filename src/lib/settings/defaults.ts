@@ -6,6 +6,7 @@ import { DEFAULT_THEME } from "@/lib/theme";
 import { DEFAULT_FULLSCREEN_CLOCK_SIZE_PX } from "@/lib/local-time";
 import { AUTO_DISPLAY } from "@/lib/monitors";
 import type { Settings, SecondaryProfilePrivileges } from "./types";
+import { DEFAULT_WORD_AUDIO_SOURCES } from "@/lib/mining/word-audio-core";
 import {
   AI_EXPLAIN_DEFAULT_PROMPT,
   AI_EXPLAIN_DEFAULT_SYSTEM_PROMPT,
@@ -738,6 +739,7 @@ export const DEFAULT: Settings = {
   aiExplainAnswerLanguage: "English",
   aiExplainTemperature: 0.7,
   localAudioDbPath: "",
+  wordAudioSources: DEFAULT_WORD_AUDIO_SOURCES.map((s) => ({ ...s })),
   ankiUrl: "http://127.0.0.1:8765",
   ankiDeck: "",
   ankiModel: "",
