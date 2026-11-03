@@ -243,7 +243,7 @@ const SECTION_META: Record<SectionId, { label: string; sub: string }> = {
   },
   dictionary: {
     label: "Dictionary",
-    sub: "Look up words in subtitles with your Yomitan dictionaries and hear them.",
+    sub: "Look up words in subtitles with your Yomitan dictionaries, hear them and get AI explanations.",
   },
   anime: {
     label: "Anime tweaks",

@@ -41,8 +41,6 @@ const subtitleDictionary: Record<string, string> = {
   Latin: "拉丁语",
   Controller: "手柄",
   Dictionary: "词典",
-  "Look up words in subtitles with your Yomitan dictionaries and hear them.":
-    "在 Yomitan 词典中查询字幕里的单词并收听发音。",
   "Hover a word in the subtitles to look it up in your Yomitan dictionaries and hear it. Uses Manatan's dictionary engine.":
     "将鼠标悬停在字幕中的单词上，即可在 Yomitan 词典中查询并收听发音。使用 Manatan 的词典引擎。",
   "Plays pronunciations from a local-audio-yomichan database (Forvo, NHK16, Shinmeikai8, JPod101). Pick android.db, or entries.db next to its *_files folders. The Flatpak build can only read android.db.":

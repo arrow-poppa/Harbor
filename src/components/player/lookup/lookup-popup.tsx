@@ -1,25 +1,43 @@
-import { Volume2 } from "lucide-react";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { Loader2, RotateCw, Sparkles, Volume2, X } from "lucide-react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useSettings } from "@/lib/settings";
+import {
+  AiCancelledError,
+  AiTimeoutError,
+  aiCacheKey,
+  aiExplainProblem,
+  cachedAiExplanation,
+  cancelAiExplanation,
+  explainWord,
+  type AiExplainInput,
+} from "@/lib/mining/ai-explain";
 import { dictionaryMedia, type DictLookupResult, type DictTerm } from "@/lib/mining/dictionary";
 import { glossaryEntryHtml, scopedDictionaryCss } from "@/lib/mining/glossary-html";
 import { findWordAudio, playWordAudio, type LocalAudioEntry } from "@/lib/mining/local-audio";
 
 const MAX_TERMS = 8;
+// Wait this long before an automatic AI request, so sweeping the mouse
+// across a subtitle does not fire one per word.
+const AI_AUTO_DELAY_MS = 450;
+
+// The subtitle line the word was looked up in.
+type PopupMining = { sentence: string };
+
 type Props = {
   result: DictLookupResult;
   anchor: DOMRect;
+  mining: PopupMining;
   onEnter: () => void;
   onLeave: () => void;
   onClose: () => void;
 };
 
-export function LookupPopup({ result, anchor, onEnter, onLeave, onClose }: Props) {
+export function LookupPopup({ result, anchor, mining, onEnter, onLeave, onClose }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   // Above the subtitle the popup is pinned by its bottom edge, below it by its
-  // top edge, so content that arrives later grows away from the subtitle and
-  // scrolls once it reaches the screen edge.
+  // top edge, so content that arrives later (the AI explanation) grows away
+  // from the subtitle and scrolls once it reaches the screen edge.
   const [pos, setPos] = useState<{
     left: number;
     top?: number;
@@ -27,6 +45,14 @@ export function LookupPopup({ result, anchor, onEnter, onLeave, onClose }: Props
     maxH: number;
   } | null>(null);
   const terms = result.terms.slice(0, MAX_TERMS);
+  const { settings } = useSettings();
+  const aiInput = useMemo<AiExplainInput | null>(() => {
+    const first = terms[0];
+    return first ? { target: result.word || first.headword, sentence: mining.sentence } : null;
+  }, [terms, result.word, mining.sentence]);
+  const aiOn = settings.subLookupAiEnabled;
+  const aiProblem = aiOn ? aiExplainProblem(settings) : null;
+  const ai = useAiExplanation(aiOn && !aiProblem ? aiInput : null, settings.subLookupAiAuto);
 
   useLayoutEffect(() => {
     const place = () => {
@@ -90,6 +116,7 @@ export function LookupPopup({ result, anchor, onEnter, onLeave, onClose }: Props
       {css && <style>{css}</style>}
       <style>{POPUP_CSS}</style>
       <div className="flex flex-col divide-y divide-edge-soft">
+        {aiOn && <AiExplanationBox ai={ai} problem={aiProblem} />}
         {terms.map((t, i) => (
           <TermEntry key={`${t.headword}|${t.reading}|${i}`} term={t} />
         ))}
@@ -111,6 +138,178 @@ function Furigana({ term }: { term: DictTerm }) {
           </ruby>
         ) : (
           <span key={i}>{text}</span>
+        ),
+      )}
+    </>
+  );
+}
+
+type AiState = "manual" | "loading" | "streaming" | "done" | "failed" | "timedOut" | "cancelled";
+
+function useAiExplanation(input: AiExplainInput | null, auto: boolean) {
+  const { settings } = useSettings();
+  const settingsRef = useRef(settings);
+  settingsRef.current = settings;
+  const inputKey = input ? aiCacheKey(settings, input) : "";
+  const [state, setState] = useState<AiState>("manual");
+  const [text, setText] = useState("");
+  const [error, setError] = useState("");
+  // Bumped on every new request or word, so a late answer never paints.
+  const gen = useRef(0);
+
+  const generate = useCallback(
+    (force = false) => {
+      if (!input) return Promise.resolve("");
+      const id = ++gen.current;
+      setError("");
+      if (force) setText("");
+      setState("loading");
+      return explainWord(settingsRef.current, input, {
+        force,
+        onText: (t) => {
+          if (gen.current !== id || !t) return;
+          setText(t);
+          setState((s) => (s === "loading" ? "streaming" : s));
+        },
+      })
+        .then((t) => {
+          if (gen.current === id) {
+            setText(t);
+            setState("done");
+          }
+          return t;
+        })
+        .catch((e) => {
+          if (gen.current === id) {
+            if (e instanceof AiCancelledError) setState("cancelled");
+            else if (e instanceof AiTimeoutError) setState("timedOut");
+            else {
+              setError(String(e?.message ?? e));
+              setState("failed");
+            }
+          }
+          return "";
+        });
+    },
+    [inputKey],
+  );
+
+  useEffect(() => {
+    gen.current++;
+    setText("");
+    setError("");
+    if (!input) {
+      setState("manual");
+      return;
+    }
+    const cached = cachedAiExplanation(settingsRef.current, input);
+    if (cached) {
+      setText(cached);
+      setState("done");
+      return;
+    }
+    // With auto-generate the request is only briefly deferred: show it as pending.
+    setState(auto ? "loading" : "manual");
+    const key = inputKey;
+    const t = auto ? window.setTimeout(() => void generate(), AI_AUTO_DELAY_MS) : 0;
+    return () => {
+      window.clearTimeout(t);
+      // Another word, or the popup closed: drop the unfinished request.
+      if (settingsRef.current.aiExplainCancelPending) cancelAiExplanation(key);
+    };
+  }, [inputKey, auto]);
+
+  const cancel = useCallback(() => {
+    if (inputKey) cancelAiExplanation(inputKey);
+  }, [inputKey]);
+
+  return { state, text, error, generate, cancel };
+}
+
+function AiExplanationBox({
+  ai,
+  problem,
+}: {
+  ai: ReturnType<typeof useAiExplanation>;
+  problem: string | null;
+}) {
+  const busy = ai.state === "loading" || ai.state === "streaming";
+  const hasText = (ai.state === "streaming" || ai.state === "done") && !!ai.text;
+  return (
+    <div data-hb-ai-box="" className="flex flex-col gap-1.5 px-4 py-3">
+      <div className="flex items-center justify-between gap-2">
+        <span className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-subtle">
+          <Sparkles size={12} strokeWidth={2.4} />
+          AI Explanation
+        </span>
+        {!problem && (
+          <div className="flex items-center gap-1">
+            {busy && (
+              <button
+                type="button"
+                title="Cancel"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={ai.cancel}
+                className="flex h-6 w-6 items-center justify-center rounded-md text-ink-muted hover:bg-ink/10 hover:text-ink"
+              >
+                <X size={13} strokeWidth={2.4} />
+              </button>
+            )}
+            <button
+              type="button"
+              title={ai.state === "manual" ? "Generate explanation" : "Regenerate explanation"}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => void ai.generate(ai.state !== "manual")}
+              className="flex h-6 items-center gap-1 rounded-md px-1.5 text-[11px] font-semibold text-ink-muted hover:bg-ink/10 hover:text-ink"
+            >
+              <RotateCw size={12} strokeWidth={2.4} />
+              {ai.state === "manual" ? "Generate" : null}
+            </button>
+          </div>
+        )}
+      </div>
+      {problem ? (
+        <div className="text-[12.5px] text-ink-subtle">
+          AI explanation is not available. {problem}
+        </div>
+      ) : ai.state === "manual" ? (
+        <div className="text-[12.5px] text-ink-subtle">
+          Automatic generation is off. Use Generate to create it.
+        </div>
+      ) : ai.state === "loading" ? (
+        <div className="flex items-center gap-2 text-[13px] text-ink-muted">
+          <Loader2 size={13} className="animate-spin" />
+          Generating explanation…
+        </div>
+      ) : hasText ? (
+        <div className="whitespace-pre-wrap text-[14px] leading-relaxed">
+          <AiText text={ai.text} />
+        </div>
+      ) : ai.state === "timedOut" ? (
+        <div className="text-[12.5px] text-danger">The AI request timed out. Please try again.</div>
+      ) : ai.state === "failed" ? (
+        <div className="text-[12.5px] text-danger">
+          Failed to generate the AI explanation. {ai.error}
+        </div>
+      ) : ai.state === "cancelled" ? (
+        <div className="text-[12.5px] text-ink-subtle">Cancelled.</div>
+      ) : null}
+    </div>
+  );
+}
+
+// Renders **bold** and *italic* from the model's answer; everything else is text.
+function AiText({ text }: { text: string }) {
+  const parts = text.split(/(\*\*[^*]+\*\*|\*[^*\n]+\*)/g);
+  return (
+    <>
+      {parts.map((p, i) =>
+        p.startsWith("**") && p.endsWith("**") && p.length > 4 ? (
+          <strong key={i}>{p.slice(2, -2)}</strong>
+        ) : p.startsWith("*") && p.endsWith("*") && p.length > 2 ? (
+          <em key={i}>{p.slice(1, -1)}</em>
+        ) : (
+          <span key={i}>{p}</span>
         ),
       )}
     </>
@@ -171,6 +370,9 @@ function TermEntry({ term }: { term: DictTerm }) {
           )}
         </div>
       </div>
+      {term.synthetic && (
+        <div className="text-[12.5px] text-ink-subtle">Not in your dictionaries.</div>
+      )}
       {term.glossary.map((g, i) => (
         <GlossaryBlock
           key={`${g.dictionaryName}${i}`}
