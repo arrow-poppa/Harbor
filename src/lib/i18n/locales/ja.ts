@@ -4,6 +4,7 @@ import clearShortcut from "./ja/clear-shortcut";
 import controllerTouchpad from "./ja/controller-touchpad";
 import controllerHotkeys from "./ja/controller-hotkeys";
 import subtitleDictionary from "./ja/subtitle-dictionary";
+import aiExplanation from "./ja/ai-explanation";
 import reviews from "./ja/reviews";
 import playOrders from "./ja/play-orders";
 import gameRomLibrary from "./ja/game-rom-library";
@@ -428,6 +429,7 @@ const ja: Record<string, string> = {
   ...controllerHotkeys,
   ...controllerTouchpad,
   ...subtitleDictionary,
+  ...aiExplanation,
 };
 
 export default ja;

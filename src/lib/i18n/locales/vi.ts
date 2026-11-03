@@ -4,6 +4,7 @@ import clearShortcut from "./vi/clear-shortcut";
 import controllerTouchpad from "./vi/controller-touchpad";
 import controllerHotkeys from "./vi/controller-hotkeys";
 import subtitleDictionary from "./vi/subtitle-dictionary";
+import aiExplanation from "./vi/ai-explanation";
 import reviews from "./vi/reviews";
 import playOrders from "./vi/play-orders";
 import gameRomLibrary from "./vi/game-rom-library";
@@ -428,6 +429,7 @@ const vi: Record<string, string> = {
   ...controllerHotkeys,
   ...controllerTouchpad,
   ...subtitleDictionary,
+  ...aiExplanation,
 };
 
 export default vi;

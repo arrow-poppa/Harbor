@@ -4,6 +4,7 @@ import clearShortcut from "./ar/clear-shortcut";
 import controllerTouchpad from "./ar/controller-touchpad";
 import controllerHotkeys from "./ar/controller-hotkeys";
 import subtitleDictionary from "./ar/subtitle-dictionary";
+import aiExplanation from "./ar/ai-explanation";
 import reviews from "./ar/reviews";
 import playOrders from "./ar/play-orders";
 import gameRomLibrary from "./ar/game-rom-library";
@@ -432,6 +433,7 @@ const ar: Record<string, string> = {
   ...controllerHotkeys,
   ...controllerTouchpad,
   ...subtitleDictionary,
+  ...aiExplanation,
 };
 
 export default ar;

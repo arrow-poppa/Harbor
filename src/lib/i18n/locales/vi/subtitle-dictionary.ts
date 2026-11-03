@@ -42,8 +42,6 @@ const subtitleDictionary: Record<string, string> = {
   Latin: "Tiếng Latinh",
   Controller: "Tay cầm",
   Dictionary: "Từ điển",
-  "Look up words in subtitles with your Yomitan dictionaries and hear them.":
-    "Tra các từ trong phụ đề bằng từ điển Yomitan và nghe phát âm.",
   "Hover a word in the subtitles to look it up in your Yomitan dictionaries and hear it. Uses Manatan's dictionary engine.":
     "Di chuột lên một từ trong phụ đề để tra trong từ điển Yomitan và nghe phát âm. Dùng công cụ từ điển của Manatan.",
   "Plays pronunciations from a local-audio-yomichan database (Forvo, NHK16, Shinmeikai8, JPod101). Pick android.db, or entries.db next to its *_files folders. The Flatpak build can only read android.db.":

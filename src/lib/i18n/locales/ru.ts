@@ -4,6 +4,7 @@ import clearShortcut from "./ru/clear-shortcut";
 import controllerTouchpad from "./ru/controller-touchpad";
 import controllerHotkeys from "./ru/controller-hotkeys";
 import subtitleDictionary from "./ru/subtitle-dictionary";
+import aiExplanation from "./ru/ai-explanation";
 import reviews from "./ru/reviews";
 import playOrders from "./ru/play-orders";
 import gameRomLibrary from "./ru/game-rom-library";
@@ -442,6 +443,7 @@ const ru: Record<string, string> = {
   ...controllerHotkeys,
   ...controllerTouchpad,
   ...subtitleDictionary,
+  ...aiExplanation,
 };
 
 export default ru;
