@@ -16,7 +16,11 @@ import { requestTracker } from "./settings/tracker-request";
 import { SubTabsProvider, type SubTabReg } from "./settings/sub-tabs";
 import { SettingsSidebar } from "./settings/settings-sidebar";
 import { tabsFor } from "./settings/tab-registry";
-import { glideSettingsToTop, useSettingsAnchor, type SettingsAnchorRequest } from "./settings/anchor-navigation";
+import {
+  glideSettingsToTop,
+  useSettingsAnchor,
+  type SettingsAnchorRequest,
+} from "./settings/anchor-navigation";
 import { PageActionsProvider, type PageActionReg } from "./settings/page-actions";
 import { SettingsFooter } from "./settings/settings-footer";
 import { SettingsActiveContext, type SectionId } from "./settings/shared";
@@ -69,6 +73,9 @@ const QualityPanel = lazy(() =>
 const MpvPanel = lazy(() => import("./settings/mpv-panel").then((m) => ({ default: m.MpvPanel })));
 const AnimePanel = lazy(() =>
   import("./settings/anime-panel").then((m) => ({ default: m.AnimePanel })),
+);
+const DictionaryPanel = lazy(() =>
+  import("./settings/dictionary-panel").then((m) => ({ default: m.DictionaryPanel })),
 );
 const ShadersPanel = lazy(() =>
   import("./settings/shaders-panel").then((m) => ({ default: m.ShadersPanel })),
@@ -134,6 +141,7 @@ const SECTION_PRELOAD: Partial<Record<SectionId, () => Promise<unknown>>> = {
   player: () => import("./settings/quality-panel"),
   mpv: () => import("./settings/mpv-panel"),
   anime: () => import("./settings/anime-panel"),
+  dictionary: () => import("./settings/dictionary-panel"),
   shaders: () => import("./settings/shaders-panel"),
   playerLayout: () => import("./settings/player-layout-panel"),
   hotkeys: () => import("./settings/hotkeys-panel"),
@@ -232,6 +240,10 @@ const SECTION_META: Record<SectionId, { label: string; sub: string }> = {
   mpv: {
     label: "Video tuning",
     sub: "Match the picture quality to your computer, smooth out weak connections, and fine-tune the mpv engine with plain-language controls.",
+  },
+  dictionary: {
+    label: "Dictionary",
+    sub: "Look up words in subtitles with your Yomitan dictionaries and hear them.",
   },
   anime: {
     label: "Anime tweaks",
@@ -717,6 +729,8 @@ export function Settings({ visible = true }: { visible?: boolean }) {
                       {active === "mpv" && <MpvPanel />}
 
                       {active === "anime" && <AnimePanel />}
+
+                      {active === "dictionary" && <DictionaryPanel />}
 
                       {active === "shaders" && <ShadersPanel />}
 

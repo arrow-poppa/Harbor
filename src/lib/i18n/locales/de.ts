@@ -1,3 +1,4 @@
+import subtitleDictionary from "./de/subtitle-dictionary";
 import reviews from "./de/reviews";
 import playOrders from "./de/play-orders";
 import gameRomLibrary from "./de/game-rom-library";
@@ -421,6 +422,7 @@ const de: Record<string, string> = {
   ...reviews,
   ...queueBasket,
   ...liveWeb,
+  ...subtitleDictionary,
 };
 
 export default de;
