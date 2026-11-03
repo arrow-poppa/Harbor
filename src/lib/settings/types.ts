@@ -11,6 +11,7 @@ import type { SubtitleOffsetPosition, SubtitleOffsetSize } from "@/lib/player/su
 import type { BufferSizeId } from "@/lib/player/buffer-profile";
 import type { UiLanguage } from "@/lib/i18n/languages";
 import type { DisplaySelection } from "@/lib/monitors";
+import type { WordAudioSource } from "@/lib/mining/word-audio-core";
 
 export type StreamingService =
   | "netflix"
@@ -884,6 +885,9 @@ export type Settings = {
   nuvioSecondaryPrivileges: SecondaryProfilePrivileges;
   subLookupEnabled: boolean;
   subLookupLanguage: string;
+  // Use the selected subtitle track's language when it names one, falling
+  // back to subLookupLanguage.
+  subLookupLanguageFromTrack: boolean;
   subLookupPauseOnHover: boolean;
   // Keep the popup open when the pointer leaves it; it then closes on a click
   // outside it or Escape.
@@ -925,6 +929,8 @@ export type Settings = {
   aiExplainAnswerLanguage: string;
   aiExplainTemperature: number;
   localAudioDbPath: string;
+  // Where word audio comes from, in the order they are tried.
+  wordAudioSources: WordAudioSource[];
   ankiUrl: string;
   ankiDeck: string;
   ankiModel: string;

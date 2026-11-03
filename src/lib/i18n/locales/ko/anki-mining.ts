@@ -4,8 +4,6 @@ const ankiMining: Record<string, string> = {
     "자막의 단어에 마우스를 올리면 Yomitan 사전에서 찾아보고, 들어 보고, Anki에 추가할 수 있습니다. Manatan의 사전 엔진을 사용합니다.",
   "Open the popup for words no dictionary contains, with only the AI explanation, so they can still go to Anki.":
     "어느 사전에도 없는 단어도 AI 설명만으로 팝업을 열어 Anki에 보낼 수 있게 합니다.",
-  "Plays and mines pronunciations from a local-audio-yomichan database (Forvo, NHK16, Shinmeikai8, JPod101). Pick android.db, or entries.db next to its *_files folders. The Flatpak build can only read android.db.":
-    "local-audio-yomichan 데이터베이스(Forvo, NHK16, Shinmeikai8, JPod101)에서 발음을 재생하고 카드에 넣습니다. android.db, 또는 *_files 폴더 옆의 entries.db를 고르세요. Flatpak 버전은 android.db만 읽을 수 있습니다.",
   "Connected to Anki": "Anki에 연결됨",
   Anki: "Anki",
   "Adds cards through AnkiConnect with the word, sentence, definitions, a screenshot, the sentence audio and the word audio. Anki must be open with the AnkiConnect add-on.":
@@ -38,7 +36,6 @@ const ankiMining: Record<string, string> = {
   "Sentence (word in bold)": "문장(단어 굵게)",
   "Sentence (word as cloze)": "문장(단어를 빈칸으로)",
   "Sentence audio": "문장 오디오",
-  "Word audio (local)": "단어 오디오(로컬)",
   "Animated clip of the line (AVIF/WebP/GIF)": "줄의 애니메이션 클립(AVIF/WebP/GIF)",
   Frequency: "빈도",
   "Pitch accent": "고저 악센트",

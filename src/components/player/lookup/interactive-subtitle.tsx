@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useSettings } from "@/lib/settings";
 import { aiExplainReady, explainWord } from "@/lib/mining/ai-explain";
+import { useLookupLanguage } from "@/lib/mining/lookup-language";
 import { setWordSelection } from "@/lib/player/word-selection";
 import {
   firstWord,
@@ -60,9 +61,10 @@ export function InteractiveSubtitle({
   onEngagedChange,
 }: Props) {
   const { settings } = useSettings();
+  const lookupLanguage = useLookupLanguage(settings);
   const lookup = useSubtitleLookup({
     lines,
-    language: settings.subLookupLanguage || "japanese",
+    language: lookupLanguage,
     pauseOnHover: settings.subLookupPauseOnHover,
     controls,
     scanKey: settings.subLookupScanKey ?? "none",

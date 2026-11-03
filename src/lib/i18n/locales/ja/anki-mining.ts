@@ -4,8 +4,6 @@ const ankiMining: Record<string, string> = {
     "字幕の単語にカーソルを合わせると、Yomitan 辞書で調べたり、発音を聞いたり、Anki に追加したりできます。Manatan の辞書エンジンを使用します。",
   "Open the popup for words no dictionary contains, with only the AI explanation, so they can still go to Anki.":
     "どの辞書にもない単語でも AI 解説だけでポップアップを開き、Anki に送れるようにします。",
-  "Plays and mines pronunciations from a local-audio-yomichan database (Forvo, NHK16, Shinmeikai8, JPod101). Pick android.db, or entries.db next to its *_files folders. The Flatpak build can only read android.db.":
-    "local-audio-yomichan データベース（Forvo、NHK16、Shinmeikai8、JPod101）から発音を再生・追加します。android.db、または *_files フォルダーの隣にある entries.db を選んでください。Flatpak 版は android.db のみ読めます。",
   "Connected to Anki": "Anki に接続しました",
   Anki: "Anki",
   "Adds cards through AnkiConnect with the word, sentence, definitions, a screenshot, the sentence audio and the word audio. Anki must be open with the AnkiConnect add-on.":
@@ -39,7 +37,6 @@ const ankiMining: Record<string, string> = {
   "Sentence (word in bold)": "例文（単語を太字）",
   "Sentence (word as cloze)": "例文（単語を穴埋め）",
   "Sentence audio": "例文の音声",
-  "Word audio (local)": "単語の音声（ローカル）",
   "Animated clip of the line (AVIF/WebP/GIF)": "行のアニメーションクリップ（AVIF/WebP/GIF）",
   Frequency: "頻度",
   "Pitch accent": "ピッチアクセント",
