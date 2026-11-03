@@ -989,6 +989,9 @@ export function createMpvBridge(mpvOptions?: MpvOptions): PlayerBridge {
       if (name === "sub-start") {
         snap.subStartSec = !primarySubtitleOff && typeof data === "number" ? data : 0;
       }
+      if (name === "sub-end") {
+        snap.subEndSec = !primarySubtitleOff && typeof data === "number" ? data : undefined;
+      }
       if (name === "secondary-sub-text") {
         snap.secondarySubText = typeof data === "string" ? data : "";
       }

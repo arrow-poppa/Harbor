@@ -42,12 +42,6 @@ const subtitleDictionary: Record<string, string> = {
   Latin: "Tiếng Latinh",
   Controller: "Tay cầm",
   Dictionary: "Từ điển",
-  "Hover a word in the subtitles to look it up in your Yomitan dictionaries and hear it. Uses Manatan's dictionary engine.":
-    "Di chuột lên một từ trong phụ đề để tra trong từ điển Yomitan và nghe phát âm. Dùng công cụ từ điển của Manatan.",
-  "Plays pronunciations from a local-audio-yomichan database (Forvo, NHK16, Shinmeikai8, JPod101). Pick android.db, or entries.db next to its *_files folders. The Flatpak build can only read android.db.":
-    "Phát cách phát âm từ cơ sở dữ liệu local-audio-yomichan (Forvo, NHK16, Shinmeikai8, JPod101). Chọn android.db, hoặc entries.db cạnh các thư mục *_files. Bản Flatpak chỉ đọc được android.db.",
-  "Subtitle dictionary lookups and word audio run in the Harbor desktop app.":
-    "Tra từ điển phụ đề và âm thanh từ chạy trong ứng dụng Harbor trên máy tính.",
 };
 
 export default subtitleDictionary;

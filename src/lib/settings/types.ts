@@ -841,4 +841,38 @@ export type Settings = {
   aiExplainSystemPrompt: string;
   aiExplainTemperature: number;
   localAudioDbPath: string;
+  ankiUrl: string;
+  ankiDeck: string;
+  ankiModel: string;
+  ankiFieldMap: Record<string, AnkiFieldSource>;
+  ankiTags: string;
+  ankiAudioPadSec: number;
+  ankiAllowDuplicates: boolean;
+  // How many notes the popup's Anki button counts for a word: those in the
+  // mining deck, or also every note in any deck with a field equal to the word.
+  ankiNoteCount: "deck" | "all";
+  // Animated clip of the subtitle line for the "clip" Anki field.
+  ankiClipFormat: "avif" | "webp" | "gif";
+  ankiClipWidth: number;
+  ankiClipFps: number;
 };
+
+export type AnkiFieldSource =
+  | ""
+  | "expression"
+  | "reading"
+  | "furigana"
+  | "glossary"
+  | "glossary-first"
+  | "sentence"
+  | "sentence-plain"
+  | "sentence-cloze"
+  | "sentence-audio"
+  | "word-audio"
+  | "picture"
+  | "clip"
+  | "frequency"
+  | "pitch"
+  | "title"
+  | "ai-explanation"
+  | "popup-selection";

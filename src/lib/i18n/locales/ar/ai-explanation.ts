@@ -43,10 +43,6 @@ const aiExplanation: Record<string, string> = {
   "Between 0 and 2. Lower is more deterministic.": "بين 0 و2. الأقل أكثر حتمية.",
   "AI explanation": "شرح بالذكاء الاصطناعي",
   "Not a valid JSON object.": "ليس كائن JSON صالحًا.",
-  "Look up words in subtitles with your Yomitan dictionaries, hear them and get AI explanations.":
-    "ابحث عن كلمات الترجمة في قواميس Yomitan، واستمع إليها، واحصل على شروح بالذكاء الاصطناعي.",
-  "Open the popup for words no dictionary contains, with only the AI explanation.":
-    "يفتح النافذة المنبثقة للكلمات التي لا يحتويها أي قاموس، مع شرح الذكاء الاصطناعي فقط.",
 };
 
 export default aiExplanation;
