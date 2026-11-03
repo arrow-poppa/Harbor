@@ -3,6 +3,7 @@ import subtitleLineHotkeys from "./ja/subtitle-line-hotkeys";
 import clearShortcut from "./ja/clear-shortcut";
 import controllerTouchpad from "./ja/controller-touchpad";
 import controllerHotkeys from "./ja/controller-hotkeys";
+import subtitleDictionary from "./ja/subtitle-dictionary";
 import reviews from "./ja/reviews";
 import playOrders from "./ja/play-orders";
 import gameRomLibrary from "./ja/game-rom-library";
@@ -426,6 +427,7 @@ const ja: Record<string, string> = {
   ...clearShortcut,
   ...controllerHotkeys,
   ...controllerTouchpad,
+  ...subtitleDictionary,
 };
 
 export default ja;
