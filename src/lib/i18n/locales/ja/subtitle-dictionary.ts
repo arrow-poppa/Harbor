@@ -19,9 +19,6 @@ const subtitleDictionary: Record<string, string> = {
   "Scan delay (in milliseconds)": "検索の遅延（ミリ秒）",
   "Wait before looking up the word under the mouse when no key is required. Lower is faster; higher avoids lookups while the mouse just passes over the subtitle.":
     "キーが不要なとき、マウスの下の単語を調べるまでの待ち時間です。短いほど速く、長いほどマウスが字幕を通過するだけのときの検索を防ぎます。",
-  "Keep subtitles above the seek bar": "字幕をシークバーの上に表示",
-  "The seek bar covers the lowest subtitle line, so lift the subtitles above it while you look words up.":
-    "シークバーが字幕の一番下の行を隠すので、単語を調べている間は字幕をその上に持ち上げます。",
   "Same setting as Player → Subtitles.": "プレーヤー → 字幕 と同じ設定です。",
   "Subtitle height": "字幕の高さ",
   "Distance from the bottom of the video.": "動画の下端からの距離です。",

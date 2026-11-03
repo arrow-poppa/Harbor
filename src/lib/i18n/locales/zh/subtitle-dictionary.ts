@@ -19,9 +19,6 @@ const subtitleDictionary: Record<string, string> = {
   "Scan delay (in milliseconds)": "查词延迟（毫秒）",
   "Wait before looking up the word under the mouse when no key is required. Lower is faster; higher avoids lookups while the mouse just passes over the subtitle.":
     "不需要按键时，查询鼠标下单词前的等待时间。越低越快；越高越能避免鼠标只是经过字幕时触发查询。",
-  "Keep subtitles above the seek bar": "让字幕保持在进度条上方",
-  "The seek bar covers the lowest subtitle line, so lift the subtitles above it while you look words up.":
-    "进度条会遮住最下面一行字幕，因此在查词时把字幕抬到它上方。",
   "Same setting as Player → Subtitles.": "与 播放器 → 字幕 的设置相同。",
   "Subtitle height": "字幕高度",
   "Distance from the bottom of the video.": "距视频底部的距离。",

@@ -32,6 +32,8 @@ import {
 import { dictionaryMedia, type DictLookupResult, type DictTerm } from "@/lib/mining/dictionary";
 import { glossaryEntryHtml, scopedDictionaryCss } from "@/lib/mining/glossary-html";
 import { findWordAudio, playWordAudio, type LocalAudioEntry } from "@/lib/mining/local-audio";
+import { onLookupCommand } from "@/lib/player/lookup-nav";
+import { POPUP_BASE_WIDTH, sanitizePopupSize } from "@/lib/player/lookup-popup-size";
 
 const MAX_TERMS = 8;
 // Wait this long before an automatic AI request, so sweeping the mouse
@@ -62,6 +64,7 @@ export function LookupPopup({ result, anchor, mining, onEnter, onLeave, onClose 
   } | null>(null);
   const terms = result.terms.slice(0, MAX_TERMS);
   const { settings } = useSettings();
+  const scale = sanitizePopupSize(settings.subLookupPopupSize, 100) / 100;
   const aiInput = useMemo<AiExplainInput | null>(() => {
     const first = terms[0];
     return first ? { target: result.word || first.headword, sentence: mining.sentence } : null;
@@ -97,7 +100,34 @@ export function LookupPopup({ result, anchor, mining, onEnter, onLeave, onClose 
     place();
     window.addEventListener("resize", place);
     return () => window.removeEventListener("resize", place);
-  }, [anchor, result]);
+  }, [anchor, result, scale]);
+
+  // Keyboard and controller lookup bindings (see lookup-nav). The buttons are
+  // clicked rather than re-implemented so they keep their own states (busy,
+  // duplicate, next voice). Only the first entry's buttons are used.
+  const aiRef = useRef(ai);
+  aiRef.current = ai;
+  const scaleRef = useRef(scale);
+  scaleRef.current = scale;
+  const aiUsable = aiOn && !aiProblem;
+  useEffect(
+    () =>
+      onLookupCommand((cmd, amount) => {
+        const el = ref.current;
+        if (!el) return false;
+        if (cmd === "anki") el.querySelector<HTMLButtonElement>("[data-hb-anki-add]")?.click();
+        else if (cmd === "audio")
+          el.querySelector<HTMLButtonElement>("[data-hb-word-audio]:not(:disabled)")?.click();
+        else if (cmd === "ai") {
+          if (!aiUsable) return false;
+          void aiRef.current.generate(aiRef.current.state !== "manual");
+        } else if (cmd === "scrollDown" || cmd === "scrollUp") {
+          el.scrollBy({ top: (cmd === "scrollDown" ? 1 : -1) * 140 * amount * scaleRef.current });
+        } else return false;
+        return true;
+      }),
+    [aiUsable],
+  );
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -125,8 +155,9 @@ export function LookupPopup({ result, anchor, mining, onEnter, onLeave, onClose 
       onMouseDown={(e) => e.stopPropagation()}
       onClick={(e) => e.stopPropagation()}
       onWheel={(e) => e.stopPropagation()}
-      className="hb-lookup-popup pointer-events-auto fixed select-text z-[95] w-[min(460px,calc(100vw-24px))] overflow-y-auto overscroll-contain rounded-2xl border border-edge-soft bg-elevated/95 text-ink shadow-[0_18px_60px_rgba(0,0,0,0.55)] backdrop-blur-md"
+      className="hb-lookup-popup pointer-events-auto fixed select-text z-[95] overflow-y-auto overscroll-contain rounded-2xl border border-edge-soft bg-elevated/95 text-ink shadow-[0_18px_60px_rgba(0,0,0,0.55)] backdrop-blur-md"
       style={{
+        width: `min(${Math.round(POPUP_BASE_WIDTH * scale)}px, calc(100vw - 24px))`,
         left: pos?.left ?? -9999,
         top: pos ? pos.top : -9999,
         bottom: pos?.bottom,
@@ -136,7 +167,8 @@ export function LookupPopup({ result, anchor, mining, onEnter, onLeave, onClose 
     >
       {css && <style>{css}</style>}
       <style>{POPUP_CSS}</style>
-      <div className="flex flex-col divide-y divide-edge-soft">
+      {/* Zoom the content, not the positioned box, so left/top stay in screen pixels. */}
+      <div className="flex flex-col divide-y divide-edge-soft" style={{ zoom: scale }}>
         {aiOn && (
           <AiExplanationBox
             ai={ai}
@@ -496,6 +528,7 @@ function WordAudioButton({ term, dbPath }: { term: DictTerm; dbPath: string }) {
   return (
     <button
       type="button"
+      data-hb-word-audio=""
       disabled={!current}
       title={
         err ??
@@ -597,16 +630,20 @@ function AnkiButton({
     }
     setState("busy");
     setMsg("Adding…");
+    const startedAt = performance.now();
     try {
       const res = await addNoteFromLookup(settings, {
         ...mining,
         term,
         popupSelection: selectionInPopup(),
       });
+      const took = `${Math.round(performance.now() - startedAt)} ms`;
       setState("done");
       for (const notify of noteAddedListeners) notify(wordKey(term), res.noteId);
       setMsg(
-        res.warnings.length ? `Added, with issues: ${res.warnings.join("; ")}` : "Added to Anki",
+        res.warnings.length
+          ? `Added, with issues: ${res.warnings.join("; ")} · ${took}`
+          : `Added to Anki · ${took}`,
       );
     } catch (e) {
       setState("error");
@@ -657,6 +694,7 @@ function AnkiButton({
         // Keep a text selection made in the popup: it can be exported to Anki.
         onMouseDown={(e) => e.preventDefault()}
         onClick={add}
+        data-hb-anki-add={compact ? undefined : ""}
         title={title}
         aria-label={compact ? title : undefined}
         className={`flex items-center gap-1 font-semibold transition-colors ${

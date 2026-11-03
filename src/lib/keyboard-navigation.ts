@@ -1,5 +1,5 @@
 import { useEffect, useRef, type RefObject } from "react";
-import { shouldHandleGlobalKeyboardEvent } from "@/lib/hotkeys";
+import { isBindingCapture, shouldHandleGlobalKeyboardEvent } from "@/lib/hotkeys";
 import { SFX } from "@/lib/sfx";
 import { isModalOverlayOpen, modalOverlayClose } from "@/lib/modal-overlay";
 import { stableCardNavigationRect } from "@/lib/poster-backdrop-expansion";
@@ -1309,7 +1309,7 @@ export function useKeyboardNavigation(options: TVNavigationOptions = {}) {
     remoteBackOwner = owner;
 
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.defaultPrevented) return;
+      if (e.defaultPrevented || isBindingCapture()) return;
       if (e.altKey || e.ctrlKey || e.metaKey) return;
       // These portals own their nearest-layer Back behavior. App's capture
       // listener mounts first, so even Escape must reach the owning surface.

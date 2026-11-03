@@ -1,6 +1,7 @@
 import subtitleDictionary from "./hi/subtitle-dictionary";
 import aiExplanation from "./hi/ai-explanation";
 import ankiMining from "./hi/anki-mining";
+import immersionHotkeys from "./hi/immersion-hotkeys";
 import reviews from "./hi/reviews";
 import playOrders from "./hi/play-orders";
 import gameRomLibrary from "./hi/game-rom-library";
@@ -368,6 +369,7 @@ const hi: Record<string, string> = {
   ...subtitleDictionary,
   ...aiExplanation,
   ...ankiMining,
+  ...immersionHotkeys,
 };
 
 export default hi;

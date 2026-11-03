@@ -1,6 +1,7 @@
 import subtitleDictionary from "./vi/subtitle-dictionary";
 import aiExplanation from "./vi/ai-explanation";
 import ankiMining from "./vi/anki-mining";
+import immersionHotkeys from "./vi/immersion-hotkeys";
 import reviews from "./vi/reviews";
 import playOrders from "./vi/play-orders";
 import gameRomLibrary from "./vi/game-rom-library";
@@ -422,6 +423,7 @@ const vi: Record<string, string> = {
   ...subtitleDictionary,
   ...aiExplanation,
   ...ankiMining,
+  ...immersionHotkeys,
 };
 
 export default vi;

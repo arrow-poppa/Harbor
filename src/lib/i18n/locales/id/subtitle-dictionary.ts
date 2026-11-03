@@ -19,9 +19,6 @@ const subtitleDictionary: Record<string, string> = {
   "Scan delay (in milliseconds)": "Jeda pencarian (milidetik)",
   "Wait before looking up the word under the mouse when no key is required. Lower is faster; higher avoids lookups while the mouse just passes over the subtitle.":
     "Waktu tunggu sebelum mencari kata di bawah kursor jika tidak perlu tombol. Lebih rendah lebih cepat; lebih tinggi menghindari pencarian saat kursor hanya melintas di atas subtitel.",
-  "Keep subtitles above the seek bar": "Letakkan subtitel di atas bilah pencarian",
-  "The seek bar covers the lowest subtitle line, so lift the subtitles above it while you look words up.":
-    "Bilah pencarian menutupi baris subtitel terbawah, jadi naikkan subtitel di atasnya saat Anda mencari kata.",
   "Same setting as Player → Subtitles.": "Pengaturan yang sama dengan Pemutar → Subtitel.",
   "Subtitle height": "Tinggi subtitel",
   "Distance from the bottom of the video.": "Jarak dari bawah video.",
