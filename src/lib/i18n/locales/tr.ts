@@ -3,6 +3,7 @@ import subtitleLineHotkeys from "./tr/subtitle-line-hotkeys";
 import clearShortcut from "./tr/clear-shortcut";
 import controllerTouchpad from "./tr/controller-touchpad";
 import controllerHotkeys from "./tr/controller-hotkeys";
+import subtitleDictionary from "./tr/subtitle-dictionary";
 import reviews from "./tr/reviews";
 import playOrders from "./tr/play-orders";
 import gameRomLibrary from "./tr/game-rom-library";
@@ -386,6 +387,7 @@ const tr: Record<string, string> = {
   ...clearShortcut,
   ...controllerHotkeys,
   ...controllerTouchpad,
+  ...subtitleDictionary,
 };
 
 export default tr;

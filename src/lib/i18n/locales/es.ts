@@ -3,6 +3,7 @@ import subtitleLineHotkeys from "./es/subtitle-line-hotkeys";
 import clearShortcut from "./es/clear-shortcut";
 import controllerTouchpad from "./es/controller-touchpad";
 import controllerHotkeys from "./es/controller-hotkeys";
+import subtitleDictionary from "./es/subtitle-dictionary";
 import reviews from "./es/reviews";
 import playOrders from "./es/play-orders";
 import gameRomLibrary from "./es/game-rom-library";
@@ -420,6 +421,7 @@ const es: Record<string, string> = {
   ...clearShortcut,
   ...controllerHotkeys,
   ...controllerTouchpad,
+  ...subtitleDictionary,
 };
 
 export default es;
