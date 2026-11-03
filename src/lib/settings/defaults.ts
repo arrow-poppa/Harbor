@@ -6,6 +6,10 @@ import { DEFAULT_THEME } from "@/lib/theme";
 import { DEFAULT_FULLSCREEN_CLOCK_SIZE_PX } from "@/lib/local-time";
 import { AUTO_DISPLAY } from "@/lib/monitors";
 import type { Settings, SecondaryProfilePrivileges } from "./types";
+import {
+  AI_EXPLAIN_DEFAULT_PROMPT,
+  AI_EXPLAIN_DEFAULT_SYSTEM_PROMPT,
+} from "@/lib/mining/ai-explain-prompts";
 
 export const STORAGE_KEY = "harbor.settings";
 
@@ -17,6 +21,8 @@ export const DEFAULT_SECONDARY_PRIVILEGES: SecondaryProfilePrivileges = {
   canViewProviderAccount: false,
   canSignOutRoot: false,
 };
+
+export { AI_EXPLAIN_DEFAULT_PROMPT, AI_EXPLAIN_DEFAULT_SYSTEM_PROMPT };
 
 export const DEFAULT: Settings = {
   tvCardOptions: {
@@ -705,5 +711,24 @@ export const DEFAULT: Settings = {
   subLookupScanKey: "none",
   subLookupScanDelayMs: 20,
   subLookupLiftAboveControls: true,
+  subLookupAiEnabled: false,
+  aiExplainEndpoint: "",
+  aiExplainKey: "",
+  aiExplainModel: "",
+  aiExplainRoutingMode: "",
+  aiExplainRoutingSlugs: "",
+  aiExplainAllowFallbacks: true,
+  aiExplainThinkingMode: "",
+  aiExplainThinkingIntensity: "",
+  aiExplainThinkingValue: "",
+  aiExplainBodyJson: "",
+  subLookupAiAuto: true,
+  aiExplainStream: false,
+  aiExplainCancelPending: true,
+  subLookupAiUnknown: false,
+  aiExplainPrompt: AI_EXPLAIN_DEFAULT_PROMPT,
+  aiExplainSystemPrompt: AI_EXPLAIN_DEFAULT_SYSTEM_PROMPT,
+  aiExplainAnswerLanguage: "English",
+  aiExplainTemperature: 0.7,
   localAudioDbPath: "",
 };

@@ -1,4 +1,5 @@
 import subtitleDictionary from "./hi/subtitle-dictionary";
+import aiExplanation from "./hi/ai-explanation";
 import reviews from "./hi/reviews";
 import playOrders from "./hi/play-orders";
 import gameRomLibrary from "./hi/game-rom-library";
@@ -364,6 +365,7 @@ const hi: Record<string, string> = {
   ...queueBasket,
   ...liveWeb,
   ...subtitleDictionary,
+  ...aiExplanation,
 };
 
 export default hi;

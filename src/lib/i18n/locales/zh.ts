@@ -1,4 +1,5 @@
 import subtitleDictionary from "./zh/subtitle-dictionary";
+import aiExplanation from "./zh/ai-explanation";
 import reviews from "./zh/reviews";
 import playOrders from "./zh/play-orders";
 import gameRomLibrary from "./zh/game-rom-library";
@@ -371,6 +372,7 @@ const zh: Record<string, string> = {
   ...queueBasket,
   ...liveWeb,
   ...subtitleDictionary,
+  ...aiExplanation,
 };
 
 export default zh;

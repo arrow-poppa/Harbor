@@ -43,8 +43,6 @@ const subtitleDictionary: Record<string, string> = {
   Latin: "Latino",
   Controller: "Controller",
   Dictionary: "Dizionario",
-  "Look up words in subtitles with your Yomitan dictionaries and hear them.":
-    "Cerca le parole dei sottotitoli nei tuoi dizionari Yomitan e ascoltale.",
   "Hover a word in the subtitles to look it up in your Yomitan dictionaries and hear it. Uses Manatan's dictionary engine.":
     "Passa il mouse su una parola dei sottotitoli per cercarla nei tuoi dizionari Yomitan e ascoltarla. Usa il motore di dizionari di Manatan.",
   "Plays pronunciations from a local-audio-yomichan database (Forvo, NHK16, Shinmeikai8, JPod101). Pick android.db, or entries.db next to its *_files folders. The Flatpak build can only read android.db.":
