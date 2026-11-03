@@ -53,6 +53,7 @@ const ankiMining: Record<string, string> = {
     "Le bouton Anki indique combien de notes le mot a déjà. Tous les paquets trouve aussi les notes d’autres paquets et types de note, comme les cartes faites avec Yomitan, dont un champ est exactement le mot.",
   "This deck": "Ce paquet",
   "This deck and all decks": "Ce paquet et tous les paquets",
+  "Definition (selected dictionary)": "Définition (dictionnaire sélectionné)",
 };
 
 export default ankiMining;

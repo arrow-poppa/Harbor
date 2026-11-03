@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { useSettings } from "@/lib/settings";
+import { useSettings, type Settings } from "@/lib/settings";
 import {
   addNoteFromLookup,
   findDuplicateNotes,
@@ -36,6 +36,7 @@ import {
   loadWordAudio,
   playWordAudioData,
   wordAudioConfigured,
+  wordAudioSourceEntries,
   type WordAudioCandidate,
 } from "@/lib/mining/word-audio";
 import { onLookupCommand } from "@/lib/player/lookup-nav";
@@ -82,6 +83,7 @@ export function LookupPopup({ result, anchor, mining, onEnter, onLeave }: Props)
     () => ({ ...mining, aiExplanation: aiOn && !aiProblem ? ai.finalText : undefined }),
     [mining, aiOn, aiProblem, ai.finalText],
   );
+  const aiMining = useMemo(() => ({ ...termMining, definitionFromAi: true }), [termMining]);
 
   useLayoutEffect(() => {
     const place = () => {
@@ -166,7 +168,17 @@ export function LookupPopup({ result, anchor, mining, onEnter, onLeave }: Props)
       <style>{POPUP_CSS}</style>
       {/* Zoom the content, not the positioned box, so left/top stay in screen pixels. */}
       <div className="flex flex-col divide-y divide-edge-soft" style={{ zoom: scale }}>
-        {aiOn && <AiExplanationBox ai={ai} problem={aiProblem} />}
+        {aiOn && (
+          <AiExplanationBox
+            ai={ai}
+            problem={aiProblem}
+            anki={
+              terms[0] && !aiProblem ? (
+                <AnkiButton term={terms[0]} mining={aiMining} compact />
+              ) : undefined
+            }
+          />
+        )}
         {terms.map((t, i) => (
           <TermEntry key={`${t.headword}|${t.reading}|${i}`} term={t} mining={termMining} />
         ))}
@@ -282,9 +294,12 @@ function useAiExplanation(input: AiExplainInput | null, auto: boolean) {
 function AiExplanationBox({
   ai,
   problem,
+  anki,
 }: {
   ai: ReturnType<typeof useAiExplanation>;
   problem: string | null;
+  // Adds the word's card with the explanation as its selected definition.
+  anki?: React.ReactNode;
 }) {
   const busy = ai.state === "loading" || ai.state === "streaming";
   const hasText = (ai.state === "streaming" || ai.state === "done") && !!ai.text;
@@ -297,6 +312,7 @@ function AiExplanationBox({
         </span>
         {!problem && (
           <div className="flex items-center gap-1">
+            {anki}
             {busy && (
               <button
                 type="button"
@@ -499,6 +515,8 @@ function WordAudioButton({ term }: { term: DictTerm }) {
   const [busy, setBusy] = useState(false);
   const [playing, setPlaying] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
   const sourcesKey = JSON.stringify([settings.wordAudioSources, settings.localAudioDbPath]);
 
   useEffect(() => {
@@ -506,7 +524,24 @@ function WordAudioButton({ term }: { term: DictTerm }) {
     setIdx(0);
     setPlaying(null);
     setErr(null);
+    setMenuOpen(false);
   }, [term.headword, term.reading, sourcesKey]);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onDown = (e: PointerEvent) => {
+      if (!(e.target instanceof Node) || !wrapRef.current?.contains(e.target)) setMenuOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMenuOpen(false);
+    };
+    window.addEventListener("pointerdown", onDown, true);
+    window.addEventListener("keydown", onKey, true);
+    return () => {
+      window.removeEventListener("pointerdown", onDown, true);
+      window.removeEventListener("keydown", onKey, true);
+    };
+  }, [menuOpen]);
 
   const play = async () => {
     if (busy) return;
@@ -538,35 +573,150 @@ function WordAudioButton({ term }: { term: DictTerm }) {
 
   const none = list !== null && list.length === 0;
   return (
-    <button
-      type="button"
-      data-hb-word-audio=""
-      disabled={none}
-      title={
-        err ??
-        (none
-          ? "No audio found for this word"
-          : playing
-            ? `${playing} — click again for the next voice`
-            : "Play the word")
-      }
-      onMouseDown={(e) => e.preventDefault()}
-      onClick={() => void play()}
-      className="flex h-8 w-8 items-center justify-center rounded-lg border border-edge-soft text-ink-muted transition-colors hover:border-edge hover:text-ink disabled:opacity-35"
-    >
-      {busy ? (
-        <Loader2 size={15} className="animate-spin" />
-      ) : (
-        <Volume2 size={15} strokeWidth={2.2} />
-      )}
-    </button>
+    <div ref={wrapRef} className="relative">
+      <button
+        type="button"
+        data-hb-word-audio=""
+        disabled={none}
+        title={
+          err ??
+          (none
+            ? "No audio found for this word"
+            : playing
+              ? `${playing} — click again for the next voice, right-click for the sources`
+              : "Play the word. Right-click for the sources.")
+        }
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={() => void play()}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          setMenuOpen((o) => !o);
+        }}
+        className="flex h-8 w-8 items-center justify-center rounded-lg border border-edge-soft text-ink-muted transition-colors hover:border-edge hover:text-ink disabled:opacity-35"
+      >
+        {busy ? (
+          <Loader2 size={15} className="animate-spin" />
+        ) : (
+          <Volume2 size={15} strokeWidth={2.2} />
+        )}
+      </button>
+      {menuOpen && <WordAudioMenu term={term} settings={settings} />}
+    </div>
   );
 }
 
-function AnkiButton({ term, mining }: { term: DictTerm; mining: Omit<MiningContext, "term"> }) {
+type AudioRowStatus = "busy" | "ok" | "none";
+
+// The enabled sources, like Yomitan's audio menu: a source plays its first
+// voice; once asked, a source with several voices lists each of them.
+function WordAudioMenu({ term, settings }: { term: DictTerm; settings: Settings }) {
+  const entries = wordAudioSourceEntries(settings, term.headword, term.reading);
+  const [found, setFound] = useState<Record<number, WordAudioCandidate[]>>({});
+  const [status, setStatus] = useState<Record<string, AudioRowStatus>>({});
+  const mark = (key: string, s: AudioRowStatus) => setStatus((m) => ({ ...m, [key]: s }));
+
+  const playFrom = async (key: string, candidates: WordAudioCandidate[]) => {
+    for (const c of candidates) {
+      try {
+        await playWordAudioData(await loadWordAudio(c));
+        mark(key, "ok");
+        return;
+      } catch {
+        /* next voice */
+      }
+    }
+    mark(key, "none");
+  };
+
+  const playSource = async (i: number) => {
+    const key = String(i);
+    if (status[key] === "busy") return;
+    mark(key, "busy");
+    const candidates = await entries[i].candidates();
+    setFound((f) => ({ ...f, [i]: candidates }));
+    await playFrom(key, candidates);
+  };
+
+  const playVoice = async (i: number, k: number) => {
+    const key = `${i}:${k}`;
+    if (status[key] === "busy") return;
+    mark(key, "busy");
+    await playFrom(key, [found[i][k]]);
+  };
+
+  const rows: { key: string; label: string; onClick: () => void }[] = [];
+  entries.forEach((entry, i) => {
+    const voices = found[i];
+    if (!voices || voices.length < 2) {
+      rows.push({ key: String(i), label: entry.name, onClick: () => void playSource(i) });
+      return;
+    }
+    voices.forEach((v, k) => {
+      const same = voices.filter((x) => x.label === v.label).length > 1;
+      rows.push({
+        key: `${i}:${k}`,
+        label: same ? `${v.label} ${k + 1}` : v.label,
+        onClick: () => void playVoice(i, k),
+      });
+    });
+  });
+
+  return (
+    <div
+      role="menu"
+      className="absolute right-0 top-full z-10 mt-1 flex min-w-[190px] flex-col rounded-lg border border-edge-soft bg-elevated py-1 shadow-[0_10px_30px_rgba(0,0,0,0.45)]"
+    >
+      {rows.map((row) => {
+        const s = status[row.key];
+        return (
+          <button
+            key={row.key}
+            type="button"
+            role="menuitem"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={row.onClick}
+            title={s === "none" ? "No audio found for this word" : undefined}
+            className={`flex items-center gap-2 px-3 py-1.5 text-left text-[13px] transition-colors hover:bg-ink/10 ${
+              s === "none" ? "text-ink-subtle" : "text-ink"
+            }`}
+          >
+            <span className="flex w-3.5 shrink-0 justify-center">
+              {s === "busy" ? (
+                <Loader2 size={12} className="animate-spin" />
+              ) : s === "ok" ? (
+                <Check size={12} strokeWidth={2.6} className="text-success" />
+              ) : s === "none" ? (
+                <X size={12} strokeWidth={2.6} className="text-danger" />
+              ) : null}
+            </span>
+            <span className="min-w-0 truncate">{row.label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// Notes added from any Anki button, so the entry's button and the AI
+// explanation's button show the same cards for a word.
+const noteAddedListeners = new Set<(word: string, noteId: number) => void>();
+const wordKey = (term: DictTerm) => `${term.headword}\u0000${term.reading}`;
+
+function AnkiButton({
+  term,
+  mining,
+  compact,
+}: {
+  term: DictTerm;
+  mining: Omit<MiningContext, "term">;
+  // The AI explanation's button, next to Regenerate, in that box's style.
+  compact?: boolean;
+}) {
   const { settings } = useSettings();
   const [state, setState] = useState<"idle" | "busy" | "done" | "error">("idle");
-  const [msg, setMsg] = useState("Add to Anki");
+  const [msg, setMsg] = useState(
+    compact ? "Add to Anki with the AI explanation as the selected definition" : "Add to Anki",
+  );
   // Notes already in the deck for this word (Anki's duplicate rule: same
   // first field), plus any added from this popup.
   const [notes, setNotes] = useState<number[]>([]);
@@ -599,6 +749,19 @@ function AnkiButton({ term, mining }: { term: DictTerm; mining: Omit<MiningConte
     countAll,
   ]);
 
+  useEffect(() => {
+    const key = wordKey(term);
+    const onAdded = (word: string, noteId: number) => {
+      if (word !== key) return;
+      setNotes((n) => (n.includes(noteId) ? n : [...n, noteId]));
+      setEverywhere((n) => (n && !n.includes(noteId) ? [...n, noteId] : n));
+    };
+    noteAddedListeners.add(onAdded);
+    return () => {
+      noteAddedListeners.delete(onAdded);
+    };
+  }, [term.headword, term.reading]);
+
   const duplicate = notes.length > 0 && state !== "done";
   const blocked = duplicate && !settings.ankiAllowDuplicates;
 
@@ -622,8 +785,7 @@ function AnkiButton({ term, mining }: { term: DictTerm; mining: Omit<MiningConte
       });
       const took = `${Math.round(performance.now() - startedAt)} ms`;
       setState("done");
-      setNotes((n) => [...n, res.noteId]);
-      setEverywhere((n) => (n ? [...n, res.noteId] : n));
+      for (const notify of noteAddedListeners) notify(wordKey(term), res.noteId);
       setMsg(
         res.warnings.length
           ? `Added, with issues: ${res.warnings.join("; ")} · ${took}`
@@ -652,6 +814,7 @@ function AnkiButton({ term, mining }: { term: DictTerm; mining: Omit<MiningConte
         ? `Already in your deck (${notes.length}). Click to open it in Anki.`
         : `Already in your deck (${notes.length}). Click to add another card.`
       : msg);
+  const icon = compact ? 12 : 14;
 
   return (
     <div className="flex items-center gap-1">
@@ -663,9 +826,13 @@ function AnkiButton({ term, mining }: { term: DictTerm; mining: Omit<MiningConte
           }
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => void openNotesInAnki(settings, notes).catch(() => {})}
-          className="flex h-8 w-8 items-center justify-center rounded-lg border border-edge-soft text-ink-muted transition-colors hover:border-edge hover:text-ink"
+          className={
+            compact
+              ? "flex h-6 w-6 items-center justify-center rounded-md text-ink-muted hover:bg-ink/10 hover:text-ink"
+              : "flex h-8 w-8 items-center justify-center rounded-lg border border-edge-soft text-ink-muted transition-colors hover:border-edge hover:text-ink"
+          }
         >
-          <ExternalLink size={14} strokeWidth={2.2} />
+          <ExternalLink size={icon} strokeWidth={2.2} />
         </button>
       )}
       <button
@@ -673,26 +840,31 @@ function AnkiButton({ term, mining }: { term: DictTerm; mining: Omit<MiningConte
         // Keep a text selection made in the popup: it can be exported to Anki.
         onMouseDown={(e) => e.preventDefault()}
         onClick={add}
-        data-hb-anki-add=""
+        data-hb-anki-add={compact ? undefined : ""}
         title={title}
-        className={`flex h-8 items-center gap-1 rounded-lg px-2.5 text-[12px] font-semibold transition-colors ${
+        aria-label={compact ? title : undefined}
+        className={`flex items-center gap-1 font-semibold transition-colors ${
+          compact ? "h-6 rounded-md px-1.5 text-[11px]" : "h-8 rounded-lg px-2.5 text-[12px]"
+        } ${
           state === "done"
             ? "bg-success/20 text-success"
             : state === "error"
               ? "bg-danger/15 text-danger"
               : duplicate
                 ? "bg-amber-300/20 text-amber-300 hover:bg-amber-300/30"
-                : "bg-ink text-canvas hover:opacity-90"
+                : compact
+                  ? "text-ink-muted hover:bg-ink/10 hover:text-ink"
+                  : "bg-ink text-canvas hover:opacity-90"
         }`}
       >
         {state === "busy" ? (
-          <Loader2 size={14} className="animate-spin" />
+          <Loader2 size={icon} className="animate-spin" />
         ) : state === "done" ? (
-          <Check size={14} strokeWidth={2.6} />
+          <Check size={icon} strokeWidth={2.6} />
         ) : duplicate ? (
-          <Copy size={14} strokeWidth={2.4} />
+          <Copy size={icon} strokeWidth={2.4} />
         ) : (
-          <Plus size={14} strokeWidth={2.6} />
+          <Plus size={icon} strokeWidth={2.6} />
         )}
         Anki
         {count && <span className="font-medium opacity-80">· {count}</span>}

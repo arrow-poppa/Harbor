@@ -5,7 +5,8 @@ const wordAudioSources: Record<string, string> = {
   "Local audio database": "Lokale Audio-Datenbank",
   "Custom URL": "Eigene URL",
   "Custom URL (JSON)": "Eigene URL (JSON)",
-  "Voices for the lookup language.": "Stimmen für die Nachschlagesprache.",
+  "Automatic picks a voice for the lookup language.":
+    "„Automatisch“ wählt eine Stimme für die Nachschlagesprache.",
   "The reading (kana), when there is one": "Die Lesung (Kana), wenn es eine gibt",
   "The word as written": "Das Wort, wie es geschrieben wird",
   URL: "URL",

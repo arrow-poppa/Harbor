@@ -52,6 +52,7 @@ const ankiMining: Record<string, string> = {
     "Anki ボタンに、その単語のノートがすでに何件あるかを表示します。「すべてのデッキ」では、Yomitan で作ったカードなど、ほかのデッキやノートタイプでフィールドが単語と完全に一致するノートも数えます。",
   "This deck": "このデッキ",
   "This deck and all decks": "このデッキとすべてのデッキ",
+  "Definition (selected dictionary)": "定義（選択した辞書）",
 };
 
 export default ankiMining;

@@ -53,6 +53,7 @@ const ankiMining: Record<string, string> = {
     "Przycisk Anki pokazuje, ile notatek ma już to słowo. Wszystkie talie znajduje też notatki z innych talii i typów notatek, np. karty z Yomitan, z polem dokładnie równym słowu.",
   "This deck": "Ta talia",
   "This deck and all decks": "Ta talia i wszystkie talie",
+  "Definition (selected dictionary)": "Definicja (wybrany słownik)",
 };
 
 export default ankiMining;

@@ -53,6 +53,7 @@ const ankiMining: Record<string, string> = {
     "Anki बटन दिखाता है कि शब्द के कितने नोट पहले से हैं. सभी डेक दूसरे डेक और नोट प्रकारों के नोट भी ढूँढता है, जैसे Yomitan से बने कार्ड, जिनका कोई फ़ील्ड ठीक यही शब्द हो.",
   "This deck": "यह डेक",
   "This deck and all decks": "यह डेक और सभी डेक",
+  "Definition (selected dictionary)": "परिभाषा (चुना हुआ शब्दकोश)",
 };
 
 export default ankiMining;

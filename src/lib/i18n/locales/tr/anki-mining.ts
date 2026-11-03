@@ -52,6 +52,7 @@ const ankiMining: Record<string, string> = {
     "Anki düğmesi kelimenin kaç notu olduğunu gösterir. Tüm desteler, Yomitan ile yapılan kartlar gibi diğer deste ve not türlerinden, bir alanı tam olarak bu kelime olan notları da bulur.",
   "This deck": "Bu deste",
   "This deck and all decks": "Bu deste ve tüm desteler",
+  "Definition (selected dictionary)": "Tanım (seçili sözlük)",
 };
 
 export default ankiMining;

@@ -52,6 +52,7 @@ const ankiMining: Record<string, string> = {
     "Nút Anki cho biết từ này đã có bao nhiêu ghi chú. Tất cả bộ thẻ cũng tìm ghi chú ở bộ thẻ và loại ghi chú khác, như thẻ tạo bằng Yomitan, có một trường đúng bằng từ đó.",
   "This deck": "Bộ thẻ này",
   "This deck and all decks": "Bộ thẻ này và tất cả bộ thẻ",
+  "Definition (selected dictionary)": "Định nghĩa (từ điển đã chọn)",
 };
 
 export default ankiMining;

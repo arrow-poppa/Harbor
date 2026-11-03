@@ -53,6 +53,7 @@ const ankiMining: Record<string, string> = {
     "O botão do Anki mostra quantas notas a palavra já tem. Todos os decks também encontra notas de outros decks e tipos de nota, como cartões feitos com o Yomitan, com um campo que é exatamente a palavra.",
   "This deck": "Este deck",
   "This deck and all decks": "Este deck e todos os decks",
+  "Definition (selected dictionary)": "Definição (dicionário selecionado)",
 };
 
 export default ankiMining;

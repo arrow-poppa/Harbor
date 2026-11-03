@@ -53,6 +53,7 @@ const ankiMining: Record<string, string> = {
     "Tombol Anki menunjukkan berapa catatan yang sudah dimiliki kata ini. Semua dek juga menemukan catatan dari dek dan tipe catatan lain, seperti kartu buatan Yomitan, dengan kolom yang persis berisi kata itu.",
   "This deck": "Dek ini",
   "This deck and all decks": "Dek ini dan semua dek",
+  "Definition (selected dictionary)": "Definisi (kamus terpilih)",
 };
 
 export default ankiMining;

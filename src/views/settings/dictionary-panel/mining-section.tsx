@@ -1,6 +1,6 @@
 import { open } from "@tauri-apps/plugin-dialog";
 import { ChevronDown, ChevronUp, Loader2, Plus, RefreshCw, Trash2, Wand2 } from "lucide-react";
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useSettings, type AnkiFieldSource, type Settings } from "@/lib/settings";
 import { useT } from "@/lib/i18n";
 import {
@@ -579,6 +579,35 @@ function TextAreaRow({
   );
 }
 
+// Every Edge voice by locale, the lookup language's locales first.
+function groupEdgeVoices(voices: EdgeNarrationVoice[], iso: string) {
+  let names: Intl.DisplayNames | null = null;
+  try {
+    names = new Intl.DisplayNames(undefined, { type: "language" });
+  } catch {
+    names = null;
+  }
+  const byLocale = new Map<string, EdgeNarrationVoice[]>();
+  for (const v of voices) {
+    const list = byLocale.get(v.locale);
+    if (list) list.push(v);
+    else byLocale.set(v.locale, [v]);
+  }
+  const own = (locale: string) => locale.toLowerCase().startsWith(`${iso}-`);
+  return Array.from(byLocale, ([locale, list]) => {
+    let label = locale;
+    try {
+      const name = names?.of(locale);
+      if (name && name !== locale) label = `${name} (${locale})`;
+    } catch {
+      /* keep the code */
+    }
+    return { locale, label, voices: list };
+  }).sort(
+    (a, b) => Number(own(b.locale)) - Number(own(a.locale)) || a.label.localeCompare(b.label),
+  );
+}
+
 const WORD_AUDIO_DESCRIPTIONS: Record<WordAudioSourceType, string> = {
   local:
     "A local-audio-yomichan database (Forvo, NHK16, Shinmeikai8, JPod101). Pick android.db, or entries.db next to its *_files folders. The Flatpak build can only read android.db.",
@@ -609,7 +638,7 @@ function WordAudioSection() {
       .catch(() => setVoices([]));
   }, [edgeOn, voices]);
   const iso = wordAudioLanguage(settings.subLookupLanguage || "japanese").iso;
-  const languageVoices = (voices ?? []).filter((v) => v.locale.toLowerCase().startsWith(`${iso}-`));
+  const voiceGroups = useMemo(() => groupEdgeVoices(voices ?? [], iso), [voices, iso]);
   const pick = async () => {
     const picked = await open({
       multiple: false,
@@ -684,17 +713,21 @@ function WordAudioSection() {
           )}
           {s.enabled && s.type === "edge-tts" && (
             <>
-              <Row label={t("Voice")} sub={t("Voices for the lookup language.")}>
+              <Row label={t("Voice")} sub={t("Automatic picks a voice for the lookup language.")}>
                 <select
                   value={s.voice ?? ""}
                   onChange={(e) => patch(i, { voice: e.target.value })}
                   className={selectCls}
                 >
                   <option value="">{t("Automatic")}</option>
-                  {languageVoices.map((v) => (
-                    <option key={v.id} value={v.id}>
-                      {v.name || v.id}
-                    </option>
+                  {voiceGroups.map((g) => (
+                    <optgroup key={g.locale} label={g.label}>
+                      {g.voices.map((v) => (
+                        <option key={v.id} value={v.id}>
+                          {v.name || v.id}
+                        </option>
+                      ))}
+                    </optgroup>
                   ))}
                 </select>
               </Row>

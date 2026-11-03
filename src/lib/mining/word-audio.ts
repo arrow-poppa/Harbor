@@ -316,28 +316,56 @@ function sourceCandidates(
 
 const listCache = new Map<string, Promise<WordAudioCandidate[]>>();
 
-/** Every voice the enabled sources have for a word, in the sources' order.
- *  A source that fails or has nothing adds no entry. */
-export function findWordAudioCandidates(
+function cachedSourceCandidates(
+  source: WordAudioSource,
   settings: Settings,
   term: string,
   reading: string,
+  language: string,
 ): Promise<WordAudioCandidate[]> {
-  const language = settings.subLookupLanguage || "japanese";
-  const sources = enabledSources(settings);
-  const key = JSON.stringify([sources, settings.localAudioDbPath, language, term, reading]);
+  const key = JSON.stringify([source, settings.localAudioDbPath, language, term, reading]);
   let list = listCache.get(key);
   if (!list) {
-    list = Promise.all(
-      sources.map((s) => sourceCandidates(s, settings, term, reading, language).catch(() => [])),
-    ).then((lists) => lists.flat());
+    list = sourceCandidates(source, settings, term, reading, language).catch(() => []);
     listCache.set(key, list);
-    if (listCache.size > 64) {
+    if (listCache.size > 256) {
       const oldest = listCache.keys().next().value;
       if (oldest !== undefined) listCache.delete(oldest);
     }
   }
   return list;
+}
+
+export type WordAudioSourceEntry = {
+  type: WordAudioSourceType;
+  name: string;
+  candidates: () => Promise<WordAudioCandidate[]>;
+};
+
+/** The enabled sources in the user's order. A source is only asked when its
+ *  candidates are wanted; a source that fails or has nothing gives none. */
+export function wordAudioSourceEntries(
+  settings: Settings,
+  term: string,
+  reading: string,
+): WordAudioSourceEntry[] {
+  const language = settings.subLookupLanguage || "japanese";
+  return enabledSources(settings).map((s) => ({
+    type: s.type,
+    name: WORD_AUDIO_SOURCE_NAMES[s.type],
+    candidates: () => cachedSourceCandidates(s, settings, term, reading, language),
+  }));
+}
+
+/** Every voice the enabled sources have for a word, in the sources' order. */
+export function findWordAudioCandidates(
+  settings: Settings,
+  term: string,
+  reading: string,
+): Promise<WordAudioCandidate[]> {
+  return Promise.all(
+    wordAudioSourceEntries(settings, term, reading).map((e) => e.candidates()),
+  ).then((lists) => lists.flat());
 }
 
 const audioCache = new WeakMap<WordAudioCandidate, Promise<WordAudio>>();

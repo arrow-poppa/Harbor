@@ -50,6 +50,7 @@ const ankiMining: Record<string, string> = {
     "Anki 按钮显示该单词已有多少条笔记。“所有牌组”还会查找其他牌组和笔记类型中字段与该单词完全相同的笔记，例如用 Yomitan 制作的卡片。",
   "This deck": "此牌组",
   "This deck and all decks": "此牌组和所有牌组",
+  "Definition (selected dictionary)": "释义（所选词典）",
 };
 
 export default ankiMining;

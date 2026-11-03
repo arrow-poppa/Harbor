@@ -53,6 +53,7 @@ const ankiMining: Record<string, string> = {
     "Il pulsante Anki mostra quante note ha già la parola. Tutti i mazzi trova anche note di altri mazzi e tipi di nota, come le carte create con Yomitan, con un campo che è esattamente la parola.",
   "This deck": "Questo mazzo",
   "This deck and all decks": "Questo mazzo e tutti i mazzi",
+  "Definition (selected dictionary)": "Definizione (dizionario selezionato)",
 };
 
 export default ankiMining;

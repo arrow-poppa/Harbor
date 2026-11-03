@@ -892,6 +892,7 @@ export type AnkiFieldSource =
   | "furigana"
   | "glossary"
   | "glossary-first"
+  | "glossary-selected"
   | "sentence"
   | "sentence-plain"
   | "sentence-cloze"

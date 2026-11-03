@@ -5,7 +5,7 @@ const wordAudioSources: Record<string, string> = {
   "Local audio database": "로컬 오디오 데이터베이스",
   "Custom URL": "사용자 지정 URL",
   "Custom URL (JSON)": "사용자 지정 URL(JSON)",
-  "Voices for the lookup language.": "찾기 언어의 음성입니다.",
+  "Automatic picks a voice for the lookup language.": "자동은 검색 언어의 음성을 고릅니다.",
   "The reading (kana), when there is one": "읽기(가나)가 있으면 읽기",
   "The word as written": "쓰인 그대로의 단어",
   URL: "URL",

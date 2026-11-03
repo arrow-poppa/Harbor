@@ -5,7 +5,7 @@ const wordAudioSources: Record<string, string> = {
   "Local audio database": "本地音频数据库",
   "Custom URL": "自定义 URL",
   "Custom URL (JSON)": "自定义 URL（JSON）",
-  "Voices for the lookup language.": "查询语言的声音。",
+  "Automatic picks a voice for the lookup language.": "“自动”会为查词语言选择一个语音。",
   "The reading (kana), when there is one": "读音（假名），如有",
   "The word as written": "书写形式的单词",
   URL: "URL",

@@ -53,6 +53,7 @@ const ankiMining: Record<string, string> = {
     "Кнопка Anki показывает, сколько заметок уже есть у слова. «Все колоды» находит и заметки из других колод и типов заметок, например карточки из Yomitan, с полем, в точности равным слову.",
   "This deck": "Эта колода",
   "This deck and all decks": "Эта колода и все колоды",
+  "Definition (selected dictionary)": "Определение (выбранный словарь)",
 };
 
 export default ankiMining;

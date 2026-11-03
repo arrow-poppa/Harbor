@@ -52,6 +52,7 @@ const ankiMining: Record<string, string> = {
     "Die Anki-Taste zeigt, wie viele Notizen das Wort schon hat. Alle Stapel findet auch Notizen aus anderen Stapeln und Notiztypen, etwa mit Yomitan erstellte Karten, mit einem Feld, das genau das Wort ist.",
   "This deck": "Dieser Stapel",
   "This deck and all decks": "Dieser Stapel und alle Stapel",
+  "Definition (selected dictionary)": "Definition (ausgewähltes Wörterbuch)",
 };
 
 export default ankiMining;

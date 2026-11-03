@@ -50,6 +50,7 @@ const ankiMining: Record<string, string> = {
     "Anki 버튼에 단어의 노트가 이미 몇 개 있는지 표시합니다. 모든 덱은 Yomitan으로 만든 카드처럼 다른 덱과 노트 유형에서 필드가 단어와 정확히 같은 노트도 찾습니다.",
   "This deck": "이 덱",
   "This deck and all decks": "이 덱과 모든 덱",
+  "Definition (selected dictionary)": "정의(선택한 사전)",
 };
 
 export default ankiMining;

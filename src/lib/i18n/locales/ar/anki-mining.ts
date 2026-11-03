@@ -52,6 +52,7 @@ const ankiMining: Record<string, string> = {
     "يعرض زر Anki عدد الملاحظات الموجودة للكلمة. خيار كل الحزم يجد أيضًا ملاحظات من حزم وأنواع ملاحظات أخرى، مثل البطاقات المصنوعة بـ Yomitan، فيها حقل يساوي الكلمة تمامًا.",
   "This deck": "هذه الحزمة",
   "This deck and all decks": "هذه الحزمة وكل الحزم",
+  "Definition (selected dictionary)": "التعريف (القاموس المحدد)",
 };
 
 export default ankiMining;

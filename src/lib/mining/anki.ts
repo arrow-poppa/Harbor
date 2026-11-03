@@ -29,6 +29,7 @@ export const ANKI_FIELD_SOURCES: { id: AnkiFieldSource; label: string }[] = [
   { id: "furigana", label: "Word with furigana" },
   { id: "glossary", label: "Definitions (all)" },
   { id: "glossary-first", label: "Definition (first dictionary)" },
+  { id: "glossary-selected", label: "Definition (selected dictionary)" },
   { id: "sentence-plain", label: "Sentence" },
   { id: "sentence", label: "Sentence (word in bold)" },
   { id: "sentence-cloze", label: "Sentence (word as cloze)" },
@@ -91,6 +92,9 @@ export type MiningContext = {
   aiExplanation?: () => Promise<string>;
   // Text the user selected inside the popup when adding the note.
   popupSelection?: string;
+  // Added from the AI explanation's own button: "Definition (selected
+  // dictionary)" holds the explanation instead of the entry's definitions.
+  definitionFromAi?: boolean;
 };
 
 export function furiganaAnki(term: DictTerm): string {
@@ -145,6 +149,16 @@ function linePlaybackTime(
   };
 }
 
+async function aiExplanationField(ctx: MiningContext, warn: (m: string) => void): Promise<string> {
+  if (!ctx.aiExplanation) {
+    warn("AI explanation is off or has no key");
+    return "";
+  }
+  const text = await ctx.aiExplanation();
+  if (!text) warn("AI explanation failed");
+  return aiTextToHtml(text);
+}
+
 async function fieldValue(
   settings: Settings,
   src: AnkiFieldSource,
@@ -180,15 +194,10 @@ async function fieldValue(
       );
     case "title":
       return escapeHtml(ctx.title);
-    case "ai-explanation": {
-      if (!ctx.aiExplanation) {
-        warn("AI explanation is off or has no key");
-        return "";
-      }
-      const text = await ctx.aiExplanation();
-      if (!text) warn("AI explanation failed");
-      return aiTextToHtml(text);
-    }
+    case "glossary-selected":
+      return ctx.definitionFromAi ? aiExplanationField(ctx, warn) : termGlossaryHtml(t);
+    case "ai-explanation":
+      return aiExplanationField(ctx, warn);
     case "popup-selection":
       return ctx.popupSelection
         ? escapeHtml(ctx.popupSelection).replace(/\r?\n/g, "<br>")

@@ -5,7 +5,7 @@ const wordAudioSources: Record<string, string> = {
   "Local audio database": "Yerel ses veritabanı",
   "Custom URL": "Özel URL",
   "Custom URL (JSON)": "Özel URL (JSON)",
-  "Voices for the lookup language.": "Arama dilinin sesleri.",
+  "Automatic picks a voice for the lookup language.": "Otomatik, arama dili için bir ses seçer.",
   "The reading (kana), when there is one": "Varsa okunuş (kana)",
   "The word as written": "Kelimenin yazılışı",
   URL: "URL",
