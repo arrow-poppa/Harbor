@@ -1,5 +1,5 @@
 import { useSubTabs } from "./sub-tabs";
-import { Keyboard, RotateCcw } from "./icons";
+import { Gamepad2, Keyboard, RotateCcw, X } from "./icons";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   HOTKEYS,
@@ -8,15 +8,39 @@ import {
   eventToBinding,
   formatBindingForDisplay,
   isModifierOnly,
+  setBindingCapture,
   type HotkeyDef,
   type HotkeyId,
   type HotkeyScope,
 } from "@/lib/hotkeys";
 import { isBackKey } from "@/lib/keyboard-navigation/geometry";
-import { SEEK_STEP_OPTIONS } from "@/lib/seek-step";
+import {
+  HALF_SPEED_MAX,
+  HALF_SPEED_MIN,
+  SEEK_STEP_MAX_SEC,
+  SEEK_STEP_MIN_SEC,
+  SPEED_STEP_MAX,
+  SPEED_STEP_MIN,
+  formatSeekStep,
+  sanitizeHalfSpeedRate,
+  sanitizeSeekStep,
+  sanitizeSpeedStep,
+} from "@/lib/seek-step";
 import { useSettings } from "@/lib/settings";
 import { useT } from "@/lib/i18n";
-import { Dropdown } from "@/components/dropdown";
+import {
+  bindPad,
+  formatPadChord,
+  padAction,
+  padChordsFor,
+  padCustomized,
+  padModeOf,
+  resetPadFor,
+  unbindPad,
+} from "@/lib/gamepad/bindings";
+import { detectLayout, type Layout } from "@/lib/gamepad/layout";
+import { useGamepads } from "@/lib/gamepad/store";
+import { usePadCapture } from "@/lib/gamepad/use-pad-capture";
 import { Section, ToggleRow } from "./shared";
 import { ModalButton, ROW_DESC, SettingRow, SettingsModal } from "./kit";
 import { SSection } from "./ui";
@@ -56,9 +80,37 @@ export function HotkeysPanel() {
     binding: string;
   } | null>(null);
   const [resetOpen, setResetOpen] = useState(false);
+  const pad = settings.gamepadHotkeys ?? {};
+  const pads = useGamepads();
+  const layout: Layout = detectLayout(pads.map((p) => p.name)) ?? "xbox";
+  const [padCapturing, setPadCapturing] = useState<HotkeyId | null>(null);
+  const [padConflict, setPadConflict] = useState<{
+    target: HotkeyId;
+    existing: HotkeyId;
+    chord: string;
+  } | null>(null);
+
+  usePadCapture(padCapturing != null, (chord) => {
+    const target = padCapturing;
+    setPadCapturing(null);
+    if (!target) return;
+    const mode = padModeOf(HOTKEY_MAP[target].scope);
+    const existing = padAction(pad, mode, chord);
+    if (existing === target) return;
+    if (existing) {
+      setPadConflict({ target, existing, chord });
+      return;
+    }
+    update({ gamepadHotkeys: bindPad(pad, mode, chord, target) });
+  });
 
   const grouped = useMemo(() => {
-    const scopes: Record<HotkeyScope, HotkeyDef[]> = { Global: [], Player: [], Manga: [] };
+    const scopes: Record<HotkeyScope, HotkeyDef[]> = {
+      Global: [],
+      Player: [],
+      Lookup: [],
+      Manga: [],
+    };
     for (const def of HOTKEYS) scopes[def.scope].push(def);
     return scopes;
   }, []);
@@ -70,10 +122,11 @@ export function HotkeysPanel() {
     update({ hotkeys: next });
   };
 
-  const resetAll = () => update({ hotkeys: {} });
+  const resetAll = () => update({ hotkeys: {}, gamepadHotkeys: {} });
 
   useEffect(() => {
     if (!capturing) return;
+    setBindingCapture(true);
     const onKey = (e: KeyboardEvent) => {
       e.preventDefault();
       e.stopPropagation();
@@ -100,10 +153,15 @@ export function HotkeysPanel() {
       setCapturing(null);
     };
     window.addEventListener("keydown", onKey, true);
-    return () => window.removeEventListener("keydown", onKey, true);
+    return () => {
+      window.removeEventListener("keydown", onKey, true);
+      setBindingCapture(false);
+    };
   }, [capturing, overrides]);
 
-  const overrideCount = Object.keys(overrides).length;
+  const overrideCount =
+    Object.keys(overrides).length +
+    HOTKEYS.filter((h) => !(h.id in overrides) && padCustomized(pad, h.id)).length;
 
   usePageActions(
     tab === "keys" && overrideCount > 0
@@ -159,8 +217,18 @@ export function HotkeysPanel() {
           <p className={`max-w-[70ch] ${ROW_DESC}`}>
             {t(
               "Click any binding to rebind it. Press Esc while capturing to cancel. Letters ignore Shift (so K and Shift+K trigger the same action).",
+            )}{" "}
+            {t(
+              "Controller buttons go next to each key: press one, or hold LB, RB, LT or RT and press another for a combination. A shoulder or trigger used in a combination does its own job when you let go of it.",
             )}
           </p>
+          {(!settings.controllerSupportEnabled || pads.length === 0) && (
+            <p className={`max-w-[70ch] ${ROW_DESC}`}>
+              {t(
+                "To bind controller buttons, connect a controller and turn on controller support under Controllers.",
+              )}
+            </p>
+          )}
 
           {(Object.keys(grouped) as HotkeyScope[]).map((scope) => {
             const defs = grouped[scope];
@@ -175,13 +243,17 @@ export function HotkeysPanel() {
             return (
               <Section
                 key={scope}
-                title={t(scope)}
+                title={scope === "Lookup" ? t("Word lookup") : t(scope)}
                 subtitle={
                   scope === "Player"
                     ? t("Inside the playback view.")
-                    : scope === "Manga"
-                      ? t("In the manga reader.")
-                      : t("Anywhere in Harbor.")
+                    : scope === "Lookup"
+                      ? t(
+                          "While picking a word in the subtitles with the Pick a word in the subtitles shortcut. These keys take over only then, so they can reuse the player's.",
+                        )
+                      : scope === "Manga"
+                        ? t("In the manga reader.")
+                        : t("Anywhere in Harbor.")
                 }
               >
                 {Array.from(subgroups.entries()).map(([groupName, items]) => (
@@ -191,7 +263,7 @@ export function HotkeysPanel() {
                         key={def.id}
                         def={def}
                         binding={effectiveBinding(def.id, overrides)}
-                        isCustom={def.id in overrides}
+                        isCustom={def.id in overrides || padCustomized(pad, def.id)}
                         isCapturing={capturing === def.id}
                         conflict={
                           conflict?.target === def.id
@@ -205,10 +277,51 @@ export function HotkeysPanel() {
                           setConflict(null);
                           setCapturing(def.id);
                         }}
-                        onReset={() => setBinding(def.id, null)}
+                        onClear={() => {
+                          setConflict(null);
+                          setBinding(def.id, "");
+                        }}
+                        onReset={() => {
+                          setBinding(def.id, null);
+                          update({ gamepadHotkeys: resetPadFor(pad, def.id) });
+                        }}
                         onCancel={() => {
                           setCapturing(null);
                           setConflict(null);
+                        }}
+                        pad={{
+                          chords: padChordsFor(pad, def.id, padModeOf(def.scope)),
+                          layout,
+                          capturing: padCapturing === def.id,
+                          conflict:
+                            padConflict?.target === def.id
+                              ? t("{key} is used for {action}.", {
+                                  key: formatPadChord(padConflict.chord, layout),
+                                  action: t(HOTKEY_MAP[padConflict.existing].label),
+                                })
+                              : undefined,
+                          onCapture: () => {
+                            setPadConflict(null);
+                            setPadCapturing(def.id);
+                          },
+                          onCancel: () => {
+                            setPadCapturing(null);
+                            setPadConflict(null);
+                          },
+                          onRemove: (chord) =>
+                            update({ gamepadHotkeys: unbindPad(pad, padModeOf(def.scope), chord) }),
+                          onConfirmConflict: () => {
+                            if (!padConflict) return;
+                            update({
+                              gamepadHotkeys: bindPad(
+                                pad,
+                                padModeOf(def.scope),
+                                padConflict.chord,
+                                def.id,
+                              ),
+                            });
+                            setPadConflict(null);
+                          },
                         }}
                       />
                     ))}
@@ -292,6 +405,49 @@ export function HotkeysPanel() {
               onBack={(seekBackStepShortSec) => update({ seekBackStepShortSec })}
               onForward={(seekForwardStepShortSec) => update({ seekForwardStepShortSec })}
             />
+            <SeekStepRow
+              label={t("Long seek")}
+              sub={t("The jump of the Long seek back and Long seek forward shortcuts.")}
+              back={settings.seekBackStepLongSec}
+              forward={settings.seekForwardStepLongSec}
+              onBack={(seekBackStepLongSec) => update({ seekBackStepLongSec })}
+              onForward={(seekForwardStepLongSec) => update({ seekForwardStepLongSec })}
+            />
+            <SettingRow
+              label={t("Slow speed")}
+              desc={t("The speed the Toggle slow speed shortcut switches to from normal speed.")}
+            >
+              <NumberField
+                value={settings.halfSpeedRate}
+                min={HALF_SPEED_MIN}
+                max={HALF_SPEED_MAX}
+                step={0.05}
+                suffix="x"
+                presets={[0.4, 0.5, 0.6, 0.75]}
+                format={(n) => `${n}x`}
+                sanitize={(n) => sanitizeHalfSpeedRate(n, settings.halfSpeedRate)}
+                ariaLabel={t("Slow speed")}
+                onChange={(halfSpeedRate) => update({ halfSpeedRate })}
+              />
+            </SettingRow>
+            <SettingRow
+              label={t("Speed step")}
+              desc={t("How much the Speed down and Speed up shortcuts change the speed per press.")}
+              wide
+            >
+              <div className="flex flex-wrap items-end gap-x-10 gap-y-4">
+                <SpeedStepPicker
+                  label={t("Speed down")}
+                  value={settings.speedDownStep}
+                  onChange={(speedDownStep) => update({ speedDownStep })}
+                />
+                <SpeedStepPicker
+                  label={t("Speed up")}
+                  value={settings.speedUpStep}
+                  onChange={(speedUpStep) => update({ speedUpStep })}
+                />
+              </div>
+            </SettingRow>
           </Section>
         </>
       )}
@@ -334,22 +490,202 @@ function SeekStepPicker({
   value: number;
   onChange: (seconds: number) => void;
 }) {
-  const t = useT();
-  const options = SEEK_STEP_OPTIONS.map((seconds) => ({
-    value: String(seconds),
-    label: seconds === 1 ? t("1 second") : t("{n} seconds", { n: seconds }),
-  }));
   return (
     <div className="flex min-w-0 flex-col gap-2">
       <span className={GROUP_LABEL}>{label}</span>
-      <div className="w-[220px] max-w-full">
-        <Dropdown
-          value={String(value)}
-          options={options}
-          onChange={(next) => onChange(Number(next))}
-          size="md"
+      <NumberField
+        value={value}
+        min={SEEK_STEP_MIN_SEC}
+        max={SEEK_STEP_MAX_SEC}
+        step={0.5}
+        suffix="s"
+        presets={[1, 2, 3, 5, 10, 30]}
+        format={formatSeekStep}
+        sanitize={(n) => sanitizeSeekStep(n, value)}
+        ariaLabel={label}
+        onChange={onChange}
+      />
+    </div>
+  );
+}
+
+function SpeedStepPicker({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  onChange: (step: number) => void;
+}) {
+  return (
+    <div className="flex min-w-0 flex-col gap-2">
+      <span className={GROUP_LABEL}>{label}</span>
+      <NumberField
+        value={value}
+        min={SPEED_STEP_MIN}
+        max={SPEED_STEP_MAX}
+        step={0.05}
+        suffix="x"
+        presets={[0.05, 0.1, 0.25, 0.5]}
+        format={(n) => `${n}x`}
+        sanitize={(n) => sanitizeSpeedStep(n, value)}
+        ariaLabel={label}
+        onChange={onChange}
+      />
+    </div>
+  );
+}
+
+const NUMBER_INPUT =
+  "h-11 w-[96px] rounded-[8px] border border-edge-soft bg-elevated px-3 text-[15.5px] font-semibold tabular-nums text-ink outline-none transition-colors focus:border-accent";
+
+const PRESET_CHIP =
+  "flex h-8 min-w-[44px] items-center justify-center rounded-[6px] px-2 text-[13px] font-semibold tabular-nums transition-colors";
+
+// Any value inside min..max, typed or picked from the presets. Saves on blur
+// or Enter, so half-typed values like "0." never reach the player.
+function NumberField({
+  value,
+  min,
+  max,
+  step,
+  suffix,
+  presets,
+  format,
+  sanitize,
+  ariaLabel,
+  onChange,
+}: {
+  value: number;
+  min: number;
+  max: number;
+  step: number;
+  suffix: string;
+  presets: number[];
+  format: (n: number) => string;
+  sanitize: (n: number) => number;
+  ariaLabel: string;
+  onChange: (n: number) => void;
+}) {
+  const [draft, setDraft] = useState(String(value));
+  useEffect(() => setDraft(String(value)), [value]);
+  const commit = () => {
+    const next = sanitize(Number(draft.replace(",", ".")));
+    setDraft(String(next));
+    if (next !== value) onChange(next);
+  };
+  return (
+    <div className="flex min-w-0 flex-wrap items-center gap-2">
+      <div className="flex items-center gap-1.5">
+        <input
+          type="number"
+          inputMode="decimal"
+          min={min}
+          max={max}
+          step={step}
+          value={draft}
+          aria-label={ariaLabel}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
+          className={NUMBER_INPUT}
         />
+        <span className="text-[14px] font-semibold text-ink-subtle">{suffix}</span>
       </div>
+      <div className="flex flex-wrap gap-1">
+        {presets.map((n) => (
+          <button
+            key={n}
+            type="button"
+            onClick={() => onChange(n)}
+            className={`${PRESET_CHIP} ${
+              n === value
+                ? "bg-accent-soft text-accent"
+                : "bg-elevated text-ink-muted hover:bg-raised hover:text-ink"
+            }`}
+          >
+            {format(n)}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+type PadRowProps = {
+  chords: string[];
+  layout: Layout;
+  capturing: boolean;
+  conflict?: string;
+  onCapture: () => void;
+  onCancel: () => void;
+  onRemove: (chord: string) => void;
+  onConfirmConflict: () => void;
+};
+
+const PAD_CHIP =
+  "group flex h-11 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-[8px] border border-edge-soft bg-elevated pl-3 pr-1.5 text-[14px] font-semibold text-ink";
+
+// The controller buttons bound to one action, each removable, plus a button
+// that waits for the next controller press.
+function PadBindings({
+  chords,
+  layout,
+  capturing,
+  conflict,
+  onCapture,
+  onCancel,
+  onRemove,
+  onConfirmConflict,
+  label,
+}: PadRowProps & { label: string }) {
+  const t = useT();
+  return (
+    <div className="flex min-w-0 flex-wrap items-center justify-end gap-1.5">
+      {chords.map((chord) => (
+        <span key={chord} className={PAD_CHIP}>
+          <Gamepad2 size={15} strokeWidth={2.2} className="text-ink-subtle" />
+          {formatPadChord(chord, layout)}
+          <button
+            type="button"
+            onClick={() => onRemove(chord)}
+            aria-label={t("Remove {key} from {name}", {
+              key: formatPadChord(chord, layout),
+              name: label,
+            })}
+            className="flex h-7 w-7 items-center justify-center rounded-[6px] text-ink-subtle transition-colors hover:bg-raised hover:text-ink"
+          >
+            <X size={14} strokeWidth={2.4} />
+          </button>
+        </span>
+      ))}
+      {conflict && !capturing && (
+        <button type="button" onClick={onConfirmConflict} className={QUIET_ACTION}>
+          {t("Use it here")}
+        </button>
+      )}
+      {capturing ? (
+        <>
+          <button type="button" onClick={onCancel} className={QUIET_ACTION}>
+            {t("Cancel")}
+          </button>
+          <span className={BINDING_CAPTURING}>
+            <Gamepad2 size={18} strokeWidth={2.2} />
+            {t("Press a button…")}
+          </span>
+        </>
+      ) : (
+        <button
+          type="button"
+          onClick={onCapture}
+          aria-label={t("Add a controller button for {name}", { name: label })}
+          className={QUIET_ACTION}
+        >
+          <Gamepad2 size={17} strokeWidth={2.2} />
+          {chords.length ? "+" : t("Controller")}
+        </button>
+      )}
     </div>
   );
 }
@@ -377,8 +713,10 @@ function HotkeyRow({
   isCapturing,
   conflict,
   onStartCapture,
+  onClear,
   onReset,
   onCancel,
+  pad,
 }: {
   def: HotkeyDef;
   binding: string;
@@ -386,8 +724,10 @@ function HotkeyRow({
   isCapturing: boolean;
   conflict?: string;
   onStartCapture: () => void;
+  onClear: () => void;
   onReset: () => void;
   onCancel: () => void;
+  pad: PadRowProps;
 }) {
   const t = useT();
   const pillRef = useRef<HTMLButtonElement>(null);
@@ -405,8 +745,9 @@ function HotkeyRow({
         </span>
       }
       desc={t(def.description)}
-      warn={conflict}
+      warn={conflict ?? pad.conflict}
     >
+      <PadBindings {...pad} label={t(def.label)} />
       {isCapturing && (
         <button type="button" onClick={onCancel} className={QUIET_ACTION}>
           {t("Cancel")}
@@ -430,10 +771,23 @@ function HotkeyRow({
             <Keyboard size={18} strokeWidth={2.2} />
             {t("Press a key…")}
           </>
-        ) : (
+        ) : binding ? (
           formatBindingForDisplay(binding)
+        ) : (
+          <span className="text-ink-subtle">{t("Not set")}</span>
         )}
       </button>
+      {binding && !isCapturing && (
+        <button
+          type="button"
+          onClick={onClear}
+          aria-label={t("Clear the shortcut for {name}", { name: t(def.label) })}
+          title={t("Clear the shortcut")}
+          className={QUIET_ACTION}
+        >
+          <X size={17} strokeWidth={2.2} />
+        </button>
+      )}
     </SettingRow>
   );
 }

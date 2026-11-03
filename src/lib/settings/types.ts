@@ -532,6 +532,14 @@ export type Settings = {
   seekForwardStepSec: number;
   seekBackStepShortSec: number;
   seekForwardStepShortSec: number;
+  // The "long seek" hotkeys (30s by default).
+  seekBackStepLongSec: number;
+  seekForwardStepLongSec: number;
+  // Slow rate the half-speed hotkey toggles to from normal speed.
+  halfSpeedRate: number;
+  // How much the Speed down / Speed up hotkeys change the rate per press.
+  speedDownStep: number;
+  speedUpStep: number;
   shareWatchPresence: boolean;
   playerHdrOpaqueWindow: boolean;
   playerEscExitsFullscreen: boolean;
@@ -730,6 +738,9 @@ export type Settings = {
     renamed: Record<string, string>;
   };
   hotkeys: Record<string, string>;
+  // Controller buttons bound to hotkey actions, by chord ("south", "lt+south",
+  // "lookup:dright"); "" unbinds a default. See lib/gamepad/bindings.
+  gamepadHotkeys: Record<string, string>;
   animeFavoriteGenres: number[];
   animeExcludeOrigins: string[];
   animeHideWatchedPicks: boolean;
@@ -877,6 +888,8 @@ export type Settings = {
   subLookupScanDelayMs: number;
   // Raise lookup subtitles above the seek bar while the player controls show.
   subLookupLiftAboveControls: boolean;
+  // Dictionary popup size in percent (75–250); the popup hotkeys step it.
+  subLookupPopupSize: number;
   // AI explanation of the looked-up word, from any OpenAI-compatible
   // chat-completions endpoint (the "Custom" provider).
   subLookupAiEnabled: boolean;
@@ -919,6 +932,16 @@ export type Settings = {
   ankiClipFormat: "avif" | "webp" | "gif";
   ankiClipWidth: number;
   ankiClipFps: number;
+  // Immersion hotkeys (cards straight from the subtitle line or a recording).
+  // Sentence cards reuse the deck, note type and field map above; audio-only
+  // cards have their own deck, note type and fields.
+  immersionAudioDeck: string;
+  immersionAudioModel: string;
+  immersionAudioField: string;
+  immersionAudioSentenceField: string;
+  // How recent a note must be for "update last card" to touch it.
+  immersionUpdateWindowMin: number;
+  immersionRecordMaxSec: number;
 };
 
 export type AnkiFieldSource =

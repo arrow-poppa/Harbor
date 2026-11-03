@@ -7,7 +7,8 @@ import {
 } from "@/lib/theme";
 import { languageName } from "@/lib/subtitles/language";
 import { ORIGINAL_AUDIO_LANG } from "@/lib/player/audio-language";
-import { sanitizeSeekStep } from "@/lib/seek-step";
+import { sanitizeHalfSpeedRate, sanitizeSeekStep, sanitizeSpeedStep } from "@/lib/seek-step";
+import { sanitizePopupSize } from "@/lib/player/lookup-popup-size";
 import { migrateModelId, providerTabFor } from "@/lib/ai-models";
 import {
   sanitizeFullscreenClockFormat,
@@ -581,6 +582,18 @@ function parseStoredSettings(raw: string | null): { settings: Settings; cacheabl
         parsed.seekForwardStepShortSec,
         DEFAULT.seekForwardStepShortSec,
       ),
+      seekBackStepLongSec: sanitizeSeekStep(
+        parsed.seekBackStepLongSec,
+        DEFAULT.seekBackStepLongSec,
+      ),
+      seekForwardStepLongSec: sanitizeSeekStep(
+        parsed.seekForwardStepLongSec,
+        DEFAULT.seekForwardStepLongSec,
+      ),
+      halfSpeedRate: sanitizeHalfSpeedRate(parsed.halfSpeedRate, DEFAULT.halfSpeedRate),
+      speedDownStep: sanitizeSpeedStep(parsed.speedDownStep, DEFAULT.speedDownStep),
+      speedUpStep: sanitizeSpeedStep(parsed.speedUpStep, DEFAULT.speedUpStep),
+      subLookupPopupSize: sanitizePopupSize(parsed.subLookupPopupSize, DEFAULT.subLookupPopupSize),
       theme: sanitizeTheme(parsed.theme),
       animeTitleLanguage:
         parsed.animeTitleLanguage === "romaji" || parsed.animeTitleLanguage === "native"

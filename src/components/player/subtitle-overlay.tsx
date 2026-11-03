@@ -16,6 +16,9 @@ type Props = {
   // Dictionary lookup on hover. `native`: mpv renders this subtitle (ASS), so
   // only an invisible, hoverable copy is drawn here.
   lookup?: { controls: LookupControls; endSec?: number; native?: boolean; chromeVisible?: boolean };
+  // Hidden by the Toggle subtitles hotkey: nothing is drawn, except the line
+  // while a word is being picked from it.
+  hidden?: boolean;
 };
 
 export const SubtitleOverlay = memo(function SubtitleOverlay({
@@ -24,6 +27,7 @@ export const SubtitleOverlay = memo(function SubtitleOverlay({
   scale = 1,
   secondaryText = "",
   lookup,
+  hidden = false,
 }: Props) {
   const { settings } = useSettings();
   const kid = useActiveKid();
@@ -155,18 +159,20 @@ export const SubtitleOverlay = memo(function SubtitleOverlay({
     () => ({ ...baseTextStyle, fontSize: `${Math.round(fontSize * secondScale)}px` }),
     [baseTextStyle, fontSize, secondScale],
   );
-  const secondBlock = secondaryText ? (
-    <div className="max-w-[80%]" style={boxStyle}>
-      <div style={secondTextStyle}>
-        {secondaryText.split("\n").map((line, i) => (
-          <div key={i}>{line}</div>
-        ))}
+  const secondBlock =
+    secondaryText && !hidden ? (
+      <div className="max-w-[80%]" style={boxStyle}>
+        <div style={secondTextStyle}>
+          {secondaryText.split("\n").map((line, i) => (
+            <div key={i}>{line}</div>
+          ))}
+        </div>
       </div>
-    </div>
-  ) : null;
+    ) : null;
 
   if (!text && !secondaryText) return null;
   if (lookup?.native && (!lookupOn || !text)) return null;
+  if (hidden && !(lookupOn && lookup && text)) return null;
 
   return (
     <>
@@ -200,6 +206,7 @@ export const SubtitleOverlay = memo(function SubtitleOverlay({
               startSec={startSec}
               endSec={lookup.endSec}
               native={!!lookup.native}
+              concealed={hidden}
             />
           ) : (
             <div className="max-w-[80%]" style={boxStyle}>

@@ -168,6 +168,8 @@ export function memoryControlsHarness() {
       },
     },
     "@/lib/player/imported-subs": { hasImportedSubTitle: () => false },
+    "@/lib/player/secondary-sub": { setSecondarySub() {} },
+    "@/lib/player/subs-hidden": { isSubsHidden: () => false, setSubsHidden() {} },
     "@/lib/subtitles/selected-subtitle-cache": {
       cacheSelectedSubtitle: (input: (typeof cacheRequests)[number]) => {
         cacheRequests.push(input);

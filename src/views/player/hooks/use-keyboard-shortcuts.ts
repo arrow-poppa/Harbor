@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type RefObject } from "react";
+import { invoke } from "@tauri-apps/api/core";
 import type { PlayerBridge, PlayerSnapshot } from "@/lib/player/bridge";
 import { writePlayerPrefs } from "@/lib/player-prefs";
 import { writePlayerVolume } from "@/lib/player-volume";
@@ -15,6 +16,13 @@ import { isPlayerInteractionLocked } from "@/lib/player/interaction-lock";
 import { HOLD_SPEED_DELAY_MS, holdSpeedRate } from "@/lib/player/hold-speed";
 import { tracePlayback } from "@/lib/player/pause-trace";
 import { round2 } from "../player-utils";
+import type { ImmersionAction } from "./use-immersion";
+import { subCueSeekTarget } from "@/lib/player/sub-seek";
+import { lineFromSnapshot } from "@/lib/mining/immersion-core";
+import { getPlaybackPosition } from "@/lib/player/playback-clock";
+import { LOOKUP_ACTIONS, isLookupNavActive, sendLookupCommand } from "@/lib/player/lookup-nav";
+import { PLAYER_HOTKEY_EVENT, type PlayerHotkeyDetail } from "@/lib/gamepad/dispatch";
+
 import { SFX } from "@/lib/sfx";
 
 export function useKeyboardShortcuts(params: {
@@ -57,6 +65,10 @@ export function useKeyboardShortcuts(params: {
   onReloadSource?: () => void;
   onRestartServer?: () => void;
   onVolumeFeedback?: (volume: number, muted: boolean) => void;
+  onToggleSubtitles?: () => void;
+  onImmersion?: (action: ImmersionAction) => void;
+  onLookupMode?: () => void;
+  onPopupSize?: (dir: 1 | -1) => void;
 }) {
   const {
     bridgeRef,
@@ -97,6 +109,10 @@ export function useKeyboardShortcuts(params: {
     onReloadSource,
     onRestartServer,
     onVolumeFeedback,
+    onToggleSubtitles,
+    onImmersion,
+    onLookupMode,
+    onPopupSize,
   } = params;
   const { settings, update } = useSettings();
   const overrides = settings.hotkeys ?? {};
@@ -104,6 +120,15 @@ export function useKeyboardShortcuts(params: {
   const seekForwardStepSec = settings.seekForwardStepSec;
   const seekBackStepShortSec = settings.seekBackStepShortSec;
   const seekForwardStepShortSec = settings.seekForwardStepShortSec;
+  const seekBackStepLongSec = settings.seekBackStepLongSec;
+  const seekForwardStepLongSec = settings.seekForwardStepLongSec;
+  // Rapid presses step line by line from where the last jump was headed, not
+  // from a position the player has not reported yet.
+  const subSeekRef = useRef<{ target: number; at: number } | null>(null);
+  // The last line shown, so replay still works in the gap after it ends.
+  const lastLineRef = useRef<{ start: number; end: number } | null>(null);
+  const currentLine = lineFromSnapshot(snap);
+  if (currentLine) lastLineRef.current = currentLine;
   const [subtitleOffsetSec, setSubtitleOffsetSec] = useState<number | null>(null);
   const subtitleOffsetTimerRef = useRef<number | null>(null);
   const showSubtitleOffset = (delaySec: number) => {
@@ -154,10 +179,16 @@ export function useKeyboardShortcuts(params: {
   };
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (document.querySelector('[data-harbor-player][data-detached="true"]') && !e.key.startsWith("Media")) return;
+    // `forced` runs one action by id: a controller button bound to it, which
+    // works even when the action has no keyboard key.
+    const onKey = (e: KeyboardEvent, forced?: HotkeyId) => {
+      if (
+        document.querySelector('[data-harbor-player][data-detached="true"]') &&
+        !e.key.startsWith("Media")
+      )
+        return;
       const dock = document.querySelector('[data-harbor-player][data-docked="true"]');
-      if (dock && !dock.contains(e.target as Node) && !e.key.startsWith("Media")) return;
+      if (!forced && dock && !dock.contains(e.target as Node) && !e.key.startsWith("Media")) return;
       if (isPlayerInteractionLocked()) {
         if (e.cancelable) e.preventDefault();
         return;
@@ -165,7 +196,36 @@ export function useKeyboardShortcuts(params: {
       if (isTypingTarget(e)) return;
 
       const binding = eventToBinding(e);
-      const match = (id: HotkeyId): boolean => effectiveBinding(id, overrides) === binding;
+      const match = (id: HotkeyId): boolean =>
+        forced ? id === forced : effectiveBinding(id, overrides) === binding;
+
+      // While picking a word, its keys come first; the rest of the player
+      // keeps working (play/pause, seeking with other keys).
+      if (!forced && isLookupNavActive()) {
+        const hit = LOOKUP_ACTIONS.find(([id]) => match(id));
+        if (hit) {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          sendLookupCommand(hit[1]);
+          return;
+        }
+      }
+      if (match("playerLookupMode") && onLookupMode) {
+        e.preventDefault();
+        if (!e.repeat) onLookupMode();
+        return;
+      }
+      if (onPopupSize && (match("playerPopupBigger") || match("playerPopupSmaller"))) {
+        e.preventDefault();
+        onPopupSize(match("playerPopupBigger") ? 1 : -1);
+        return;
+      }
+      // Hold-to-speed-up needs the key's release, which a controller event
+      // does not have.
+      if (forced === "playerPlayPause") {
+        playPauseToggle();
+        return;
+      }
 
       if (e.key.startsWith("Media")) tracePlayback(`media-key-dom ${e.key}`);
 
@@ -267,12 +327,35 @@ export function useKeyboardShortcuts(params: {
       }
       if (match("playerSeekBack30")) {
         e.preventDefault();
-        seekStep(-30);
+        seekStep(-seekBackStepLongSec);
         return;
       }
       if (match("playerSeekForward30")) {
         e.preventDefault();
-        seekStep(30);
+        seekStep(seekForwardStepLongSec);
+        return;
+      }
+      if (match("playerSubNext") || match("playerSubPrev")) {
+        e.preventDefault();
+        const dir = match("playerSubNext") ? 1 : -1;
+        const bridge = bridgeRef.current;
+        if (!bridge) return;
+        const cues = bridge.getSelectedTrackCues();
+        if (cues?.length) {
+          const last = subSeekRef.current;
+          const now = getPlaybackPosition();
+          const from = last && performance.now() - last.at < 1500 ? last.target : now;
+          const target = subCueSeekTarget(cues, from - snap.subDelaySec, dir);
+          if (target == null) return;
+          const at = target + snap.subDelaySec;
+          subSeekRef.current = { target: at, at: performance.now() };
+          seekStep(at - now);
+          return;
+        }
+        // Embedded tracks have no cue list here; mpv steps through them itself.
+        if (bridge.capabilities().engine === "mpv") {
+          invoke("mpv_command", { cmd: ["sub-seek", dir] }).catch(() => {});
+        }
         return;
       }
       if (match("playerFrameForward") && onFrameStep) {
@@ -380,6 +463,37 @@ export function useKeyboardShortcuts(params: {
         onPrevChannel();
         return;
       }
+      if (match("playerSubReplay")) {
+        e.preventDefault();
+        if (e.repeat) return;
+        const line = lastLineRef.current;
+        if (!line) return;
+        seekStep(line.start - getPlaybackPosition());
+        if (mediaRef.current.status !== "playing") mediaRef.current.playPauseToggle();
+        return;
+      }
+      if (match("playerSubtitleToggle") && onToggleSubtitles) {
+        e.preventDefault();
+        if (e.repeat) return;
+        onToggleSubtitles();
+        return;
+      }
+      if (onImmersion) {
+        const immersion: [HotkeyId, ImmersionAction][] = [
+          ["playerAnkiNewCard", "new"],
+          ["playerAnkiUpdateLast", "update"],
+          ["playerAnkiAudioCard", "audio"],
+          ["playerRecordNew", "record-new"],
+          ["playerRecordUpdate", "record-update"],
+          ["playerRecordAudio", "record-audio"],
+        ];
+        const hit = immersion.find(([id]) => match(id));
+        if (hit) {
+          e.preventDefault();
+          if (!e.repeat) onImmersion(hit[1]);
+          return;
+        }
+      }
       if (match("playerSubtitleCycle") || match("playerSubtitleCycleAlt")) {
         e.preventDefault();
         cycleSubtitles();
@@ -412,14 +526,23 @@ export function useKeyboardShortcuts(params: {
       }
       if (match("playerSpeedDown")) {
         e.preventDefault();
-        const r = Math.max(0.25, +(snap.rate - 0.25).toFixed(2));
+        const r = Math.max(0.25, +(snap.rate - settings.speedDownStep).toFixed(2));
         bridgeRef.current?.setRate(r);
         writePlayerPrefs(metaId, { rate: r });
         return;
       }
       if (match("playerSpeedUp")) {
         e.preventDefault();
-        const r = Math.min(3, +(snap.rate + 0.25).toFixed(2));
+        const r = Math.min(3, +(snap.rate + settings.speedUpStep).toFixed(2));
+        bridgeRef.current?.setRate(r);
+        writePlayerPrefs(metaId, { rate: r });
+        return;
+      }
+      if (match("playerHalfSpeed")) {
+        e.preventDefault();
+        if (e.repeat) return;
+        const slow = settings.halfSpeedRate || 0.5;
+        const r = Math.abs(snap.rate - slow) < 0.001 ? 1 : slow;
         bridgeRef.current?.setRate(r);
         writePlayerPrefs(metaId, { rate: r });
         return;
@@ -541,11 +664,18 @@ export function useKeyboardShortcuts(params: {
     const onBlur = () => {
       if (holdRef.current.key != null) releaseHold();
     };
-    window.addEventListener("keydown", onKey);
+    const onForced = (ev: Event) => {
+      const { id, repeat } = (ev as CustomEvent<PlayerHotkeyDetail>).detail;
+      onKey(new KeyboardEvent("keydown", { repeat, cancelable: true }), id);
+    };
+    const onKeyDown = (e: KeyboardEvent) => onKey(e);
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener(PLAYER_HOTKEY_EVENT, onForced);
     window.addEventListener("keyup", onKeyUp);
     window.addEventListener("blur", onBlur);
     return () => {
-      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener(PLAYER_HOTKEY_EVENT, onForced);
       window.removeEventListener("keyup", onKeyUp);
       window.removeEventListener("blur", onBlur);
     };
@@ -565,6 +695,8 @@ export function useKeyboardShortcuts(params: {
     seekForwardStepSec,
     seekBackStepShortSec,
     seekForwardStepShortSec,
+    seekBackStepLongSec,
+    seekForwardStepLongSec,
     seekTo,
     toggleSwitcher,
     toggleEpisodePanel,
@@ -585,6 +717,13 @@ export function useKeyboardShortcuts(params: {
     onRestartServer,
     onFrameStep,
     onVolumeFeedback,
+    onToggleSubtitles,
+    onImmersion,
+    onLookupMode,
+    onPopupSize,
+    settings.halfSpeedRate,
+    settings.speedDownStep,
+    settings.speedUpStep,
     settings.playerEscExitsFullscreen,
     settings.playerConfirmLeave,
     settings.playerVolumeSfx,

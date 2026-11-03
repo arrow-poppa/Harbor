@@ -21,6 +21,7 @@ function select(choice, tracks, lang = "en") {
     "@/lib/player/secondary-sub": { resetSecondarySub() {}, useSecondarySubChoice: () => choice },
     "@/lib/player/sub-format": formats,
     "@/lib/player/sub-style": { applySecondarySubNative: async () => {} },
+    "@/lib/player/subs-hidden": { useSubsHidden: () => false },
     "@/lib/subtitles/language": { pickBestTrack },
   };
   const module = { exports: {} };
