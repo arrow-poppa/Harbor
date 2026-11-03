@@ -3,6 +3,7 @@ import type { PlayerBridge, PlayerSnapshot } from "@/lib/player/bridge";
 import { useClipRecorder } from "./use-clip-recorder";
 import { useFrameGrab } from "./use-frame-grab";
 import { useGifRecorder } from "./use-gif-recorder";
+import type { ImmersionAction } from "./use-immersion";
 import { useKeyboardShortcuts } from "./use-keyboard-shortcuts";
 import { useLiveChannelOverlay } from "./use-live-channel-overlay";
 import { useSleepTimer } from "./use-sleep-timer";
@@ -44,6 +45,10 @@ export function usePlayerHotkeys(params: {
   onReloadSource?: () => void;
   onRestartServer?: () => void;
   onVolumeFeedback?: (volume: number, muted: boolean) => void;
+  onToggleSubtitles?: () => void;
+  onImmersion?: (action: ImmersionAction) => void;
+  onLookupMode?: () => void;
+  onPopupSize?: (dir: 1 | -1) => void;
 }) {
   const {
     bridgeRef,
@@ -81,6 +86,10 @@ export function usePlayerHotkeys(params: {
     onReloadSource,
     onRestartServer,
     onVolumeFeedback,
+    onToggleSubtitles,
+    onImmersion,
+    onLookupMode,
+    onPopupSize,
   } = params;
 
   const [showStats, setShowStats] = useState(false);
@@ -129,6 +138,10 @@ export function usePlayerHotkeys(params: {
     onRestartServer,
     onFrameStep: (dir) => bridgeRef.current?.frameStep?.(dir),
     onVolumeFeedback,
+    onToggleSubtitles,
+    onImmersion,
+    onLookupMode,
+    onPopupSize,
   });
 
   return { holdSpeedActive, showStats, subtitleOffsetSec };

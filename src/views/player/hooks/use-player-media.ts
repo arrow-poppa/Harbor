@@ -43,6 +43,7 @@ import { publishAutoSync } from "@/components/player/autosync/autosync-store";
 import { useVideoDownload } from "./use-video-download";
 import { useWebviewMemory } from "./use-webview-memory";
 import { useCaptionsPopoutOpen } from "@/lib/player/captions-popout-state";
+import { useSubsHidden } from "@/lib/player/subs-hidden";
 import { sdhSafeForLanguage } from "@/lib/subtitles/sdh-filter";
 
 const HDR_NATIVE_GAMMAS = new Set(["pq", "hlg"]);
@@ -273,10 +274,11 @@ export function usePlayerMedia(params: {
     sdhFilterAllowed,
   });
   const captionsPopout = useCaptionsPopoutOpen();
+  const subsHidden = useSubsHidden();
   useEffect(() => {
     if (!subEmbed && !hdrNativeSurface && !mpvNativeWindow) return;
     if (!bridgeReady) return;
-    bridgeRef.current?.setSubVisible(subNativeRender && !captionsPopout);
+    bridgeRef.current?.setSubVisible(subNativeRender && !captionsPopout && !subsHidden);
   }, [
     subEmbed,
     mpvNativeWindow,
@@ -286,6 +288,7 @@ export function usePlayerMedia(params: {
     bridgeReady,
     bridgeKey,
     captionsPopout,
+    subsHidden,
   ]);
   useEffect(() => {
     if (engine !== "html5") return;
