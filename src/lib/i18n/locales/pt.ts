@@ -1,3 +1,4 @@
+import wordAudioSources from "./pt/word-audio-sources";
 import subtitleDictionary from "./pt/subtitle-dictionary";
 import aiExplanation from "./pt/ai-explanation";
 import ankiMining from "./pt/anki-mining";
@@ -433,6 +434,7 @@ const pt: Record<string, string> = {
   ...ankiMining,
   ...immersionHotkeys,
   ...controllerPlayer,
+  ...wordAudioSources,
 };
 
 export default pt;

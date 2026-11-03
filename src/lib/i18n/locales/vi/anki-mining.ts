@@ -4,8 +4,6 @@ const ankiMining: Record<string, string> = {
     "Di chuột lên một từ trong phụ đề để tra trong từ điển Yomitan, nghe phát âm và thêm vào Anki. Dùng công cụ từ điển của Manatan.",
   "Open the popup for words no dictionary contains, with only the AI explanation, so they can still go to Anki.":
     "Mở cửa sổ bật lên cho các từ không có trong từ điển nào, chỉ với lời giải thích AI, để vẫn có thể đưa vào Anki.",
-  "Plays and mines pronunciations from a local-audio-yomichan database (Forvo, NHK16, Shinmeikai8, JPod101). Pick android.db, or entries.db next to its *_files folders. The Flatpak build can only read android.db.":
-    "Phát và lấy cách phát âm từ cơ sở dữ liệu local-audio-yomichan (Forvo, NHK16, Shinmeikai8, JPod101). Chọn android.db, hoặc entries.db cạnh các thư mục *_files. Bản Flatpak chỉ đọc được android.db.",
   "Connected to Anki": "Đã kết nối Anki",
   Anki: "Anki",
   "Adds cards through AnkiConnect with the word, sentence, definitions, a screenshot, the sentence audio and the word audio. Anki must be open with the AnkiConnect add-on.":
@@ -39,7 +37,6 @@ const ankiMining: Record<string, string> = {
   "Sentence (word in bold)": "Câu (từ in đậm)",
   "Sentence (word as cloze)": "Câu (từ dạng điền khuyết)",
   "Sentence audio": "Âm thanh câu",
-  "Word audio (local)": "Âm thanh từ (cục bộ)",
   "Animated clip of the line (AVIF/WebP/GIF)": "Đoạn hoạt ảnh của dòng (AVIF/WebP/GIF)",
   Frequency: "Tần suất",
   "Pitch accent": "Trọng âm cao độ",

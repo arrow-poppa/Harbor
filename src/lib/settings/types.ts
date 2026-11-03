@@ -10,6 +10,7 @@ import type { SubtitleOffsetPosition, SubtitleOffsetSize } from "@/lib/player/su
 import type { BufferSizeId } from "@/lib/player/buffer-profile";
 import type { UiLanguage } from "@/lib/i18n/languages";
 import type { DisplaySelection } from "@/lib/monitors";
+import type { WordAudioSource } from "@/lib/mining/word-audio-core";
 
 export type StreamingService =
   | "netflix"
@@ -856,6 +857,8 @@ export type Settings = {
   aiExplainSystemPrompt: string;
   aiExplainTemperature: number;
   localAudioDbPath: string;
+  // Where word audio comes from, in the order they are tried.
+  wordAudioSources: WordAudioSource[];
   ankiUrl: string;
   ankiDeck: string;
   ankiModel: string;

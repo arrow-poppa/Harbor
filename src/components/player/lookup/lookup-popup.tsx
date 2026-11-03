@@ -31,7 +31,13 @@ import {
 } from "@/lib/mining/ai-explain";
 import { dictionaryMedia, type DictLookupResult, type DictTerm } from "@/lib/mining/dictionary";
 import { glossaryEntryHtml, scopedDictionaryCss } from "@/lib/mining/glossary-html";
-import { findWordAudio, playWordAudio, type LocalAudioEntry } from "@/lib/mining/local-audio";
+import {
+  findWordAudioCandidates,
+  loadWordAudio,
+  playWordAudioData,
+  wordAudioConfigured,
+  type WordAudioCandidate,
+} from "@/lib/mining/word-audio";
 import { onLookupCommand } from "@/lib/player/lookup-nav";
 import { POPUP_BASE_WIDTH, sanitizePopupSize } from "@/lib/player/lookup-popup-size";
 
@@ -412,9 +418,7 @@ function TermEntry({ term, mining }: { term: DictTerm; mining: Omit<MiningContex
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-1.5 pt-1">
-          {settings.localAudioDbPath && (
-            <WordAudioButton term={term} dbPath={settings.localAudioDbPath} />
-          )}
+          {wordAudioConfigured(settings) && <WordAudioButton term={term} />}
           <AnkiButton term={term} mining={mining} />
         </div>
       </div>
@@ -485,45 +489,76 @@ function GlossaryBlock({
   );
 }
 
-function WordAudioButton({ term, dbPath }: { term: DictTerm; dbPath: string }) {
-  const [entries, setEntries] = useState<LocalAudioEntry[] | null>(null);
+function WordAudioButton({ term }: { term: DictTerm }) {
+  const { settings } = useSettings();
+  const settingsRef = useRef(settings);
+  settingsRef.current = settings;
+  // Found on the first press: the online sources are only asked when wanted.
+  const [list, setList] = useState<WordAudioCandidate[] | null>(null);
   const [idx, setIdx] = useState(0);
+  const [busy, setBusy] = useState(false);
+  const [playing, setPlaying] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const sourcesKey = JSON.stringify([settings.wordAudioSources, settings.localAudioDbPath]);
 
   useEffect(() => {
-    let alive = true;
-    findWordAudio(dbPath, term.headword, term.reading)
-      .then((e) => alive && setEntries(e))
-      .catch((e) => alive && setErr(String(e)));
-    return () => {
-      alive = false;
-    };
-  }, [dbPath, term.headword, term.reading]);
+    setList(null);
+    setIdx(0);
+    setPlaying(null);
+    setErr(null);
+  }, [term.headword, term.reading, sourcesKey]);
 
-  const none = entries !== null && entries.length === 0;
-  const current = entries?.[idx];
+  const play = async () => {
+    if (busy) return;
+    setBusy(true);
+    setErr(null);
+    try {
+      const found =
+        list ?? (await findWordAudioCandidates(settingsRef.current, term.headword, term.reading));
+      setList(found);
+      // A voice that fails to load is skipped for the next one.
+      for (let step = 0; step < found.length; step++) {
+        const at = (idx + step) % found.length;
+        try {
+          await playWordAudioData(await loadWordAudio(found[at]));
+          setPlaying(found[at].label);
+          setIdx((at + 1) % found.length);
+          return;
+        } catch {
+          /* next voice */
+        }
+      }
+      setErr("No audio found for this word");
+    } catch (e) {
+      setErr(String(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const none = list !== null && list.length === 0;
   return (
     <button
       type="button"
       data-hb-word-audio=""
-      disabled={!current}
+      disabled={none}
       title={
         err ??
         (none
-          ? "No local audio for this word"
-          : current
-            ? `${current.label} — click again for the next voice`
-            : "")
+          ? "No audio found for this word"
+          : playing
+            ? `${playing} — click again for the next voice`
+            : "Play the word")
       }
-      onClick={() => {
-        if (!entries?.length) return;
-        const entry = entries[idx];
-        playWordAudio(dbPath, entry).catch((e) => setErr(String(e)));
-        setIdx((i) => (i + 1) % entries.length);
-      }}
+      onMouseDown={(e) => e.preventDefault()}
+      onClick={() => void play()}
       className="flex h-8 w-8 items-center justify-center rounded-lg border border-edge-soft text-ink-muted transition-colors hover:border-edge hover:text-ink disabled:opacity-35"
     >
-      <Volume2 size={15} strokeWidth={2.2} />
+      {busy ? (
+        <Loader2 size={15} className="animate-spin" />
+      ) : (
+        <Volume2 size={15} strokeWidth={2.2} />
+      )}
     </button>
   );
 }

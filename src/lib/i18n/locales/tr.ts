@@ -1,3 +1,4 @@
+import wordAudioSources from "./tr/word-audio-sources";
 import subtitleDictionary from "./tr/subtitle-dictionary";
 import aiExplanation from "./tr/ai-explanation";
 import ankiMining from "./tr/anki-mining";
@@ -386,6 +387,7 @@ const tr: Record<string, string> = {
   ...ankiMining,
   ...immersionHotkeys,
   ...controllerPlayer,
+  ...wordAudioSources,
 };
 
 export default tr;
