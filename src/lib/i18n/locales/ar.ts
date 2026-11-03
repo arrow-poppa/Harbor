@@ -1,6 +1,7 @@
 import subtitleDictionary from "./ar/subtitle-dictionary";
 import aiExplanation from "./ar/ai-explanation";
 import ankiMining from "./ar/anki-mining";
+import immersionHotkeys from "./ar/immersion-hotkeys";
 import reviews from "./ar/reviews";
 import playOrders from "./ar/play-orders";
 import gameRomLibrary from "./ar/game-rom-library";
@@ -426,6 +427,7 @@ const ar: Record<string, string> = {
   ...subtitleDictionary,
   ...aiExplanation,
   ...ankiMining,
+  ...immersionHotkeys,
 };
 
 export default ar;

@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import ts from "typescript";
-import { sanitizeSeekStep } from "../src/lib/seek-step.ts";
+import * as seekStep from "../src/lib/seek-step.ts";
+import * as popupSize from "../src/lib/player/lookup-popup-size.ts";
 import * as language from "../src/lib/subtitles/language.ts";
 import { sanitizeScreensaverMedia } from "../src/lib/screensaver/media.ts";
 import * as controllerCursor from "../src/lib/gamepad/cursor.ts";
@@ -25,7 +26,8 @@ function fixture() {
     "@/lib/subtitles/language": language,
     "@/lib/player/audio-language": { ORIGINAL_AUDIO_LANG: "Original" },
     "@/lib/screensaver/media": { sanitizeScreensaverMedia },
-    "@/lib/seek-step": { sanitizeSeekStep },
+    "@/lib/seek-step": seekStep,
+    "@/lib/player/lookup-popup-size": popupSize,
     "@/lib/ai-models": { migrateModelId: identity, providerTabFor: () => "openrouter" },
     "@/lib/local-time": {
       DEFAULT_FULLSCREEN_CLOCK_SIZE_PX: 18,

@@ -1,6 +1,17 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useSettings } from "@/lib/settings";
-import { aiExplainReady } from "@/lib/mining/ai-explain";
+import { aiExplainReady, explainWord } from "@/lib/mining/ai-explain";
+import { setWordSelection } from "@/lib/player/word-selection";
+import {
+  firstWord,
+  nextWord,
+  onLookupCommand,
+  prevWord,
+  setLookupNavActive,
+  wordLength,
+  wordOnOtherLine,
+  type WordPos,
+} from "@/lib/player/lookup-nav";
 import { LookupPopup } from "./lookup-popup";
 import { useSubtitleLookup, type LookupControls, type LookupHit } from "./use-subtitle-lookup";
 
@@ -29,6 +40,9 @@ type Props = {
   // ASS/native mode: mpv draws the subtitle; this copy stays invisible until
   // hovered, then replaces mpv's rendering while the user reads/looks up.
   native: boolean;
+  // Subtitles hidden by the user: invisible and not hoverable, shown only
+  // while a word is picked from them with the keyboard or a controller.
+  concealed?: boolean;
 };
 
 export function InteractiveSubtitle({
@@ -39,6 +53,7 @@ export function InteractiveSubtitle({
   startSec,
   endSec,
   native,
+  concealed = false,
 }: Props) {
   const { settings } = useSettings();
   const lookup = useSubtitleLookup({
@@ -53,15 +68,138 @@ export function InteractiveSubtitle({
   const markRef = useRef<HTMLSpanElement>(null);
   const [anchor, setAnchor] = useState<DOMRect | null>(null);
   const [hovering, setHovering] = useState(false);
-  const revealed = !native || hovering || lookup.open;
   const stayOpen = settings.subLookupStayOpen;
   const rootRef = useRef<HTMLDivElement>(null);
+  const controlsRef = useRef(controls);
+  controlsRef.current = controls;
+
+  // Picking words with the keyboard or a controller (see lookup-nav). The
+  // position is kept apart from the dictionary hit: a word no dictionary
+  // knows still gets highlighted, and the next step starts from it.
+  const navRef = useRef<{ pos: WordPos; history: WordPos[]; pausedByNav: boolean } | null>(null);
+  const [navPos, setNavPos] = useState<WordPos | null>(null);
+  // In the mode the dictionary is still queried on every step (its match is
+  // how far a Japanese word reaches), but the popup only shows on request.
+  const [navPopup, setNavPopup] = useState(false);
+  const hitRef = useRef(lookup.hit);
+  hitRef.current = lookup.hit;
+  const lookupAt = lookup.lookupAt;
+  const plainClose = lookup.close;
+  const setPinned = lookup.setPinned;
+
+  const exitNav = useCallback(() => {
+    const nav = navRef.current;
+    navRef.current = null;
+    setNavPos(null);
+    setNavPopup(false);
+    setLookupNavActive(false);
+    plainClose();
+    const c = controlsRef.current;
+    if (nav?.pausedByNav && !c.isPlaying()) c.togglePlay();
+  }, [plainClose]);
+
+  // Hiding the subtitles takes an open popup with them (not one opened from
+  // the pick-a-word mode, which shows the line on purpose).
+  useEffect(() => {
+    if (concealed && !navRef.current) plainClose();
+  }, [concealed, plainClose]);
+
+  // In the mode, closing the popup (Escape, a click outside) only hides it;
+  // leaving the mode is its own key.
+  const closeLookup = useCallback(
+    () => (navRef.current ? setNavPopup(false) : plainClose()),
+    [plainClose],
+  );
+
+  useEffect(() => {
+    const goTo = (pos: WordPos) => {
+      if (!navRef.current) return;
+      navRef.current.pos = pos;
+      setNavPos(pos);
+      setNavPopup(false);
+      lookupAt(pos.line, pos.index);
+      setPinned(true);
+    };
+    return onLookupCommand((cmd) => {
+      const nav = navRef.current;
+      if (cmd === "toggle") {
+        if (nav) {
+          exitNav();
+          return true;
+        }
+        const start = firstWord(lines);
+        if (!start) return false;
+        const c = controlsRef.current;
+        const wasPlaying = c.isPlaying();
+        if (wasPlaying) c.togglePlay();
+        navRef.current = { pos: start, history: [], pausedByNav: wasPlaying };
+        setLookupNavActive(true);
+        goTo(start);
+        return true;
+      }
+      if (!nav) return false;
+      if (cmd === "exit") {
+        exitNav();
+        return true;
+      }
+      if (cmd === "popup") {
+        setNavPopup((open) => !open);
+        return true;
+      }
+      if (cmd === "nextWord") {
+        // How far the dictionary match reaches: a Japanese word ends there.
+        const hit = hitRef.current;
+        const matched =
+          hit && hit.line === nav.pos.line && hit.start >= nav.pos.index
+            ? hit.start + hit.length - nav.pos.index
+            : 0;
+        const next = nextWord(lines, nav.pos, matched);
+        if (next) {
+          nav.history.push(nav.pos);
+          goTo(next);
+        }
+        return true;
+      }
+      if (cmd === "prevWord") {
+        const prev = nav.history.pop() ?? prevWord(lines, nav.pos);
+        if (prev) goTo(prev);
+        return true;
+      }
+      if (cmd === "prevLine" || cmd === "nextLine") {
+        const other = wordOnOtherLine(lines, nav.pos, cmd === "nextLine" ? 1 : -1);
+        if (other) {
+          nav.history = [];
+          goTo(other);
+        }
+        return true;
+      }
+      return false;
+    });
+  }, [lines, lookupAt, setPinned, exitNav]);
+
+  useEffect(
+    () => () => {
+      if (navRef.current) setLookupNavActive(false);
+    },
+    [],
+  );
+
+  const navHit =
+    navPos && lines[navPos.line] != null
+      ? {
+          line: navPos.line,
+          start: navPos.index,
+          length: wordLength(lines[navPos.line], navPos.index),
+        }
+      : null;
+  const shownHit = lookup.hit ?? navHit;
+  const revealed = concealed ? !!navPos : !native || hovering || lookup.open || !!navPos;
+  const popupShown = lookup.open && (!navPos || navPopup);
 
   // With "keep open", the first click outside the subtitle and the popup only
   // dismisses it; that click is swallowed so it does not also toggle playback.
-  const closeLookup = lookup.close;
   useEffect(() => {
-    if (!stayOpen || !lookup.open) return;
+    if (!stayOpen || !popupShown) return;
     const inside = (target: EventTarget | null) =>
       target instanceof Element &&
       (!!target.closest(".hb-lookup-popup") || !!rootRef.current?.contains(target));
@@ -88,15 +226,13 @@ export function InteractiveSubtitle({
     };
     window.addEventListener("pointerdown", onDown, true);
     return () => window.removeEventListener("pointerdown", onDown, true);
-  }, [stayOpen, lookup.open, closeLookup]);
+  }, [stayOpen, popupShown, closeLookup]);
 
   useLayoutEffect(() => {
-    setAnchor(lookup.open && markRef.current ? markRef.current.getBoundingClientRect() : null);
-  }, [lookup.open, lookup.hit]);
+    setAnchor(popupShown && markRef.current ? markRef.current.getBoundingClientRect() : null);
+  }, [popupShown, lookup.hit]);
 
   // Swap mpv's own subtitle for this copy while it is revealed.
-  const controlsRef = useRef(controls);
-  controlsRef.current = controls;
   useEffect(() => {
     if (!native) return;
     controlsRef.current.setNativeSubVisible(!revealed);
@@ -137,11 +273,38 @@ export function InteractiveSubtitle({
     endSec,
   ]);
 
+  // A word highlighted in the pick-a-word mode, or shown in the popup, is the
+  // selected word the immersion card hotkeys add to the card.
+  const owner = useRef({}).current;
+  const aiOn = settings.subLookupAiEnabled && aiExplainReady(settings);
+  const settingsRef = useRef(settings);
+  settingsRef.current = settings;
+  const selectedTerm = (navPos || popupShown) && lookup.hit ? lookup.result?.terms[0] : undefined;
+  const selectedTarget = selectedTerm ? lookup.result?.word || selectedTerm.headword : "";
+  useEffect(() => {
+    if (!selectedTerm) {
+      setWordSelection(owner, null);
+      return;
+    }
+    const input = { target: selectedTarget, sentence: mining.sentence };
+    setWordSelection(owner, {
+      term: selectedTerm,
+      sentence: mining.sentence,
+      matchStart: mining.matchStart,
+      matchLength: mining.matchLength,
+      // Joins the popup's request or its cached answer when there is one.
+      aiExplanation: aiOn
+        ? () => explainWord(settingsRef.current, input).catch(() => "")
+        : undefined,
+    });
+  }, [owner, selectedTerm, selectedTarget, mining, aiOn]);
+  useEffect(() => () => setWordSelection(owner, null), [owner]);
+
   const hiddenText: React.CSSProperties = { color: "transparent", textShadow: "none" };
   return (
     <div
       ref={rootRef}
-      className="pointer-events-auto max-w-[80%] cursor-text"
+      className={`${concealed && !navPos ? "pointer-events-none" : "pointer-events-auto"} max-w-[80%] cursor-text`}
       style={revealed ? boxStyle : undefined}
       onPointerEnter={() => {
         lookup.cancelClose();
@@ -150,7 +313,7 @@ export function InteractiveSubtitle({
       onPointerLeave={() => {
         setHovering(false);
         lookup.onPointerExit();
-        if (!lookup.pinned && !stayOpen) lookup.scheduleClose();
+        if (!lookup.pinned && !stayOpen && !navRef.current) lookup.scheduleClose();
       }}
       onPointerMove={lookup.onPointerMove}
       onMouseDown={(e) => e.stopPropagation()}
@@ -159,17 +322,10 @@ export function InteractiveSubtitle({
     >
       <div style={revealed ? textStyle : { ...textStyle, ...hiddenText }}>
         {lines.map((line, i) => (
-          <Line
-            key={i}
-            index={i}
-            text={line}
-            hit={lookup.hit}
-            markRef={markRef}
-            visible={revealed}
-          />
+          <Line key={i} index={i} text={line} hit={shownHit} markRef={markRef} visible={revealed} />
         ))}
       </div>
-      {lookup.open && anchor && lookup.result && (
+      {popupShown && anchor && lookup.result && (
         <LookupPopup
           result={lookup.result}
           anchor={anchor}
@@ -179,10 +335,11 @@ export function InteractiveSubtitle({
             lookup.setPinned(true);
           }}
           onLeave={() => {
+            if (navRef.current) return;
             lookup.setPinned(false);
             if (!stayOpen) lookup.scheduleClose();
           }}
-          onClose={lookup.close}
+          onClose={closeLookup}
         />
       )}
     </div>
