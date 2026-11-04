@@ -1,5 +1,7 @@
+mod edge;
+mod sec_ms_gec;
+
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
-use kothok_edge_tts::{init_tls, list_voices, EdgeTts, Engine, TtsEvent};
 use serde::Serialize;
 use std::{
     collections::HashMap,
@@ -56,13 +58,6 @@ pub struct EBookTtsVoice {
     name: String,
 }
 
-const VOICE_LIST_URL: &str =
-    "https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list";
-// Public constants of the Edge read-aloud endpoint, the same ones the crate uses
-// internally. They are pub(crate) over there, so we cannot borrow them.
-const VOICE_LIST_TOKEN: &str = "6A5AA1D4EAFF4E9FB37E23D68491D6F4";
-const VOICE_LIST_GEC_VERSION: &str = "1-143.0.3650.75";
-
 #[derive(serde::Deserialize)]
 struct RemoteVoice {
     #[serde(rename = "ShortName")]
@@ -75,30 +70,26 @@ struct RemoteVoice {
     friendly_name: String,
 }
 
-// The crate's list_voices() reads the response until the socket closes and lets
-// the read error escape. Microsoft closes without a TLS close_notify, so rustls
-// reports UnexpectedEof and the call fails every time even though the body
-// arrived intact, which is why the reader only ever saw the built-in voices.
-// reqwest ends the body on Content-Length, so it gets all 300+ voices.
-async fn remote_voices() -> Result<Vec<EBookTtsVoice>, String> {
-    let url = format!(
-        "{VOICE_LIST_URL}?TrustedClientToken={VOICE_LIST_TOKEN}\
-         &Sec-MS-GEC={}&Sec-MS-GEC-Version={VOICE_LIST_GEC_VERSION}",
-        kothok_edge_tts::sec_ms_gec(0)
-    );
+// reqwest ends the body on Content-Length; a read to the end of the socket fails
+// because Microsoft closes it without a TLS close_notify.
+#[tauri::command]
+pub async fn ebook_tts_voices() -> Result<Vec<EBookTtsVoice>, String> {
     let client = crate::http_fetch::http_client_builder()
+        .user_agent(edge::user_agent())
         .build()
-        .map_err(|error| format!("voice list client: {error}"))?;
+        .map_err(|error| format!("Could not load Edge TTS voices: {error}"))?;
     let voices = client
-        .get(url)
+        .get(edge::voices_url())
         .send()
         .await
-        .map_err(|error| format!("voice list request: {error}"))?
-        .error_for_status()
-        .map_err(|error| format!("voice list status: {error}"))?
+        .and_then(|response| response.error_for_status())
+        .map_err(|error| format!("Could not load Edge TTS voices: {error}"))?
         .json::<Vec<RemoteVoice>>()
         .await
-        .map_err(|error| format!("voice list body: {error}"))?;
+        .map_err(|error| format!("Could not load Edge TTS voices: {error}"))?;
+    if voices.is_empty() {
+        return Err("Could not load Edge TTS voices: the list came back empty".into());
+    }
     Ok(voices
         .into_iter()
         .map(|voice| EBookTtsVoice {
@@ -106,28 +97,6 @@ async fn remote_voices() -> Result<Vec<EBookTtsVoice>, String> {
             locale: voice.locale,
             gender: voice.gender,
             name: voice.friendly_name,
-        })
-        .collect())
-}
-
-#[tauri::command]
-pub async fn ebook_tts_voices() -> Result<Vec<EBookTtsVoice>, String> {
-    init_tls();
-    match remote_voices().await {
-        Ok(voices) if !voices.is_empty() => return Ok(voices),
-        Ok(_) => eprintln!("[harbor::tts] voice list came back empty, trying the crate"),
-        Err(error) => eprintln!("[harbor::tts] {error}, trying the crate"),
-    }
-    let voices = list_voices()
-        .await
-        .map_err(|error| format!("Could not load Edge TTS voices: {error}"))?;
-    Ok(voices
-        .into_iter()
-        .map(|voice| EBookTtsVoice {
-            id: voice.short_name().to_owned(),
-            locale: voice.locale().to_owned(),
-            gender: voice.gender().to_owned(),
-            name: voice.friendly_name().to_owned(),
         })
         .collect())
 }
@@ -223,33 +192,22 @@ pub async fn ebook_tts_synthesize(
     {
         previous.cancel();
     }
-    init_tls();
     let outcome = async {
         for (index, chunk) in chunks.into_iter().enumerate() {
-            let events = tokio::select! {
+            let speech = tokio::select! {
                 _ = cancellation.cancelled() => return Err("Edge TTS generation cancelled".into()),
-                result = EdgeTts.synthesize(chunk, &voice, &rate, &locale) =>
+                result = edge::synthesize(chunk, &voice, &rate, &locale) =>
                     result.map_err(|error| format!("Edge TTS failed: {error}"))?,
             };
+            audio.extend_from_slice(&speech.audio);
             let mut chunk_end = 0_u64;
-            for event in events {
-                match event {
-                    TtsEvent::Audio(bytes) => audio.extend_from_slice(&bytes),
-                    TtsEvent::WordBoundary {
-                        offset,
-                        duration,
-                        text,
-                    } => {
-                        let end = offset.saturating_add(duration);
-                        chunk_end = chunk_end.max(end);
-                        boundaries.push(EBookWordBoundary {
-                            offset_ms: (timeline_ticks + offset) as f64 / 10_000.0,
-                            duration_ms: duration as f64 / 10_000.0,
-                            text,
-                        });
-                    }
-                    TtsEvent::TurnEnd => {}
-                }
+            for boundary in speech.boundaries {
+                chunk_end = chunk_end.max(boundary.offset.saturating_add(boundary.duration));
+                boundaries.push(EBookWordBoundary {
+                    offset_ms: (timeline_ticks + boundary.offset) as f64 / 10_000.0,
+                    duration_ms: boundary.duration as f64 / 10_000.0,
+                    text: boundary.text,
+                });
             }
             timeline_ticks = timeline_ticks.saturating_add(chunk_end);
             let completed = index + 1;
@@ -334,52 +292,46 @@ mod tests {
     #[tokio::test]
     #[ignore = "requires the live Microsoft Edge Read Aloud service"]
     async fn synthesizes_live_edge_audio() {
-        init_tls();
-        let events = EdgeTts
-            .synthesize(
-                "Harbor Edge text to speech test.",
-                "en-US-AvaNeural",
-                "+0%",
-                "en-US",
-            )
-            .await
-            .expect("live Edge synthesis should succeed");
-        assert!(events
-            .iter()
-            .any(|event| matches!(event, TtsEvent::Audio(bytes) if !bytes.is_empty())));
-        assert!(events
-            .iter()
-            .any(|event| matches!(event, TtsEvent::WordBoundary { .. })));
+        let speech = edge::synthesize(
+            "Harbor Edge text to speech test.",
+            "en-US-AvaNeural",
+            "+0%",
+            "en-US",
+        )
+        .await
+        .expect("live Edge synthesis should succeed");
+        assert!(!speech.audio.is_empty());
+        assert!(!speech.boundaries.is_empty());
     }
 
     #[tokio::test]
     #[ignore = "requires the live Microsoft Edge Read Aloud service"]
     async fn arabic_voice_ids_produce_distinct_audio() {
-        init_tls();
         let mut results = Vec::new();
         for (voice, locale) in [
             ("ar-SA-HamedNeural", "ar-SA"),
             ("ar-EG-ShakirNeural", "ar-EG"),
             ("ar-AE-HamdanNeural", "ar-AE"),
         ] {
-            let events = EdgeTts
-                .synthesize("مرحباً، هذا اختبار لصوت القراءة.", voice, "+0%", locale)
+            let audio = edge::synthesize("مرحباً، هذا اختبار لصوت القراءة.", voice, "+0%", locale)
                 .await
-                .expect("live Arabic voice synthesis should succeed");
-            let audio = events
-                .into_iter()
-                .filter_map(|event| match event {
-                    TtsEvent::Audio(bytes) => Some(bytes),
-                    _ => None,
-                })
-                .flatten()
-                .collect::<Vec<_>>();
+                .expect("live Arabic voice synthesis should succeed")
+                .audio;
             assert!(!audio.is_empty(), "{voice} returned no audio");
             println!("{voice}: {} audio bytes", audio.len());
             results.push((voice, audio));
         }
-        assert_ne!(results[0].1, results[1].1, "Hamed and Shakir returned identical audio");
-        assert_ne!(results[0].1, results[2].1, "Hamed and Hamdan returned identical audio");
-        assert_ne!(results[1].1, results[2].1, "Shakir and Hamdan returned identical audio");
+        assert_ne!(
+            results[0].1, results[1].1,
+            "Hamed and Shakir returned identical audio"
+        );
+        assert_ne!(
+            results[0].1, results[2].1,
+            "Hamed and Hamdan returned identical audio"
+        );
+        assert_ne!(
+            results[1].1, results[2].1,
+            "Shakir and Hamdan returned identical audio"
+        );
     }
 }
