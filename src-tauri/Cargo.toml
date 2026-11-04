@@ -102,7 +102,8 @@ sha1 = "0.10"
 png = "0.17"
 image = { version = "0.25", default-features = false, features = ["jpeg", "png", "gif", "webp"] }
 hound = "3.5"
-kothok-edge-tts = "0.2.10"
+# Edge TTS (ebook_tts/edge.rs): the Read Aloud service is a WebSocket.
+tokio-tungstenite = { version = "0.24", features = ["rustls-tls-webpki-roots"] }
 discord-rich-presence = "1.1"
 rust_cast = { path = "vendor/rust_cast", version = "0.20" }
 mdns-sd = "0.13"
