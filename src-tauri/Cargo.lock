@@ -2692,7 +2692,6 @@ dependencies = [
  "hound",
  "httpdate",
  "image",
- "kothok-edge-tts",
  "leveldb-sys",
  "libc",
  "libmpv2",
@@ -2747,6 +2746,7 @@ dependencies = [
  "tauri-plugin-updater",
  "tauri-plugin-window-state",
  "tokio",
+ "tokio-tungstenite 0.24.0",
  "tokio-util",
  "trash",
  "unicode-normalization",
@@ -3633,26 +3633,6 @@ checksum = "0fbe853b403ae61a04233030ae8a79d94975281ed9770a1f9e246732b534b28d"
 dependencies = [
  "bitflags 2.11.1",
  "serde",
-]
-
-[[package]]
-name = "kothok-edge-tts"
-version = "0.2.10"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4bcde0e39e03615b18f0b505ea9d681894b4297acce0414aca380b1a078f9fc8"
-dependencies = [
- "futures-util",
- "log",
- "rand 0.8.6",
- "rustls",
- "serde",
- "serde_json",
- "sha2",
- "thiserror 1.0.69",
- "tokio",
- "tokio-rustls",
- "tokio-tungstenite 0.24.0",
- "webpki-roots 0.26.11",
 ]
 
 [[package]]
