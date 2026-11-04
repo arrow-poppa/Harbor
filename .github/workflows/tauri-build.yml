@@ -12,12 +12,16 @@ on:
     tags:
       - "v*"
       - "V*"
+    # Fork only: test builds of the immersion branches (never part of a PR).
+    branches:
+      - "test/**"
 
 permissions:
   contents: read
 
 env:
   NODE_OPTIONS: --max-old-space-size=6144
+  HARBOR_CAPSTAN_OPTIONAL: "1"
 
 jobs:
   build:
@@ -31,6 +35,8 @@ jobs:
         platform: >-
           ${{ fromJSON(inputs.intel-only &&
           '[{"name":"macOS-Intel","runner":"macos-15-intel","target":"x86_64-apple-darwin","bundle":"dmg"}]' ||
+          github.ref_type == 'branch' &&
+          '[{"name":"Windows","runner":"windows-latest","target":"x86_64-pc-windows-msvc","bundle":"msi"},{"name":"Linux","runner":"ubuntu-24.04","target":"x86_64-unknown-linux-gnu","bundle":"rpm"}]' ||
           '[{"name":"Windows","runner":"windows-latest","target":"x86_64-pc-windows-msvc","bundle":"msi"},{"name":"macOS-AppleSilicon","runner":"macos-15","target":"aarch64-apple-darwin","bundle":"dmg"},{"name":"macOS-Intel","runner":"macos-15-intel","target":"x86_64-apple-darwin","bundle":"dmg"}]') }}
 
     steps:
@@ -45,6 +51,24 @@ jobs:
             *beta*) echo "HARBOR_CHANNEL=beta" >> "$GITHUB_ENV" ;;
             *)      echo "HARBOR_CHANNEL=stable" >> "$GITHUB_ENV" ;;
           esac
+
+      - name: Install Linux deps
+        if: contains(matrix.platform.runner, 'ubuntu')
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libssl-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            libasound2-dev \
+            libudev-dev \
+            libmpv-dev \
+            libpulse-dev \
+            libgtk-3-dev \
+            patchelf \
+            rpm \
+            xdg-utils
 
       - name: Install Mac deps
         if: contains(matrix.platform.runner, 'macos')
@@ -266,6 +290,10 @@ jobs:
           test -s "$exe.sig"
           echo "::notice::Signed $(basename "$exe")"
 
+      - name: Build the Linux rpm
+        if: contains(matrix.platform.runner, 'ubuntu')
+        run: pnpm tauri:build:linux-system --target ${{ matrix.platform.target }} --bundles rpm
+
       - name: Verify macOS app dependencies
         if: contains(matrix.platform.runner, 'macos')
         shell: bash
@@ -308,6 +336,7 @@ jobs:
           path: |
             src-tauri/target/${{ matrix.platform.target }}/release/bundle/**/*.dmg
             src-tauri/target/${{ matrix.platform.target }}/release/bundle/**/*.deb
+            src-tauri/target/${{ matrix.platform.target }}/release/bundle/**/*.rpm
             src-tauri/target/${{ matrix.platform.target }}/release/bundle/**/*.AppImage
             src-tauri/target/${{ matrix.platform.target }}/release/bundle/**/*.msi
             src-tauri/target/${{ matrix.platform.target }}/release/bundle/**/*.exe
