@@ -19,9 +19,6 @@ const subtitleDictionary: Record<string, string> = {
   "Scan delay (in milliseconds)": "Arama gecikmesi (milisaniye)",
   "Wait before looking up the word under the mouse when no key is required. Lower is faster; higher avoids lookups while the mouse just passes over the subtitle.":
     "Tuş gerekmediğinde, farenin altındaki kelimeyi aramadan önce bekleme süresi. Düşük daha hızlıdır; yüksek, fare altyazının üzerinden yalnızca geçerken aramaları önler.",
-  "Keep subtitles above the seek bar": "Altyazıları ilerleme çubuğunun üstünde tut",
-  "The seek bar covers the lowest subtitle line, so lift the subtitles above it while you look words up.":
-    "İlerleme çubuğu en alttaki altyazı satırını kapatır; kelime ararken altyazıları onun üstüne kaldırın.",
   "Same setting as Player → Subtitles.": "Oynatıcı → Altyazılar ile aynı ayar.",
   "Subtitle height": "Altyazı yüksekliği",
   "Distance from the bottom of the video.": "Videonun altından uzaklık.",

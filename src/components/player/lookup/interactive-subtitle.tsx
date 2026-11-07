@@ -44,6 +44,8 @@ type Props = {
   // Subtitles hidden by the user: invisible and not hoverable, shown only
   // while a word is picked from them with the keyboard or a controller.
   concealed?: boolean;
+  // In use: hovered, its popup open or a word being picked from it.
+  onEngagedChange?: (engaged: boolean) => void;
 };
 
 export function InteractiveSubtitle({
@@ -55,6 +57,7 @@ export function InteractiveSubtitle({
   endSec,
   native,
   concealed = false,
+  onEngagedChange,
 }: Props) {
   const { settings } = useSettings();
   const lookup = useSubtitleLookup({
@@ -308,6 +311,12 @@ export function InteractiveSubtitle({
     });
   }, [owner, selectedTerm, selectedTarget, mining, aiOn]);
   useEffect(() => () => setWordSelection(owner, null), [owner]);
+  const engaged = hovering || lookup.open || !!navPos;
+  useEffect(() => {
+    if (!onEngagedChange) return;
+    onEngagedChange(engaged);
+    return () => onEngagedChange(false);
+  }, [engaged, onEngagedChange]);
   useEffect(() => {
     setLookupPopupOpen(owner, popupShown);
     return () => setLookupPopupOpen(owner, false);

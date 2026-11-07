@@ -19,9 +19,6 @@ const subtitleDictionary: Record<string, string> = {
   "Scan delay (in milliseconds)": "Độ trễ tra (mili giây)",
   "Wait before looking up the word under the mouse when no key is required. Lower is faster; higher avoids lookups while the mouse just passes over the subtitle.":
     "Thời gian chờ trước khi tra từ dưới con trỏ khi không cần phím. Thấp hơn thì nhanh hơn; cao hơn tránh tra khi chuột chỉ lướt qua phụ đề.",
-  "Keep subtitles above the seek bar": "Giữ phụ đề phía trên thanh tua",
-  "The seek bar covers the lowest subtitle line, so lift the subtitles above it while you look words up.":
-    "Thanh tua che dòng phụ đề thấp nhất, nên hãy nâng phụ đề lên trên nó khi bạn tra từ.",
   "Same setting as Player → Subtitles.": "Cùng thiết lập với Trình phát → Phụ đề.",
   "Subtitle height": "Độ cao phụ đề",
   "Distance from the bottom of the video.": "Khoảng cách từ đáy video.",

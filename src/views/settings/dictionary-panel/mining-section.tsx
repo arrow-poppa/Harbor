@@ -203,14 +203,6 @@ function DictionarySection() {
           }}
         />
       )}
-      <ToggleRow
-        label={t("Keep subtitles above the seek bar")}
-        sub={t(
-          "The seek bar covers the lowest subtitle line, so lift the subtitles above it while you look words up.",
-        )}
-        value={settings.subLookupLiftAboveControls !== false}
-        onChange={(v) => update({ subLookupLiftAboveControls: v })}
-      />
       <Row label={t("Subtitle size")} sub={t("Same setting as Player → Subtitles.")}>
         <RangeInput
           value={settings.subFontSize}

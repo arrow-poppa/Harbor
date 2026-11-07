@@ -87,7 +87,7 @@ export const StageOverlays = memo(function StageOverlays({
             secondaryText={snap.secondarySubText}
             lookup={
               lookupControls && !pipMode && primarySubtitleVisible
-                ? { controls: lookupControls, endSec: snap.subEndSec, chromeVisible }
+                ? { controls: lookupControls, endSec: snap.subEndSec }
                 : undefined
             }
             hidden={subsHidden}

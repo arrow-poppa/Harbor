@@ -714,7 +714,6 @@ export const DEFAULT: Settings = {
   subLookupStayOpen: false,
   subLookupScanKey: "none",
   subLookupScanDelayMs: 20,
-  subLookupLiftAboveControls: true,
   subLookupPopupSize: 100,
   subLookupAiEnabled: false,
   aiExplainEndpoint: "",
