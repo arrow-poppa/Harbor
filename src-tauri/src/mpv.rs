@@ -3626,10 +3626,15 @@ fn sub_line_time(mpv: &Mpv, name: &str) -> Option<f64> {
 //
 // Opening the source again for every card is what made exporting slow: a
 // debrid stream costs DNS, TLS, the host resolving the link and a seek, about
-// a second each time, and the audio and the clip each paid it. The player has
-// already downloaded the stretch, so `dump-cache` writes it to a local file
-// in milliseconds and the encoders read that instead. When the stretch is no
-// longer cached the slow path is still there.
+// a second each time. The player has already downloaded the stretch, so
+// `dump-cache` writes it to a local file in milliseconds and the sentence
+// audio reads that instead. When the stretch is no longer cached the slow path
+// is still there.
+//
+// Only the audio: mpv 0.41's dump drops most video packets that are not
+// keyframes (76 of 192 in an 8 s test, any output format), so a clip cut from
+// it skips frames and, with HEVC, decodes with missing references (smears).
+// The audio packets all come through.
 //
 // The dump is rebased to zero and starts at the first packet it writes, whose
 // source time mpv does not report. Starting it where the cached range starts
@@ -3715,6 +3720,18 @@ async fn cached_segment(mpv: &Mpv, src: &str, from: f64, to: f64) -> Option<(Pat
         return None;
     }
     let origin = origin - first_packet_time(&path).await.unwrap_or(0.0);
+    // The dump holds what was cached, which can stop short of the asked end
+    // (the line ending right at the edge of a stream's download). Kept only
+    // when it reaches the end, and remembered with the end it really has, so a
+    // later card does not reuse it for a stretch it lacks.
+    let end = match dump_duration(&path).await {
+        Some(duration) => origin + duration,
+        None => end,
+    };
+    if end < to {
+        let _ = std::fs::remove_file(&path);
+        return None;
+    }
     if let Some(old) = slot.replace(CacheDump { path: path.clone(), src: src.to_string(), origin, end, at: std::time::Instant::now() }) {
         // Another encode may still be reading the previous dump.
         tokio::spawn(async move {
@@ -3723,6 +3740,29 @@ async fn cached_segment(mpv: &Mpv, src: &str, from: f64, to: f64) -> Option<(Pat
         });
     }
     Some((path, origin))
+}
+
+/// Length of a dump in seconds, from its container.
+async fn dump_duration(path: &std::path::Path) -> Option<f64> {
+    let ffprobe = crate::transcode::locate_ffprobe()?;
+    let mut cmd = tokio::process::Command::new(&ffprobe);
+    cmd.args(["-v", "error", "-show_entries", "format=duration"])
+        .args(["-of", "csv=p=0"])
+        .arg(path)
+        .stdin(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null())
+        .kill_on_drop(true);
+    #[cfg(windows)]
+    cmd.creation_flags(0x0800_0000);
+    let out = tokio::time::timeout(Duration::from_secs(5), cmd.output())
+        .await
+        .ok()?
+        .ok()?;
+    String::from_utf8_lossy(&out.stdout)
+        .trim()
+        .parse::<f64>()
+        .ok()
+        .filter(|d| d.is_finite() && *d > 0.0)
 }
 
 /// Time of the first video packet in a dump (the first audio one when there
@@ -3888,7 +3928,8 @@ fn clip_encoders(format: &str) -> Vec<(&'static str, Vec<&'static str>)> {
 /// Encodes the video of the current subtitle line (or `start`..`end`) as an
 /// animated AVIF, WebP or GIF for an Anki card. A separate mpv cuts the
 /// scaled segment from the playing source (so streams, headers and EDL
-/// sources work), then ffmpeg encodes it. Missing encoders fall back to the
+/// sources work; not from the cache dump, see `cached_segment`), then ffmpeg
+/// encodes it. Missing encoders fall back to the
 /// next format: AVIF → WebP → GIF.
 #[tauri::command]
 #[allow(clippy::too_many_arguments)]
@@ -3925,24 +3966,17 @@ pub async fn mpv_sentence_clip(
     }
     let width = width.unwrap_or(480).clamp(160, 1280);
     let fps = fps.unwrap_or(12).clamp(4, 30);
-    // Same cache dump as the sentence audio; the audio and clip of one card
-    // share it. Track ids and headers only apply to the source itself.
-    let cached = cached_segment(&mpv, &src, from, from + dur).await;
-    let (input, seek) = match &cached {
-        Some((path, origin)) => (path.to_string_lossy().into_owned(), from - origin),
-        None => (src.clone(), from),
-    };
-    let remote = cached.is_none();
+    let (input, seek) = (src.clone(), from);
     let vid = mpv
         .get_property::<String>("vid")
         .ok()
-        .filter(|v| remote && !v.trim().is_empty() && v.trim() != "no" && v.trim() != "auto");
+        .filter(|v| !v.trim().is_empty() && v.trim() != "no" && v.trim() != "auto");
     let gamma = mpv.get_property::<String>("video-params/gamma").unwrap_or_default();
-    let user_agent = mpv.get_property::<String>("user-agent").ok().filter(|s| remote && !s.is_empty());
+    let user_agent = mpv.get_property::<String>("user-agent").ok().filter(|s| !s.is_empty());
     let header_fields = mpv
         .get_property::<String>("http-header-fields")
         .ok()
-        .filter(|s| remote && !s.is_empty());
+        .filter(|s| !s.is_empty());
 
     let mpv_bin = crate::thumbs::locate_mpv().ok_or_else(|| "mpv binary not found".to_string())?;
     let ffmpeg = crate::transcode::locate_ffmpeg().ok_or_else(|| "ffmpeg not found".to_string())?;

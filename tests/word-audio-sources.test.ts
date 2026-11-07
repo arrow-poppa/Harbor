@@ -14,6 +14,7 @@ import {
   parseCustomAudioList,
   pickEdgeVoice,
   sanitizeWordAudioSources,
+  wordAudioRequestHeaders,
   wiktionaryRegion,
 } from "../src/lib/mining/word-audio-core.ts";
 
@@ -136,4 +137,16 @@ test("audio extensions come from the type, then the URL", () => {
   assert.equal(audioExtFor("application/ogg", "https://x/a"), "ogg");
   assert.equal(audioExtFor(null, "https://x/a.wav?x=1"), "wav");
   assert.equal(audioExtFor("application/octet-stream", "https://x/a"), "mp3");
+});
+
+test("Wikimedia requests name Harbor; other sites keep the default User-Agent", () => {
+  const ua = { "User-Agent": "Harbor/1.0.2 (https://github.com/Harborofficial/Harbor)" };
+  assert.deepEqual(
+    wordAudioRequestHeaders("https://upload.wikimedia.org/wikipedia/commons/b/bd/x.ogg", "1.0.2"),
+    ua,
+  );
+  assert.deepEqual(wordAudioRequestHeaders("https://commons.wikimedia.org/w/api.php", "1.0.2"), ua);
+  assert.equal(wordAudioRequestHeaders("https://jisho.org/search/x", "1.0.2"), undefined);
+  assert.equal(wordAudioRequestHeaders("https://notwikimedia.org/x", "1.0.2"), undefined);
+  assert.equal(wordAudioRequestHeaders("not a url", "1.0.2"), undefined);
 });
