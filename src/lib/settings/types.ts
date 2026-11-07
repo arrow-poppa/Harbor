@@ -889,8 +889,6 @@ export type Settings = {
   subLookupScanKey: "none" | "shift" | "ctrl" | "alt";
   // Wait before looking up a hovered word when no key is required (Yomitan's "Scan delay").
   subLookupScanDelayMs: number;
-  // Raise lookup subtitles above the seek bar while the player controls show.
-  subLookupLiftAboveControls: boolean;
   // Dictionary popup size in percent (75–250); the popup hotkeys step it.
   subLookupPopupSize: number;
   // AI explanation of the looked-up word, from any OpenAI-compatible

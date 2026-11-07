@@ -19,9 +19,6 @@ const subtitleDictionary: Record<string, string> = {
   "Scan delay (in milliseconds)": "Such-Verzögerung (in Millisekunden)",
   "Wait before looking up the word under the mouse when no key is required. Lower is faster; higher avoids lookups while the mouse just passes over the subtitle.":
     "Wartezeit, bevor das Wort unter der Maus nachgeschlagen wird, wenn keine Taste nötig ist. Niedriger ist schneller; höher vermeidet Nachschlagen, wenn die Maus nur über den Untertitel fährt.",
-  "Keep subtitles above the seek bar": "Untertitel über der Zeitleiste halten",
-  "The seek bar covers the lowest subtitle line, so lift the subtitles above it while you look words up.":
-    "Die Zeitleiste verdeckt die unterste Untertitelzeile, also hebe die Untertitel darüber, während du Wörter nachschlägst.",
   "Same setting as Player → Subtitles.": "Dieselbe Einstellung wie Player → Untertitel.",
   "Subtitle height": "Untertitelhöhe",
   "Distance from the bottom of the video.": "Abstand vom unteren Rand des Videos.",

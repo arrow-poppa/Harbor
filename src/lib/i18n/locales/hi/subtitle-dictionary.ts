@@ -19,9 +19,6 @@ const subtitleDictionary: Record<string, string> = {
   "Scan delay (in milliseconds)": "खोज में देरी (मिलीसेकंड में)",
   "Wait before looking up the word under the mouse when no key is required. Lower is faster; higher avoids lookups while the mouse just passes over the subtitle.":
     "जब कोई कुंजी ज़रूरी न हो, तब माउस के नीचे के शब्द को देखने से पहले का इंतज़ार. कम होने पर तेज़; ज़्यादा होने पर माउस के सिर्फ़ सबटाइटल पर से गुज़रने पर खोज नहीं होती.",
-  "Keep subtitles above the seek bar": "सबटाइटल को सीक बार के ऊपर रखें",
-  "The seek bar covers the lowest subtitle line, so lift the subtitles above it while you look words up.":
-    "सीक बार सबसे नीचे की सबटाइटल पंक्ति को ढक देता है, इसलिए शब्द देखते समय सबटाइटल उसके ऊपर उठाएँ.",
   "Same setting as Player → Subtitles.": "प्लेयर → सबटाइटल वाली ही सेटिंग.",
   "Subtitle height": "सबटाइटल की ऊँचाई",
   "Distance from the bottom of the video.": "वीडियो के निचले किनारे से दूरी.",

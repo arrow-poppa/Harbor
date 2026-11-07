@@ -15,7 +15,7 @@ type Props = {
   secondaryText?: string;
   // Dictionary lookup on hover. `native`: mpv renders this subtitle (ASS), so
   // only an invisible, hoverable copy is drawn here.
-  lookup?: { controls: LookupControls; endSec?: number; native?: boolean; chromeVisible?: boolean };
+  lookup?: { controls: LookupControls; endSec?: number; native?: boolean };
   // Hidden by the Toggle subtitles hotkey: nothing is drawn, except the line
   // while a word is being picked from it.
   hidden?: boolean;
@@ -141,14 +141,12 @@ export const SubtitleOverlay = memo(function SubtitleOverlay({
 
   const opacity = useMemo(() => clamp(settings.subOpacity ?? 1, 0.1, 1), [settings.subOpacity]);
   const lookupOn = !!lookup && settings.subLookupEnabled && miningAvailable();
-  // The seek bar overlaps the lowest subtitle line and swallows its hover.
-  // Keep hoverable subtitles above it; the lift stays put when the controls
-  // hide so the line does not jump away from the cursor.
-  const liftPx = useSeekBarLift(
-    wrapRef,
-    lookupOn && !lookup?.native && settings.subLookupLiftAboveControls !== false,
-    `${text}|${lookup?.chromeVisible ? 1 : 0}`,
-  );
+  // A subtitle in use keeps its lift when the controls hide, so the line does
+  // not drop away from the cursor. Not in native mode: mpv's own copy drops.
+  const [engaged, setEngaged] = useState(false);
+  const heldLift = useRef(0);
+  const shownLift = engaged && !lookup?.native ? Math.max(lift, heldLift.current) : lift;
+  heldLift.current = shownLift;
 
   const secondScale = useMemo(
     () => clamp(settings.subSecondaryScale ?? 0.85, 0.4, 1.4),
@@ -189,10 +187,9 @@ export const SubtitleOverlay = memo(function SubtitleOverlay({
         ref={wrapRef}
         className={`pointer-events-none absolute inset-x-0 z-10 flex flex-col gap-1.5 ${alignItems} px-[6%] transition-transform duration-300 ease-out motion-reduce:transition-none`}
         style={{
-          bottom: liftPx > 0 ? `max(${marginY}%, ${liftPx}px)` : `${marginY}%`,
+          bottom: `${marginY}%`,
           opacity: lookup?.native ? 1 : opacity,
-          transform: `translateY(${-lift}px)`,
-          transition: lookupOn ? "bottom 160ms ease-out, transform 300ms ease-out" : undefined,
+          transform: `translateY(${-shownLift}px)`,
         }}
       >
         {secondBlock && !secondTop && !lookup?.native && secondBlock}
@@ -207,6 +204,7 @@ export const SubtitleOverlay = memo(function SubtitleOverlay({
               endSec={lookup.endSec}
               native={!!lookup.native}
               concealed={hidden}
+              onEngagedChange={setEngaged}
             />
           ) : (
             <div className="max-w-[80%]" style={boxStyle}>
@@ -266,31 +264,4 @@ function hexToRgb(hex: string): { r: number; g: number; b: number } {
     g: parseInt(m.slice(2, 4), 16) || 0,
     b: parseInt(m.slice(4, 6), 16) || 0,
   };
-}
-
-function useSeekBarLift(
-  wrapRef: React.RefObject<HTMLDivElement | null>,
-  enabled: boolean,
-  remeasureKey: string,
-): number {
-  const [lift, setLift] = useState(0);
-  useEffect(() => {
-    if (!enabled) {
-      setLift(0);
-      return;
-    }
-    const measure = () => {
-      const host = wrapRef.current?.offsetParent as HTMLElement | null;
-      const root = host?.closest("[data-harbor-player]") ?? document;
-      const bar = root.querySelector<HTMLElement>("[data-hb-seekbar]");
-      if (!host || !bar) return;
-      const hostRect = host.getBoundingClientRect();
-      const barRect = bar.getBoundingClientRect();
-      if (barRect.height > 0) setLift(Math.max(0, Math.round(hostRect.bottom - barRect.top + 6)));
-    };
-    measure();
-    window.addEventListener("resize", measure);
-    return () => window.removeEventListener("resize", measure);
-  }, [enabled, remeasureKey, wrapRef]);
-  return lift;
 }
