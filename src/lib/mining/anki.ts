@@ -169,6 +169,10 @@ async function fieldValue(
   warn: (m: string) => void,
 ): Promise<string> {
   const t = ctx.term;
+  // A word no dictionary knows (shown for the AI explanation) has no
+  // definitions, so its definition fields take the explanation instead.
+  const definitions = (firstOnly: boolean) =>
+    t.synthetic ? aiExplanationField(ctx, warn) : termGlossaryHtml(t, firstOnly);
   switch (src) {
     case "expression":
       return escapeHtml(t.headword);
@@ -177,9 +181,9 @@ async function fieldValue(
     case "furigana":
       return escapeHtml(furiganaAnki(t));
     case "glossary":
-      return termGlossaryHtml(t);
+      return definitions(false);
     case "glossary-first":
-      return termGlossaryHtml(t, true);
+      return definitions(true);
     case "sentence-plain":
       return escapeHtml(ctx.sentence);
     case "sentence":
@@ -198,13 +202,13 @@ async function fieldValue(
     case "title":
       return escapeHtml(ctx.title);
     case "glossary-selected":
-      return ctx.definitionFromAi ? aiExplanationField(ctx, warn) : termGlossaryHtml(t);
+      return ctx.definitionFromAi ? aiExplanationField(ctx, warn) : definitions(false);
     case "ai-explanation":
       return aiExplanationField(ctx, warn);
     case "popup-selection":
       return ctx.popupSelection
         ? escapeHtml(ctx.popupSelection).replace(/\r?\n/g, "<br>")
-        : termGlossaryHtml(t, true);
+        : definitions(true);
     case "picture": {
       if (!ctx.mpvEngine) {
         warn("Screenshot needs the mpv player");
