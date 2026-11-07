@@ -714,6 +714,7 @@ export const DEFAULT: Settings = {
 
   subLookupEnabled: false,
   subLookupLanguage: "japanese",
+  subLookupLanguageFromTrack: true,
   subLookupPauseOnHover: true,
   subLookupStayOpen: false,
   subLookupScanKey: "none",
