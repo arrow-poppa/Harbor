@@ -1,4 +1,5 @@
 import wordAudioSources from "./ko/word-audio-sources";
+import dictionaryDownloads from "./ko/dictionary-downloads";
 import subtitleDictionary from "./ko/subtitle-dictionary";
 import aiExplanation from "./ko/ai-explanation";
 import ankiMining from "./ko/anki-mining";
@@ -387,6 +388,7 @@ const ko: Record<string, string> = {
   ...immersionHotkeys,
   ...controllerPlayer,
   ...wordAudioSources,
+  ...dictionaryDownloads,
 };
 
 export default ko;

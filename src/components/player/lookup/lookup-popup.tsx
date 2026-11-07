@@ -396,6 +396,15 @@ function TermEntry({ term, mining }: { term: DictTerm; mining: Omit<MiningContex
     [term],
   );
   const freqs = term.frequencies.slice(0, 4);
+  const ipa = useMemo(
+    () =>
+      Array.from(
+        new Set((term.ipa ?? []).flatMap((i) => i.transcriptions.map((x) => x.ipa.trim()))),
+      )
+        .filter(Boolean)
+        .slice(0, 3),
+    [term],
+  );
 
   return (
     <div className="flex flex-col gap-2 px-4 py-3">
@@ -411,6 +420,11 @@ function TermEntry({ term, mining }: { term: DictTerm; mining: Omit<MiningContex
                 className="rounded-md bg-accent/15 px-1.5 py-0.5 text-[11px] font-semibold text-accent"
               >
                 [{p}]
+              </span>
+            ))}
+            {ipa.map((p) => (
+              <span key={p} className="text-[12.5px] text-ink-muted">
+                {p}
               </span>
             ))}
             {term.termTags.slice(0, 5).map((t) => (
