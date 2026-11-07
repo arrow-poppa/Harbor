@@ -1,6 +1,7 @@
 import { fetchEdgeNarrationVoices, synthesizeNarration } from "@/lib/ebook/narration";
 import { FINAL_URL_HEADER, safeFetch, safeFetchBytes, safeFetchLocal } from "@/lib/safe-fetch";
 import type { Settings } from "@/lib/settings";
+import { APP_VERSION } from "@/lib/build-info";
 import { audioExtension, findWordAudio, wordAudioDataUrl } from "./local-audio";
 import {
   JPOD101_MISSING_AUDIO_SHA256,
@@ -17,6 +18,7 @@ import {
   sanitizeWordAudioSources,
   wiktionaryRegion,
   wiktionarySearchUrl,
+  wordAudioRequestHeaders,
   type WordAudioSource,
   type WordAudioSourceType,
 } from "./word-audio-core";
@@ -83,9 +85,10 @@ async function fetchAudio(
   source: WordAudioSourceType,
   allowLocalNetwork = false,
 ): Promise<WordAudio> {
+  const headers = wordAudioRequestHeaders(url, APP_VERSION);
   const res = await safeFetchBytes(
     url,
-    undefined,
+    headers ? { headers } : undefined,
     FETCH_TIMEOUT_MS,
     MAX_AUDIO_BYTES,
     allowLocalNetwork,
@@ -107,7 +110,8 @@ async function fetchAudio(
 }
 
 async function fetchText(url: string, init?: RequestInit): Promise<{ text: string; url: string }> {
-  const res = await safeFetch(url, init);
+  const headers = wordAudioRequestHeaders(url, APP_VERSION);
+  const res = await safeFetch(url, headers ? { ...init, headers: { ...headers } } : init);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return { text: await res.text(), url: res.headers.get(FINAL_URL_HEADER) ?? url };
 }

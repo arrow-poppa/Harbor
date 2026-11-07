@@ -208,6 +208,28 @@ function commonsSearchUrl(query: string): string {
   return `https://commons.wikimedia.org/w/api.php?${params}`;
 }
 
+// Wikimedia's servers (Lingua Libre and Wiktionary recordings live on
+// Commons) throttle clients that present a browser User-Agent without being a
+// browser, answering 429 to most downloads. Their User-Agent policy asks
+// tools to name themselves and a website instead.
+// https://foundation.wikimedia.org/wiki/Policy:Wikimedia_Foundation_User-Agent_Policy
+const WIKIMEDIA_HOST = /(^|\.)(wikimedia|wikipedia|wiktionary)\.org$/i;
+
+/** Headers for a word audio request: an identifying User-Agent for Wikimedia. */
+export function wordAudioRequestHeaders(
+  url: string,
+  appVersion: string,
+): Record<string, string> | undefined {
+  let host: string;
+  try {
+    host = new URL(url).hostname;
+  } catch {
+    return undefined;
+  }
+  if (!WIKIMEDIA_HOST.test(host)) return undefined;
+  return { "User-Agent": `Harbor/${appVersion} (https://github.com/Harborofficial/Harbor)` };
+}
+
 export function commonsFileInfoUrl(title: string): string {
   const params = new URLSearchParams({
     action: "query",
