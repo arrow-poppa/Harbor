@@ -12,7 +12,9 @@ use axum::Json;
 use base64::{engine::general_purpose::STANDARD as B64, Engine as _};
 use manatan_yomitan_server::handlers::{self, DictionaryAction, DictionaryLanguage, LookupParams};
 use manatan_yomitan_server::{import, lookup::LookupService, state::AppState, ServerState};
+use serde::Serialize;
 use serde_json::Value;
+use tauri::ipc::Channel;
 use tauri::{AppHandle, Manager};
 use tokio::sync::OnceCell;
 
@@ -119,7 +121,11 @@ pub async fn dict_lookup(
 
 #[tauri::command]
 pub async fn dict_import(app: AppHandle, path: String) -> Result<String, String> {
-    let st = engine(&app).await?;
+    import_file(&app, path).await
+}
+
+async fn import_file(app: &AppHandle, path: String) -> Result<String, String> {
+    let st = engine(app).await?;
     let app_state = st.app.clone();
     app_state.set_loading(true);
     let res = tokio::task::spawn_blocking(move || {
@@ -130,6 +136,92 @@ pub async fn dict_import(app: AppHandle, path: String) -> Result<String, String>
     .map_err(|e| format!("import task failed: {}", e));
     st.app.set_loading(false);
     res?
+}
+
+// Where the dictionaries offered in Settings are published: GitHub releases
+// and repositories, and the wty releases on Hugging Face. Their redirects go to
+// those sites' download hosts.
+const DOWNLOAD_HOSTS: &[&str] = &["github.com", "raw.githubusercontent.com", "huggingface.co"];
+// The largest offered dictionaries (Wikipedia, some Wiktionary editions) stay
+// well under this.
+const MAX_DOWNLOAD_BYTES: u64 = 1024 * 1024 * 1024;
+
+#[derive(Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DictDownloadProgress {
+    received: u64,
+    total: Option<u64>,
+}
+
+/// Downloads a Yomitan dictionary from one of `DOWNLOAD_HOSTS` and imports it.
+#[tauri::command]
+pub async fn dict_download(
+    app: AppHandle,
+    url: String,
+    on_progress: Channel<DictDownloadProgress>,
+) -> Result<String, String> {
+    let parsed = reqwest::Url::parse(&url).map_err(|e| format!("bad dictionary URL: {}", e))?;
+    let host = parsed.host_str().unwrap_or_default().to_ascii_lowercase();
+    if parsed.scheme() != "https" || !DOWNLOAD_HOSTS.contains(&host.as_str()) {
+        return Err("dictionaries are only downloaded from GitHub and Hugging Face".into());
+    }
+    let client = crate::http_fetch::http_client_builder()
+        .redirect(reqwest::redirect::Policy::custom(|attempt| {
+            if attempt.url().scheme() == "https" && attempt.previous().len() < 10 {
+                attempt.follow()
+            } else {
+                attempt.stop()
+            }
+        }))
+        .timeout(std::time::Duration::from_secs(30 * 60))
+        .build()
+        .map_err(|e| format!("client: {}", e))?;
+    let mut res = client
+        .get(parsed)
+        .send()
+        .await
+        .and_then(|r| r.error_for_status())
+        .map_err(|e| format!("download failed: {}", e))?;
+    let total = res.content_length();
+    if total.is_some_and(|t| t > MAX_DOWNLOAD_BYTES) {
+        return Err("dictionary is too large".into());
+    }
+    let path = std::env::temp_dir().join(format!("harbor-dictionary-{}.zip", uuid::Uuid::new_v4()));
+    let downloaded = async {
+        use tokio::io::AsyncWriteExt;
+        let mut file = tokio::fs::File::create(&path)
+            .await
+            .map_err(|e| format!("temp file: {}", e))?;
+        let mut received = 0u64;
+        let mut reported = std::time::Instant::now();
+        while let Some(chunk) = res
+            .chunk()
+            .await
+            .map_err(|e| format!("download failed: {}", e))?
+        {
+            received += chunk.len() as u64;
+            if received > MAX_DOWNLOAD_BYTES {
+                return Err("dictionary is too large".to_string());
+            }
+            file.write_all(&chunk)
+                .await
+                .map_err(|e| format!("write: {}", e))?;
+            if reported.elapsed() >= std::time::Duration::from_millis(150) {
+                reported = std::time::Instant::now();
+                let _ = on_progress.send(DictDownloadProgress { received, total });
+            }
+        }
+        file.flush().await.map_err(|e| format!("write: {}", e))?;
+        let _ = on_progress.send(DictDownloadProgress { received, total });
+        Ok(())
+    }
+    .await;
+    let result = match downloaded {
+        Ok(()) => import_file(&app, path.to_string_lossy().into_owned()).await,
+        Err(e) => Err(e),
+    };
+    let _ = tokio::fs::remove_file(&path).await;
+    result
 }
 
 #[tauri::command]

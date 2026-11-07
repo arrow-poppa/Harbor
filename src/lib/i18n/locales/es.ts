@@ -6,6 +6,7 @@ import controllerHotkeys from "./es/controller-hotkeys";
 import controllerPlayer from "./es/controller-player";
 import immersionHotkeys from "./es/immersion-hotkeys";
 import wordAudioSources from "./es/word-audio-sources";
+import dictionaryDownloads from "./es/dictionary-downloads";
 import subtitleDictionary from "./es/subtitle-dictionary";
 import aiExplanation from "./es/ai-explanation";
 import ankiMining from "./es/anki-mining";
@@ -432,6 +433,7 @@ const es: Record<string, string> = {
   ...immersionHotkeys,
   ...controllerPlayer,
   ...wordAudioSources,
+  ...dictionaryDownloads,
 };
 
 export default es;
