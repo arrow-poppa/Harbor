@@ -3634,180 +3634,15 @@ fn sub_line_time(mpv: &Mpv, name: &str) -> Option<f64> {
     Some(time * scale + mpv_prop_f64(mpv, "sub-delay").unwrap_or(0.0))
 }
 
-// ---------- Anki media from the player's own cache ----------
-//
-// Opening the source again for every card is what made exporting slow: a
-// debrid stream costs DNS, TLS, the host resolving the link and a seek, about
-// a second each time. The player has already downloaded the stretch, so
-// `dump-cache` writes it to a local file in milliseconds and the sentence
-// audio reads that instead. When the stretch is no longer cached the slow path
-// is still there.
-//
-// Only the audio: mpv 0.41's dump drops most video packets that are not
-// keyframes (76 of 192 in an 8 s test, any output format), so a clip cut from
-// it skips frames and, with HEVC, decodes with missing references (smears).
-// The audio packets all come through.
-//
-// The dump is rebased to zero and starts at the first packet it writes, whose
-// source time mpv does not report. Starting it where the cached range starts
-// (a known time) is what turns a playback time into a position in the file.
-// The range starts at a video keyframe, but the file's zero is its earliest
-// packet, usually audio a few tens of milliseconds before; the keyframe's
-// time in the file is that lead, and is taken off (measured: 27 ms).
-
-struct CacheDump {
-    path: PathBuf,
-    src: String,
-    origin: f64,
-    end: f64,
-    at: std::time::Instant,
-}
-
-fn cache_dump_slot() -> &'static Mutex<Option<CacheDump>> {
-    static SLOT: std::sync::OnceLock<Mutex<Option<CacheDump>>> = std::sync::OnceLock::new();
-    SLOT.get_or_init(|| Mutex::new(None))
-}
-
-// Dumping from the start of the cached range copies everything kept behind
-// the playhead; past this many seconds back (the full-download mode keeps the
-// whole file) the dump would be too large to be worth it.
-const CACHE_DUMP_MAX_BACK_SECS: f64 = 600.0;
-
-/// The cached range that contains `from`, as (range start, range end).
-fn cached_range(mpv: &Mpv, from: f64) -> Option<(f64, f64)> {
-    let state = mpv_node_to_json(mpv.get_property::<MpvNode>("demuxer-cache-state").ok()?);
-    let ranges = state.get("seekable-ranges")?.as_array()?;
-    let mut best: Option<(f64, f64)> = None;
-    for r in ranges {
-        let (Some(a), Some(b)) = (r.get("start").and_then(Value::as_f64), r.get("end").and_then(Value::as_f64)) else {
-            continue;
-        };
-        if a <= from && best.map_or(true, |(_, e)| b > e) {
-            best = Some((a, b));
-        }
-    }
-    best
-}
-
-/// A local file holding `from..to` of the playing source, and the source time
-/// its zero corresponds to. None when that stretch is not in the cache.
-async fn cached_segment(mpv: &Mpv, src: &str, from: f64, to: f64) -> Option<(PathBuf, f64)> {
-    let mut slot = cache_dump_slot().lock().await;
-    if let Some(d) = slot.as_ref() {
-        if d.src == src && d.origin <= from && d.end >= to && d.at.elapsed() < Duration::from_secs(120) && d.path.exists() {
-            return Some((d.path.clone(), d.origin));
-        }
-    }
-    // Mining happens with the line still on screen, so its end is often a few
-    // tenths past the cache edge; wait briefly while the cache is growing.
-    let deadline = std::time::Instant::now() + Duration::from_millis(1500);
-    let mut last_end = f64::MIN;
-    let (origin, _) = loop {
-        let (a, b) = cached_range(mpv, from)?;
-        if b >= to {
-            break (a, b);
-        }
-        if b <= last_end || std::time::Instant::now() >= deadline {
-            return None;
-        }
-        last_end = b;
-        tokio::time::sleep(Duration::from_millis(150)).await;
-    };
-    if from - origin > CACHE_DUMP_MAX_BACK_SECS {
-        return None;
-    }
-    let path = std::env::temp_dir().join(format!("harbor-anki-cache-{}.mkv", Uuid::new_v4()));
-    let end = to + 1.0;
-    // A second past the end: the dump stops at a packet boundary, and cutting
-    // it exactly could lose the end of the line.
-    let args = [
-        "dump-cache".to_string(),
-        format!("{:.3}", origin),
-        format!("{:.3}", end),
-        path.to_string_lossy().into_owned(),
-    ];
-    let argv: Vec<&str> = args.iter().map(String::as_str).collect();
-    if mpv_argv_command(mpv, &argv).is_err() || std::fs::metadata(&path).map(|m| m.len() < 1024).unwrap_or(true) {
-        let _ = std::fs::remove_file(&path);
-        return None;
-    }
-    let origin = origin - first_packet_time(&path).await.unwrap_or(0.0);
-    // The dump holds what was cached, which can stop short of the asked end
-    // (the line ending right at the edge of a stream's download). Kept only
-    // when it reaches the end, and remembered with the end it really has, so a
-    // later card does not reuse it for a stretch it lacks.
-    let end = match dump_duration(&path).await {
-        Some(duration) => origin + duration,
-        None => end,
-    };
-    if end < to {
-        let _ = std::fs::remove_file(&path);
-        return None;
-    }
-    if let Some(old) = slot.replace(CacheDump { path: path.clone(), src: src.to_string(), origin, end, at: std::time::Instant::now() }) {
-        // Another encode may still be reading the previous dump.
-        tokio::spawn(async move {
-            tokio::time::sleep(Duration::from_secs(60)).await;
-            let _ = std::fs::remove_file(old.path);
-        });
-    }
-    Some((path, origin))
-}
-
-/// Length of a dump in seconds, from its container.
-async fn dump_duration(path: &std::path::Path) -> Option<f64> {
-    let ffprobe = crate::transcode::locate_ffprobe()?;
-    let mut cmd = tokio::process::Command::new(&ffprobe);
-    cmd.args(["-v", "error", "-show_entries", "format=duration"])
-        .args(["-of", "csv=p=0"])
-        .arg(path)
-        .stdin(std::process::Stdio::null())
-        .stderr(std::process::Stdio::null())
-        .kill_on_drop(true);
-    #[cfg(windows)]
-    cmd.creation_flags(0x0800_0000);
-    let out = tokio::time::timeout(Duration::from_secs(5), cmd.output())
-        .await
-        .ok()?
-        .ok()?;
-    String::from_utf8_lossy(&out.stdout)
-        .trim()
-        .parse::<f64>()
-        .ok()
-        .filter(|d| d.is_finite() && *d > 0.0)
-}
-
-/// Time of the first video packet in a dump (the first audio one when there
-/// is no video), which is where the cached range started.
-async fn first_packet_time(path: &std::path::Path) -> Option<f64> {
-    let ffprobe = crate::transcode::locate_ffprobe()?;
-    for stream in ["v:0", "a:0"] {
-        let mut cmd = tokio::process::Command::new(&ffprobe);
-        cmd.args(["-v", "error", "-select_streams", stream, "-show_entries", "packet=pts_time"])
-            .args(["-read_intervals", "%+#1", "-of", "csv=p=0"])
-            .arg(path)
-            .stdin(std::process::Stdio::null())
-            .stderr(std::process::Stdio::null())
-            .kill_on_drop(true);
-        #[cfg(windows)]
-        cmd.creation_flags(0x0800_0000);
-        let out = tokio::time::timeout(Duration::from_secs(5), cmd.output()).await.ok()?.ok()?;
-        let text = String::from_utf8_lossy(&out.stdout);
-        if let Some(t) = text.lines().find_map(|l| l.trim().trim_end_matches(',').parse::<f64>().ok()) {
-            return Some(t.clamp(0.0, 2.0));
-        }
-    }
-    None
-}
-
 // Index into SENTENCE_AUDIO_FORMATS of the last encoder that worked, so later
 // cards go straight to it instead of failing through the missing ones.
 static SENTENCE_AUDIO_FORMAT: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
 
 /// Encodes the audio between `start` and `end` (defaulting to the current
 /// subtitle line) to AAC for an Anki card, using the playing source and audio
-/// track. Runs a separate mpv so playback is not disturbed; it reads the
-/// player's cache when the stretch is in it (see `cached_segment`).
+/// track. Runs a separate mpv so playback is not disturbed. It reads the
+/// source itself, not the player's cache: mpv 0.41's `dump-cache` loses most
+/// non-key video packets and a dump can stop short of the line's end.
 #[tauri::command]
 pub async fn mpv_sentence_audio(
     state: State<'_, MpvState>,
@@ -3838,23 +3673,16 @@ pub async fn mpv_sentence_audio(
     if !(0.2..=300.0).contains(&dur) {
         return Err(format!("bad sentence range {:.2}..{:.2}", from, to));
     }
-    // The dump holds only the playing tracks, so the source's track ids,
-    // user agent and headers apply only when reading the source itself.
-    let cached = cached_segment(&mpv, &src, from, to).await;
-    let (input, seek) = match &cached {
-        Some((path, origin)) => (path.to_string_lossy().into_owned(), from - origin),
-        None => (src.clone(), from),
-    };
-    let remote = cached.is_none();
+    let (input, seek) = (src.clone(), from);
     let aid = mpv
         .get_property::<String>("aid")
         .ok()
-        .filter(|a| remote && !a.trim().is_empty() && a.trim() != "no" && a.trim() != "auto");
-    let user_agent = mpv.get_property::<String>("user-agent").ok().filter(|s| remote && !s.is_empty());
+        .filter(|a| !a.trim().is_empty() && a.trim() != "no" && a.trim() != "auto");
+    let user_agent = mpv.get_property::<String>("user-agent").ok().filter(|s| !s.is_empty());
     let header_fields = mpv
         .get_property::<String>("http-header-fields")
         .ok()
-        .filter(|s| remote && !s.is_empty());
+        .filter(|s| !s.is_empty());
 
     let mpv_bin = crate::thumbs::locate_mpv().ok_or_else(|| "mpv binary not found".to_string())?;
     let mut last_exit = None;
@@ -3940,8 +3768,8 @@ fn clip_encoders(format: &str) -> Vec<(&'static str, Vec<&'static str>)> {
 /// Encodes the video of the current subtitle line (or `start`..`end`) as an
 /// animated AVIF, WebP or GIF for an Anki card. A separate mpv cuts the
 /// scaled segment from the playing source (so streams, headers and EDL
-/// sources work; not from the cache dump, see `cached_segment`), then ffmpeg
-/// encodes it. Missing encoders fall back to the
+/// sources work; not from the player's cache, see `mpv_sentence_audio`),
+/// then ffmpeg encodes it. Missing encoders fall back to the
 /// next format: AVIF → WebP → GIF.
 #[tauri::command]
 #[allow(clippy::too_many_arguments)]
