@@ -10,6 +10,7 @@ import {
   isWiktionaryFile,
   jpod101Url,
   languagePod101Url,
+  lookupLanguageForTrack,
   moveWordAudioSource,
   parseCustomAudioList,
   pickEdgeVoice,
@@ -149,4 +150,17 @@ test("Wikimedia requests name Harbor; other sites keep the default User-Agent", 
   assert.equal(wordAudioRequestHeaders("https://jisho.org/search/x", "1.0.2"), undefined);
   assert.equal(wordAudioRequestHeaders("https://notwikimedia.org/x", "1.0.2"), undefined);
   assert.equal(wordAudioRequestHeaders("not a url", "1.0.2"), undefined);
+});
+
+test("a subtitle track's language tag picks the lookup language", () => {
+  assert.equal(lookupLanguageForTrack("jpn"), "japanese");
+  assert.equal(lookupLanguageForTrack("ja-JP"), "japanese");
+  assert.equal(lookupLanguageForTrack("pt-BR"), "portuguese");
+  assert.equal(lookupLanguageForTrack("es-419"), "spanish");
+  assert.equal(lookupLanguageForTrack("chi"), "chinese");
+  assert.equal(lookupLanguageForTrack("nob"), "norwegian");
+  assert.equal(lookupLanguageForTrack("English"), "english");
+  assert.equal(lookupLanguageForTrack("und"), null);
+  assert.equal(lookupLanguageForTrack(""), null);
+  assert.equal(lookupLanguageForTrack(undefined), null);
 });

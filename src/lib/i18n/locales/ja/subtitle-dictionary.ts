@@ -39,6 +39,9 @@ const subtitleDictionary: Record<string, string> = {
   Latin: "ラテン語",
   Controller: "コントローラー",
   Dictionary: "辞書",
+  "Detect from the subtitle track": "字幕トラックから判別",
+  "Lookups and word audio use the selected subtitle's language when it has one; otherwise the language above.":
+    "選択中の字幕に言語情報があれば、検索と単語の音声にその言語を使います。なければ上の言語を使います。",
 };
 
 export default subtitleDictionary;

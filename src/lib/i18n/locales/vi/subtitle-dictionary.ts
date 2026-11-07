@@ -39,6 +39,9 @@ const subtitleDictionary: Record<string, string> = {
   Latin: "Tiếng Latinh",
   Controller: "Tay cầm",
   Dictionary: "Từ điển",
+  "Detect from the subtitle track": "Nhận diện từ rãnh phụ đề",
+  "Lookups and word audio use the selected subtitle's language when it has one; otherwise the language above.":
+    "Tra từ và âm thanh của từ dùng ngôn ngữ của phụ đề đang chọn nếu có; nếu không thì dùng ngôn ngữ ở trên.",
 };
 
 export default subtitleDictionary;

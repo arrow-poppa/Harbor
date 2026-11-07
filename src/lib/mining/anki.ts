@@ -4,6 +4,7 @@ import type { DictTerm } from "./dictionary";
 import { aiTextToHtml } from "./ai-explain";
 import { escapeHtml, termGlossaryHtml } from "./glossary-html";
 import { firstWordAudio } from "./word-audio";
+import { subToPlaybackTime, type SubTiming } from "./immersion-core";
 
 export function ankiInvoke<T = unknown>(
   settings: Settings,
@@ -80,10 +81,11 @@ export type MiningContext = {
   matchStart: number;
   matchLength: number;
   title: string;
-  // The line's sub-start/sub-end as mpv reports them, without sub-delay.
+  // The line's sub-start/sub-end as mpv reports them, in the subtitle's own
+  // times (see subToPlaybackTime).
   subStartSec?: number;
   subEndSec?: number;
-  subDelaySec?: () => number;
+  subTiming?: () => SubTiming;
   // Exact stretch to cut, in playback time, instead of the subtitle line
   // (a recording made with the immersion hotkeys).
   audioRange?: { start: number; end: number; pad: number };
@@ -134,17 +136,18 @@ export function dataUrlBase64(url: string): string {
   return i >= 0 ? url.slice(i + 1) : url;
 }
 
-// mpv leaves sub-delay out of sub-start/sub-end, so a cut from them is off by
-// exactly the timing correction. null lets the native side read the line itself.
+// mpv's sub-start/sub-end leave sub-delay and the frame-rate correction out,
+// so a cut from them would miss the line. null lets the native side read the
+// line itself.
 function linePlaybackTime(
   settings: Settings,
   ctx: MiningContext,
 ): { start: number | null; end: number | null; pad: number } {
   if (ctx.audioRange) return ctx.audioRange;
-  const delay = ctx.subDelaySec?.() ?? 0;
+  const timing = ctx.subTiming?.() ?? { subDelaySec: 0 };
   return {
-    start: ctx.subStartSec != null ? ctx.subStartSec + delay : null,
-    end: ctx.subEndSec != null ? ctx.subEndSec + delay : null,
+    start: ctx.subStartSec != null ? subToPlaybackTime(ctx.subStartSec, timing) : null,
+    end: ctx.subEndSec != null ? subToPlaybackTime(ctx.subEndSec, timing) : null,
     pad: settings.ankiAudioPadSec,
   };
 }

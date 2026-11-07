@@ -2,6 +2,7 @@ import { fetchEdgeNarrationVoices, synthesizeNarration } from "@/lib/ebook/narra
 import { FINAL_URL_HEADER, safeFetch, safeFetchBytes, safeFetchLocal } from "@/lib/safe-fetch";
 import type { Settings } from "@/lib/settings";
 import { APP_VERSION } from "@/lib/build-info";
+import { effectiveLookupLanguage } from "./lookup-language";
 import { audioExtension, findWordAudio, wordAudioDataUrl } from "./local-audio";
 import {
   JPOD101_MISSING_AUDIO_SHA256,
@@ -363,7 +364,7 @@ export function wordAudioSourceEntries(
   term: string,
   reading: string,
 ): WordAudioSourceEntry[] {
-  const language = settings.subLookupLanguage || "japanese";
+  const language = effectiveLookupLanguage(settings);
   const entries = enabledSources(settings).map((s) => ({
     type: s.type,
     name: WORD_AUDIO_SOURCE_NAMES[s.type],

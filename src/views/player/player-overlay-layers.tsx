@@ -1,4 +1,4 @@
-import { memo, useMemo, type ComponentProps, type RefObject } from "react";
+import { memo, useEffect, useMemo, type ComponentProps, type RefObject } from "react";
 import { DrawCanvas, StrokesLayer, type Stroke } from "@/components/player/draw-canvas";
 import { cropTransform } from "./hooks/use-video-fill";
 import type { HoldSpeed } from "./hooks/use-hold-speed";
@@ -15,6 +15,7 @@ import { writePlayerPrefs } from "@/lib/player-prefs";
 import type { PlayerSrc, PlayEpisode } from "@/lib/view";
 import { isLivePlaybackSrc } from "@/lib/player/live-src";
 import { isSubsHidden } from "@/lib/player/subs-hidden";
+import { setSubtitleTrackLanguage } from "@/lib/mining/lookup-language";
 import { BpTenFootLayer } from "./bp-ten-foot";
 import { CastLayer } from "./cast-layer";
 import { DragClickStage } from "./drag-click-stage";
@@ -222,6 +223,17 @@ export const PlayerOverlayLayers = memo(function PlayerOverlayLayers(p: PlayerOv
     : "top-start";
 
   const lookupTitle = [p.src.title, p.src.subtitle].filter(Boolean).join(" · ");
+  // Lookups and word audio follow the selected subtitle's language.
+  const subtitleLang = p.snap.subtitleTracks.find((track) => track.selected)?.lang;
+  useEffect(() => {
+    setSubtitleTrackLanguage(subtitleLang);
+  }, [subtitleLang]);
+  useEffect(
+    () => () => {
+      setSubtitleTrackLanguage(null);
+    },
+    [],
+  );
   const { snapRef, playPauseToggle, bridgeRef, engine } = p;
   // Stable across renders so the memoized subtitle layers do not re-render.
   const lookupControls = useMemo<LookupControls>(
@@ -230,7 +242,7 @@ export const PlayerOverlayLayers = memo(function PlayerOverlayLayers(p: PlayerOv
       togglePlay: playPauseToggle,
       // Hidden subtitles stay hidden however the lookup copy swaps them.
       setNativeSubVisible: (on) => bridgeRef.current?.setSubVisible(on && !isSubsHidden()),
-      subDelaySec: () => snapRef.current?.subDelaySec ?? 0,
+      subTiming: () => snapRef.current ?? { subDelaySec: 0 },
       title: lookupTitle,
       mpvEngine: engine === "mpv",
     }),

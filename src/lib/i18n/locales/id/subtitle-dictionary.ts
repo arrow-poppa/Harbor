@@ -39,6 +39,9 @@ const subtitleDictionary: Record<string, string> = {
   Latin: "Latin",
   Controller: "Kontroler",
   Dictionary: "Kamus",
+  "Detect from the subtitle track": "Deteksi dari trek subtitel",
+  "Lookups and word audio use the selected subtitle's language when it has one; otherwise the language above.":
+    "Pencarian dan audio kata memakai bahasa subtitel yang dipilih bila ada; jika tidak, bahasa di atas.",
 };
 
 export default subtitleDictionary;

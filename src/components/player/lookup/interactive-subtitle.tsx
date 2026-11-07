@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useSettings } from "@/lib/settings";
 import { aiExplainReady, explainWord } from "@/lib/mining/ai-explain";
+import { useLookupLanguage } from "@/lib/mining/lookup-language";
 import { setWordSelection } from "@/lib/player/word-selection";
 import {
   firstWord,
@@ -60,9 +61,10 @@ export function InteractiveSubtitle({
   onEngagedChange,
 }: Props) {
   const { settings } = useSettings();
+  const lookupLanguage = useLookupLanguage(settings);
   const lookup = useSubtitleLookup({
     lines,
-    language: settings.subLookupLanguage || "japanese",
+    language: lookupLanguage,
     pauseOnHover: settings.subLookupPauseOnHover,
     controls,
     scanKey: settings.subLookupScanKey ?? "none",
@@ -272,18 +274,10 @@ export function InteractiveSubtitle({
       title: controls.title,
       subStartSec: startSec,
       subEndSec: endSec,
-      subDelaySec: controls.subDelaySec,
+      subTiming: controls.subTiming,
       mpvEngine: controls.mpvEngine,
     };
-  }, [
-    lines,
-    lookup.hit,
-    controls.title,
-    controls.mpvEngine,
-    controls.subDelaySec,
-    startSec,
-    endSec,
-  ]);
+  }, [lines, lookup.hit, controls.title, controls.mpvEngine, controls.subTiming, startSec, endSec]);
 
   // A word highlighted in the pick-a-word mode, or shown in the popup, is the
   // selected word the immersion card hotkeys add to the card.
