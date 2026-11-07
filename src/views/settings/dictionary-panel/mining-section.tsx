@@ -30,6 +30,7 @@ import {
   type WordAudioSourceType,
 } from "@/lib/mining/word-audio-core";
 import { Section, ToggleRow } from "../shared";
+import { DictionaryDownloads } from "./dictionary-downloads";
 
 const LANGUAGES = [
   ["japanese", "Japanese"],
@@ -294,6 +295,7 @@ function DictionarySection() {
           {busy ? t("Importing {name}…", { name: busy }) : t("Import dictionary (.zip)")}
         </button>
       </div>
+      <DictionaryDownloads installed={dicts?.map((d) => d.name) ?? []} onImported={refresh} />
       {msg && (
         <p className="whitespace-pre-wrap text-[12.5px] leading-relaxed text-ink-muted">{msg}</p>
       )}

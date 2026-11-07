@@ -1,4 +1,5 @@
 import wordAudioSources from "./pl/word-audio-sources";
+import dictionaryDownloads from "./pl/dictionary-downloads";
 import subtitleDictionary from "./pl/subtitle-dictionary";
 import aiExplanation from "./pl/ai-explanation";
 import ankiMining from "./pl/anki-mining";
@@ -395,6 +396,7 @@ const pl: Record<string, string> = {
   ...immersionHotkeys,
   ...controllerPlayer,
   ...wordAudioSources,
+  ...dictionaryDownloads,
 };
 
 export default pl;

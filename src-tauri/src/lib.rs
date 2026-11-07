@@ -2143,6 +2143,7 @@ pub fn run() {
             mpv::mpv_sentence_clip,
             dictionary::dict_lookup,
             dictionary::dict_import,
+            dictionary::dict_download,
             dictionary::dict_list,
             dictionary::dict_manage,
             dictionary::dict_media,
