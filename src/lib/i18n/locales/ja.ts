@@ -6,6 +6,7 @@ import controllerHotkeys from "./ja/controller-hotkeys";
 import controllerPlayer from "./ja/controller-player";
 import immersionHotkeys from "./ja/immersion-hotkeys";
 import wordAudioSources from "./ja/word-audio-sources";
+import dictionaryDownloads from "./ja/dictionary-downloads";
 import subtitleDictionary from "./ja/subtitle-dictionary";
 import aiExplanation from "./ja/ai-explanation";
 import ankiMining from "./ja/anki-mining";
@@ -438,6 +439,7 @@ const ja: Record<string, string> = {
   ...immersionHotkeys,
   ...controllerPlayer,
   ...wordAudioSources,
+  ...dictionaryDownloads,
 };
 
 export default ja;

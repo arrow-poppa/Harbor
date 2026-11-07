@@ -1,4 +1,4 @@
-import { invoke } from "@tauri-apps/api/core";
+import { Channel, invoke } from "@tauri-apps/api/core";
 import { isLinuxDesktop, isMacDesktop, isWeb, isWindowsDesktop } from "@/lib/platform";
 
 // The dictionary engine, local audio and Anki bridge exist in the desktop app only.
@@ -16,6 +16,8 @@ export type DictTerm = {
   glossary: { dictionaryName: string; tags: string[]; content: unknown[] }[];
   frequencies: { dictionaryName: string; value: string }[];
   pitchAccents: { dictionaryName: string; reading: string; pitches: { position: number }[] }[];
+  // From pronunciation dictionaries (Wiktionary IPA and the like).
+  ipa?: { dictionaryName: string; reading: string; transcriptions: { ipa: string }[] }[];
   forms: { headword: string; reading: string }[];
   termTags: DictTag[];
   // Matched source length in Unicode code points.
@@ -65,6 +67,20 @@ export function clearLookupCache() {
 
 export async function importDictionary(path: string): Promise<string> {
   const msg = await invoke<string>("dict_import", { path });
+  clearLookupCache();
+  return msg;
+}
+
+export type DownloadProgress = { received: number; total?: number | null };
+
+/** Downloads a Yomitan dictionary (GitHub or Hugging Face) and imports it. */
+export async function downloadDictionary(
+  url: string,
+  onProgress: (progress: DownloadProgress) => void,
+): Promise<string> {
+  const channel = new Channel<DownloadProgress>();
+  channel.onmessage = onProgress;
+  const msg = await invoke<string>("dict_download", { url, onProgress: channel });
   clearLookupCache();
   return msg;
 }
