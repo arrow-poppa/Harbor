@@ -25,6 +25,9 @@ const wordAudioSources: Record<string, string> = {
     "Kendi URL'nizdeki bir ses dosyası. {term}, {reading} ve {language} doldurulur.",
   "A URL that answers with a list of audio files, such as a local audio server. {term}, {reading} and {language} are filled in.":
     "Yerel bir ses sunucusu gibi, ses dosyalarının listesiyle yanıt veren bir URL. {term}, {reading} ve {language} doldurulur.",
+  "Only when no other source has audio": "Yalnızca başka kaynakta ses yoksa",
+  "Synthesized speech is used only if no recorded voice is found for the word.":
+    "Sentezlenmiş ses yalnızca kelimenin kaydı bulunamazsa kullanılır.",
 };
 
 export default wordAudioSources;

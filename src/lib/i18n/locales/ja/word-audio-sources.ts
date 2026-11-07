@@ -25,6 +25,9 @@ const wordAudioSources: Record<string, string> = {
     "独自の URL にある音声ファイルです。{term}、{reading}、{language} が埋め込まれます。",
   "A URL that answers with a list of audio files, such as a local audio server. {term}, {reading} and {language} are filled in.":
     "ローカル音声サーバーのように、音声ファイルの一覧を返す URL です。{term}、{reading}、{language} が埋め込まれます。",
+  "Only when no other source has audio": "他のソースに音声がない場合のみ",
+  "Synthesized speech is used only if no recorded voice is found for the word.":
+    "単語の録音が見つからない場合にのみ合成音声を使います。",
 };
 
 export default wordAudioSources;

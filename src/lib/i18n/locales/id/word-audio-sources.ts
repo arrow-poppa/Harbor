@@ -25,6 +25,9 @@ const wordAudioSources: Record<string, string> = {
     "File audio di URL Anda sendiri. {term}, {reading}, dan {language} diisi otomatis.",
   "A URL that answers with a list of audio files, such as a local audio server. {term}, {reading} and {language} are filled in.":
     "URL yang menjawab dengan daftar file audio, seperti server audio lokal. {term}, {reading}, dan {language} diisi otomatis.",
+  "Only when no other source has audio": "Hanya jika sumber lain tidak punya audio",
+  "Synthesized speech is used only if no recorded voice is found for the word.":
+    "Suara sintetis hanya dipakai jika tidak ada rekaman untuk kata tersebut.",
 };
 
 export default wordAudioSources;

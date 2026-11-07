@@ -26,6 +26,9 @@ const wordAudioSources: Record<string, string> = {
     "Một tệp âm thanh tại URL của bạn. {term}, {reading} và {language} sẽ được điền vào.",
   "A URL that answers with a list of audio files, such as a local audio server. {term}, {reading} and {language} are filled in.":
     "URL trả về danh sách tệp âm thanh, chẳng hạn máy chủ âm thanh cục bộ. {term}, {reading} và {language} sẽ được điền vào.",
+  "Only when no other source has audio": "Chỉ khi không nguồn nào khác có âm thanh",
+  "Synthesized speech is used only if no recorded voice is found for the word.":
+    "Giọng tổng hợp chỉ được dùng khi không tìm thấy bản ghi âm nào của từ.",
 };
 
 export default wordAudioSources;

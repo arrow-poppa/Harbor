@@ -19,6 +19,8 @@ export type WordAudioSource = {
   // edge-tts: voice id ("" picks one for the lookup language) and what it reads.
   voice?: string;
   speak?: "term" | "reading";
+  // edge-tts: only used when no other source has audio for the word.
+  onlyAsFallback?: boolean;
 };
 
 // The local database keeps working as before; every online source starts off,
@@ -30,7 +32,7 @@ export const DEFAULT_WORD_AUDIO_SOURCES: WordAudioSource[] = [
   { type: "jisho", enabled: false },
   { type: "lingua-libre", enabled: false },
   { type: "wiktionary", enabled: false },
-  { type: "edge-tts", enabled: false, voice: "", speak: "reading" },
+  { type: "edge-tts", enabled: false, voice: "", speak: "reading", onlyAsFallback: true },
   { type: "custom", enabled: false, url: "" },
   { type: "custom-json", enabled: false, url: "" },
 ];
@@ -54,6 +56,7 @@ export function sanitizeWordAudioSources(value: unknown): WordAudioSource[] {
       if ("url" in base) source.url = typeof r.url === "string" ? r.url.trim().slice(0, 2048) : "";
       if ("voice" in base) source.voice = typeof r.voice === "string" ? r.voice.slice(0, 96) : "";
       if ("speak" in base) source.speak = r.speak === "term" ? "term" : "reading";
+      if ("onlyAsFallback" in base) source.onlyAsFallback = r.onlyAsFallback !== false;
       out.push(source);
     }
   }
