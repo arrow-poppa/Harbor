@@ -551,16 +551,24 @@ function WordAudioButton({ term }: { term: DictTerm }) {
       const found =
         list ?? (await findWordAudioCandidates(settingsRef.current, term.headword, term.reading));
       setList(found);
-      // A voice that fails to load is skipped for the next one.
-      for (let step = 0; step < found.length; step++) {
-        const at = (idx + step) % found.length;
-        try {
-          await playWordAudioData(await loadWordAudio(found[at]));
-          setPlaying(found[at].label);
-          setIdx((at + 1) % found.length);
-          return;
-        } catch {
-          /* next voice */
+      // A voice that fails to load is skipped for the next one. Clicking
+      // again cycles through the recorded voices; a fallback (Edge TTS) only
+      // plays when none of them loads.
+      const recorded = found.filter((c) => !c.fallback);
+      const fallbacks = found.filter((c) => c.fallback);
+      const pools = recorded.length ? [recorded, fallbacks] : [fallbacks];
+      for (const [p, pool] of pools.entries()) {
+        const from = p === 0 ? idx : 0;
+        for (let step = 0; step < pool.length; step++) {
+          const at = (from + step) % pool.length;
+          try {
+            await playWordAudioData(await loadWordAudio(pool[at]));
+            setPlaying(pool[at].label);
+            if (p === 0) setIdx((at + 1) % pool.length);
+            return;
+          } catch {
+            /* next voice */
+          }
         }
       }
       setErr("No audio found for this word");
@@ -627,28 +635,37 @@ function WordAudioMenu({ term, settings }: { term: DictTerm; settings: Settings 
 
   // Every source is checked as the menu opens, so each row already shows
   // whether it has audio. Lists and loaded audio are cached, so what the
-  // audio button already fetched is not fetched again.
+  // audio button already fetched is not fetched again. Fallback sources
+  // (Edge TTS) are only checked when no other source has audio, so opening
+  // the menu does not synthesize speech for nothing; a click still plays them.
   useEffect(() => {
     let alive = true;
     const set = (key: string, s: AudioRowStatus) => {
       if (alive) setStatus((m) => ({ ...m, [key]: s }));
     };
-    entries.forEach(async (entry, i) => {
+    const check = async (i: number): Promise<boolean> => {
       set(String(i), "busy");
-      const candidates = await entry.candidates();
-      if (!alive) return;
+      const candidates = await entries[i].candidates();
+      if (!alive) return false;
       setFound((f) => ({ ...f, [i]: candidates }));
       if (candidates.length < 2) {
-        set(
-          String(i),
-          candidates.length === 1 && (await audioLoads(candidates[0])) ? "ok" : "none",
-        );
-        return;
+        const ok = candidates.length === 1 && (await audioLoads(candidates[0]));
+        set(String(i), ok ? "ok" : "none");
+        return ok;
       }
-      candidates.forEach(async (candidate, k) => {
-        set(`${i}:${k}`, "busy");
-        set(`${i}:${k}`, (await audioLoads(candidate)) ? "ok" : "none");
-      });
+      const loaded = await Promise.all(
+        candidates.map(async (candidate, k) => {
+          set(`${i}:${k}`, "busy");
+          const ok = await audioLoads(candidate);
+          set(`${i}:${k}`, ok ? "ok" : "none");
+          return ok;
+        }),
+      );
+      return loaded.some(Boolean);
+    };
+    const indexes = entries.map((_, i) => i);
+    void Promise.all(indexes.filter((i) => !entries[i].fallback).map(check)).then((found) => {
+      if (alive && !found.some(Boolean)) indexes.filter((i) => entries[i].fallback).forEach(check);
     });
     return () => {
       alive = false;

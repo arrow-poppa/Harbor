@@ -735,6 +735,14 @@ function WordAudioSection() {
                   <option value="term">{t("The word as written")}</option>
                 </select>
               </Row>
+              <ToggleRow
+                label={t("Only when no other source has audio")}
+                sub={t(
+                  "Synthesized speech is used only if no recorded voice is found for the word.",
+                )}
+                value={s.onlyAsFallback !== false}
+                onChange={(v) => patch(i, { onlyAsFallback: v })}
+              />
             </>
           )}
           {s.enabled && (s.type === "custom" || s.type === "custom-json") && (

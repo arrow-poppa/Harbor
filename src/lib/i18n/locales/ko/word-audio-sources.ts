@@ -25,6 +25,9 @@ const wordAudioSources: Record<string, string> = {
     "직접 지정한 URL의 오디오 파일입니다. {term}, {reading}, {language}가 채워집니다.",
   "A URL that answers with a list of audio files, such as a local audio server. {term}, {reading} and {language} are filled in.":
     "로컬 오디오 서버처럼 오디오 파일 목록으로 응답하는 URL입니다. {term}, {reading}, {language}가 채워집니다.",
+  "Only when no other source has audio": "다른 소스에 음성이 없을 때만",
+  "Synthesized speech is used only if no recorded voice is found for the word.":
+    "단어의 녹음을 찾지 못한 경우에만 합성 음성을 사용합니다.",
 };
 
 export default wordAudioSources;

@@ -24,6 +24,9 @@ const wordAudioSources: Record<string, string> = {
     "位于你自己 URL 的音频文件。{term}、{reading} 和 {language} 会被填入。",
   "A URL that answers with a list of audio files, such as a local audio server. {term}, {reading} and {language} are filled in.":
     "返回音频文件列表的 URL，例如本地音频服务器。{term}、{reading} 和 {language} 会被填入。",
+  "Only when no other source has audio": "仅在其他来源都没有音频时使用",
+  "Synthesized speech is used only if no recorded voice is found for the word.":
+    "只有找不到该词的录音时才使用合成语音。",
 };
 
 export default wordAudioSources;

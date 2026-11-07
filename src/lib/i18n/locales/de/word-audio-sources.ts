@@ -26,6 +26,9 @@ const wordAudioSources: Record<string, string> = {
     "Eine Audiodatei unter deiner eigenen URL. {term}, {reading} und {language} werden eingesetzt.",
   "A URL that answers with a list of audio files, such as a local audio server. {term}, {reading} and {language} are filled in.":
     "Eine URL, die mit einer Liste von Audiodateien antwortet, etwa ein lokaler Audioserver. {term}, {reading} und {language} werden eingesetzt.",
+  "Only when no other source has audio": "Nur wenn keine andere Quelle Audio hat",
+  "Synthesized speech is used only if no recorded voice is found for the word.":
+    "Synthetische Sprache wird nur verwendet, wenn für das Wort keine Aufnahme gefunden wird.",
 };
 
 export default wordAudioSources;

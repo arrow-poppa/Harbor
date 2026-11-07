@@ -27,6 +27,8 @@ export type WordAudioCandidate = {
   source: WordAudioSourceType;
   label: string;
   load: () => Promise<WordAudio>;
+  // Only used when no other source has audio (Edge TTS by default).
+  fallback?: boolean;
 };
 
 const FETCH_TIMEOUT_MS = 12_000;
@@ -220,6 +222,7 @@ async function edgeTts(
     {
       source: "edge-tts",
       label: `Edge TTS (${voice.id})`,
+      fallback: isFallbackSource(source),
       load: async () => {
         const { blob } = await synthesizeNarration(
           `word-audio-${Date.now()}-${++ttsRequest}`,
@@ -339,25 +342,36 @@ function cachedSourceCandidates(
 export type WordAudioSourceEntry = {
   type: WordAudioSourceType;
   name: string;
+  // Asked only when no other source has audio for the word.
+  fallback: boolean;
   candidates: () => Promise<WordAudioCandidate[]>;
 };
 
-/** The enabled sources in the user's order. A source is only asked when its
- *  candidates are wanted; a source that fails or has nothing gives none. */
+function isFallbackSource(source: WordAudioSource): boolean {
+  return source.type === "edge-tts" && source.onlyAsFallback !== false;
+}
+
+/** The enabled sources in the user's order, fallback sources last. A source
+ *  is only asked when its candidates are wanted; a source that fails or has
+ *  nothing gives none. */
 export function wordAudioSourceEntries(
   settings: Settings,
   term: string,
   reading: string,
 ): WordAudioSourceEntry[] {
   const language = settings.subLookupLanguage || "japanese";
-  return enabledSources(settings).map((s) => ({
+  const entries = enabledSources(settings).map((s) => ({
     type: s.type,
     name: WORD_AUDIO_SOURCE_NAMES[s.type],
+    fallback: isFallbackSource(s),
     candidates: () => cachedSourceCandidates(s, settings, term, reading, language),
   }));
+  return [...entries.filter((e) => !e.fallback), ...entries.filter((e) => e.fallback)];
 }
 
-/** Every voice the enabled sources have for a word, in the sources' order. */
+/** Every voice the enabled sources have for a word, in the sources' order
+ *  with fallback sources last. Listing a fallback costs nothing: Edge TTS
+ *  only synthesizes when its candidate is loaded. */
 export function findWordAudioCandidates(
   settings: Settings,
   term: string,

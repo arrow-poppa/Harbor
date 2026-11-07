@@ -40,6 +40,7 @@ test("saved sources keep their order, gain new types and drop unknown ones", () 
     enabled: true,
     voice: "ja-JP-NanamiNeural",
     speak: "term",
+    onlyAsFallback: true,
   });
   assert.equal(saved[2].url, "https://x.test/{term}");
   assert.equal(saved.find((s) => s.type === "jisho")?.enabled, false);
