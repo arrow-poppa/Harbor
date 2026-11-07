@@ -6,7 +6,9 @@ import {
   invisibleMarker,
   lineFromSnapshot,
   newestRecentNote,
+  playbackToSubTime,
   pushLine,
+  subToPlaybackTime,
 } from "../src/lib/mining/immersion-core.ts";
 import { subCueSeekTarget } from "../src/lib/player/sub-seek.ts";
 
@@ -116,4 +118,32 @@ test("an open dictionary popup is tracked per subtitle until each one closes", a
   assert.equal(isLookupPopupOpen(), true);
   setLookupPopupOpen(secondary, false);
   assert.equal(isLookupPopupOpen(), false);
+});
+
+// Measured on mpv 0.41 with a 10–12s line in a 24 fps video: sub-start and
+// sub-end stay 10 and 12 whatever sub-fps and sub-delay are.
+test("a line retimed by sub-fps is cut where it shows, not at its file times", () => {
+  const at48 = { subText: "A", subStartSec: 10, subEndSec: 12, subtitleFps: 48, videoFps: 24 };
+  assert.deepEqual(lineFromSnapshot({ ...at48, subDelaySec: 0 }), {
+    text: "A",
+    start: 20,
+    end: 24,
+  });
+  assert.deepEqual(lineFromSnapshot({ ...at48, subDelaySec: 3 }), {
+    text: "A",
+    start: 23,
+    end: 27,
+  });
+  const at12 = { subDelaySec: 0, subtitleFps: 12, videoFps: 24 };
+  assert.equal(subToPlaybackTime(10, at12), 5);
+  // sub-fps 0 (or unknown) is no correction.
+  assert.equal(subToPlaybackTime(10, { subDelaySec: 2, subtitleFps: 0, videoFps: 24 }), 12);
+  assert.equal(subToPlaybackTime(10, { subDelaySec: 2 }), 12);
+});
+
+test("playback times map back to the subtitle's own times", () => {
+  const timing = { subDelaySec: 3, subtitleFps: 25, videoFps: 24 };
+  for (const t of [0, 10, 1234.5]) {
+    assert.ok(Math.abs(playbackToSubTime(subToPlaybackTime(t, timing), timing) - t) < 1e-9);
+  }
 });

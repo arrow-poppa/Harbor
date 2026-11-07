@@ -881,6 +881,9 @@ export type Settings = {
   nuvioSecondaryPrivileges: SecondaryProfilePrivileges;
   subLookupEnabled: boolean;
   subLookupLanguage: string;
+  // Use the selected subtitle track's language when it names one, falling
+  // back to subLookupLanguage.
+  subLookupLanguageFromTrack: boolean;
   subLookupPauseOnHover: boolean;
   // Keep the popup open when the pointer leaves it; it then closes on a click
   // outside it or Escape.

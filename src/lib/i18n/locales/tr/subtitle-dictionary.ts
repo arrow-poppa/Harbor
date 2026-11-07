@@ -40,6 +40,9 @@ const subtitleDictionary: Record<string, string> = {
   Latin: "Latince",
   Controller: "Kontrolcü",
   Dictionary: "Sözlük",
+  "Detect from the subtitle track": "Altyazı parçasından algıla",
+  "Lookups and word audio use the selected subtitle's language when it has one; otherwise the language above.":
+    "Aramalar ve kelime sesi, seçili altyazının bir dili varsa onu kullanır; yoksa yukarıdaki dili.",
 };
 
 export default subtitleDictionary;

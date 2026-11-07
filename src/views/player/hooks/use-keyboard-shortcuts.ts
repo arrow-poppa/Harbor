@@ -18,7 +18,11 @@ import { tracePlayback } from "@/lib/player/pause-trace";
 import { round2 } from "../player-utils";
 import type { ImmersionAction } from "./use-immersion";
 import { subCueSeekTarget } from "@/lib/player/sub-seek";
-import { lineFromSnapshot } from "@/lib/mining/immersion-core";
+import {
+  lineFromSnapshot,
+  playbackToSubTime,
+  subToPlaybackTime,
+} from "@/lib/mining/immersion-core";
 import { getPlaybackPosition } from "@/lib/player/playback-clock";
 import {
   LOOKUP_ACTIONS,
@@ -358,9 +362,9 @@ export function useKeyboardShortcuts(params: {
           const last = subSeekRef.current;
           const now = getPlaybackPosition();
           const from = last && performance.now() - last.at < 1500 ? last.target : now;
-          const target = subCueSeekTarget(cues, from - snap.subDelaySec, dir);
+          const target = subCueSeekTarget(cues, playbackToSubTime(from, snap), dir);
           if (target == null) return;
-          const at = target + snap.subDelaySec;
+          const at = subToPlaybackTime(target, snap);
           subSeekRef.current = { target: at, at: performance.now() };
           seekStep(at - now);
           return;

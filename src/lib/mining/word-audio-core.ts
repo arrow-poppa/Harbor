@@ -1,3 +1,5 @@
+import { normalizeLang } from "@/lib/subtitles/language";
+
 // Word audio sources, kept free of Tauri and settings imports so they can be tested.
 
 export type WordAudioSourceType =
@@ -109,6 +111,18 @@ const LANGUAGES: Record<string, LanguageInfo> = {
   ukrainian: { iso: "uk", iso3: "ukr" },
   arabic: { iso: "ar", iso3: "ara", pod: { name: "arabic", kind: "pod" } },
 };
+
+const NORWEGIAN = new Set(["nb", "nn", "nob", "nno"]);
+
+/** The lookup language for a subtitle track's language tag ("jpn", "ja-JP",
+ *  "pt-BR", "Spanish"…), or null when the track has none we can look up. */
+export function lookupLanguageForTrack(lang?: string | null): string | null {
+  const code = normalizeLang(lang).split("-")[0];
+  if (!code) return null;
+  const iso = NORWEGIAN.has(code) ? "no" : code;
+  for (const [id, info] of Object.entries(LANGUAGES)) if (info.iso === iso) return id;
+  return null;
+}
 
 export function wordAudioLanguage(lookupLanguage: string): LanguageInfo {
   return LANGUAGES[lookupLanguage] ?? LANGUAGES.japanese;

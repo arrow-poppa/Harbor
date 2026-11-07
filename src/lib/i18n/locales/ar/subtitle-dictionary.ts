@@ -39,6 +39,9 @@ const subtitleDictionary: Record<string, string> = {
   Latin: "اللاتينية",
   Controller: "وحدة التحكم",
   Dictionary: "القاموس",
+  "Detect from the subtitle track": "الكشف من مسار الترجمة",
+  "Lookups and word audio use the selected subtitle's language when it has one; otherwise the language above.":
+    "تستخدم عمليات البحث وصوت الكلمة لغة الترجمة المحددة عندما تكون لها لغة؛ وإلا فاللغة أعلاه.",
 };
 
 export default subtitleDictionary;

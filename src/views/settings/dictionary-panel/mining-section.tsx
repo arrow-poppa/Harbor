@@ -234,6 +234,14 @@ function DictionarySection() {
           ))}
         </select>
       </Row>
+      <ToggleRow
+        label={t("Detect from the subtitle track")}
+        sub={t(
+          "Lookups and word audio use the selected subtitle's language when it has one; otherwise the language above.",
+        )}
+        value={settings.subLookupLanguageFromTrack !== false}
+        onChange={(v) => update({ subLookupLanguageFromTrack: v })}
+      />
 
       <div className="flex flex-col gap-2">
         {dicts === null ? (

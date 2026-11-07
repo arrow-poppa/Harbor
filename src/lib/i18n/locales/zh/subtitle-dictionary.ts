@@ -38,6 +38,9 @@ const subtitleDictionary: Record<string, string> = {
   Latin: "拉丁语",
   Controller: "手柄",
   Dictionary: "词典",
+  "Detect from the subtitle track": "根据字幕轨道识别",
+  "Lookups and word audio use the selected subtitle's language when it has one; otherwise the language above.":
+    "若所选字幕标明了语言，查词和单词音频就使用该语言；否则使用上面的语言。",
 };
 
 export default subtitleDictionary;

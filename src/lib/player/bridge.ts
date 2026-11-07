@@ -76,6 +76,9 @@ export type PlayerSnapshot = {
   audioDelaySec: number;
   /** Observed native correction; undefined when the engine does not expose it. Zero means no correction. */
   subtitleFps?: number;
+  /** The video's frame rate as its container declares it; with subtitleFps it
+   *  scales subtitle times (mpv's sub-fps). */
+  videoFps?: number;
   subText: string;
   subStartSec: number;
   subEndSec?: number;

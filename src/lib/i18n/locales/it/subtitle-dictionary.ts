@@ -40,6 +40,9 @@ const subtitleDictionary: Record<string, string> = {
   Latin: "Latino",
   Controller: "Controller",
   Dictionary: "Dizionario",
+  "Detect from the subtitle track": "Rileva dalla traccia dei sottotitoli",
+  "Lookups and word audio use the selected subtitle's language when it has one; otherwise the language above.":
+    "Le ricerche e l’audio della parola usano la lingua del sottotitolo scelto quando ne ha una; altrimenti la lingua qui sopra.",
 };
 
 export default subtitleDictionary;

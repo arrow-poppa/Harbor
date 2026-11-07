@@ -313,6 +313,8 @@ const OBSERVED_PROPS: &[(&str, u64, PropertyKind)] = &[
     ("height", 23, PropertyKind::Int64),
     ("sub-fps", 24, PropertyKind::Double),
     ("sub-end", 25, PropertyKind::Double),
+    // With sub-fps, what subtitle times are scaled by (see `sub_line_time`).
+    ("container-fps", 26, PropertyKind::Double),
 ];
 
 // Display-info publishes this user-data property after the video window opens.
@@ -3614,12 +3616,22 @@ fn mpv_prop_f64(mpv: &Mpv, name: &str) -> Option<f64> {
     mpv.get_property::<String>(name).ok()?.trim().parse().ok()
 }
 
-/// `sub-start` / `sub-end` in playback time. mpv reports them without
-/// `sub-delay` (on mpv 0.41 a 5–8s line delayed by 2s shows at 7–10s while
-/// sub-start still says 5), so a cut taken from them would be off by exactly
-/// the timing correction.
+/// `sub-start` / `sub-end` in playback time. mpv reports them in the
+/// subtitle's own times (measured on mpv 0.41): `sub-delay` shifts the line
+/// (a 5–8s line delayed by 2s shows at 7–10s while sub-start says 5) and
+/// `sub-speed` and `sub-fps` (a subtitle made for another frame rate) scale it
+/// (with sub-fps 48 on a 24 fps video a 10–12s line shows at 20–24s).
 fn sub_line_time(mpv: &Mpv, name: &str) -> Option<f64> {
-    Some(mpv_prop_f64(mpv, name)? + mpv_prop_f64(mpv, "sub-delay").unwrap_or(0.0))
+    let time = mpv_prop_f64(mpv, name)?;
+    let mut scale = mpv_prop_f64(mpv, "sub-speed")
+        .filter(|s| *s > 0.0)
+        .unwrap_or(1.0);
+    let sub_fps = mpv_prop_f64(mpv, "sub-fps").filter(|f| *f > 0.0);
+    let video_fps = mpv_prop_f64(mpv, "container-fps").filter(|f| *f > 0.0);
+    if let (Some(sub_fps), Some(video_fps)) = (sub_fps, video_fps) {
+        scale *= sub_fps / video_fps;
+    }
+    Some(time * scale + mpv_prop_f64(mpv, "sub-delay").unwrap_or(0.0))
 }
 
 // ---------- Anki media from the player's own cache ----------

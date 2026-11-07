@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { SubTiming } from "@/lib/mining/immersion-core";
 import {
   codePointsToUtf16,
   lookupDictionary,
@@ -13,8 +14,8 @@ export type LookupControls = {
   setNativeSubVisible: (on: boolean) => void;
   title: string;
   mpvEngine: boolean;
-  // Current sub-delay, read when a card is added.
-  subDelaySec: () => number;
+  // Current sub-delay and frame-rate correction, read when a card is added.
+  subTiming: () => SubTiming;
 };
 
 export type LookupHit = { line: number; start: number; length: number };
