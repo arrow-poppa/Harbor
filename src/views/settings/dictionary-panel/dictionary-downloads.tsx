@@ -38,7 +38,7 @@ const KIND_LABELS: Record<DictionaryKind, string> = {
 };
 
 const selectCls =
-  "h-9 min-w-0 max-w-[220px] rounded-lg border border-edge bg-raised px-2.5 text-[12.5px] text-ink outline-none transition-colors focus:border-ink";
+  "h-10 min-w-0 max-w-[300px] rounded-lg border border-edge bg-raised px-3 text-[13.5px] text-ink outline-none transition-colors focus:border-ink";
 
 type OfferState = { progress?: DownloadProgress; importing?: boolean; error?: string };
 
@@ -170,11 +170,11 @@ export function DictionaryDownloads({
     return (
       <div
         key={offer.id}
-        className="flex items-center justify-between gap-3 rounded-xl border border-edge-soft bg-canvas/40 px-4 py-2.5"
+        className="flex items-center justify-between gap-3 rounded-xl border border-edge-soft bg-canvas/40 px-5 py-3.5"
       >
-        <div className="flex min-w-0 flex-col gap-0.5">
-          <span className="truncate text-[13.5px] font-medium text-ink">{offer.name}</span>
-          <span className="text-[12px] text-ink-subtle">
+        <div className="flex min-w-0 flex-col gap-1">
+          <span className="truncate text-[14.5px] font-medium text-ink">{offer.name}</span>
+          <span className="text-[13px] text-ink-subtle">
             {[
               t(KIND_LABELS[offer.kind]),
               offer.explains && offer.explains !== studied
@@ -185,12 +185,12 @@ export function DictionaryDownloads({
               .filter(Boolean)
               .join(" · ")}
           </span>
-          {offer.note && <span className="text-[12px] text-ink-subtle">{t(offer.note)}</span>}
-          {state.error && <span className="text-[12px] text-danger">{state.error}</span>}
+          {offer.note && <span className="text-[13px] text-ink-subtle">{t(offer.note)}</span>}
+          {state.error && <span className="text-[13px] text-danger">{state.error}</span>}
         </div>
         {have && !busy ? (
-          <span className="flex shrink-0 items-center gap-1 text-[12.5px] font-medium text-success">
-            <Check size={14} strokeWidth={2.6} />
+          <span className="flex shrink-0 items-center gap-1.5 text-[13px] font-medium text-success">
+            <Check size={15} strokeWidth={2.6} />
             {t("Installed")}
           </span>
         ) : (
@@ -198,12 +198,12 @@ export function DictionaryDownloads({
             type="button"
             disabled={busy}
             onClick={() => void download(offer)}
-            className="flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-edge-soft px-3 text-[12.5px] font-medium text-ink-muted transition-colors hover:border-edge hover:text-ink disabled:opacity-70"
+            className="flex h-9 shrink-0 items-center gap-1.5 rounded-lg border border-edge-soft px-4 text-[13px] font-medium text-ink-muted transition-colors hover:border-edge hover:text-ink disabled:opacity-70"
           >
             {busy ? (
-              <Loader2 size={13} className="animate-spin" />
+              <Loader2 size={15} className="animate-spin" />
             ) : (
-              <Download size={13} strokeWidth={2.4} />
+              <Download size={15} strokeWidth={2.4} />
             )}
             {state.importing
               ? t("Importing…")
@@ -219,24 +219,24 @@ export function DictionaryDownloads({
   };
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-3 rounded-2xl border border-edge-soft bg-canvas/30 p-4">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        className="flex items-center gap-1.5 self-start text-[13px] font-medium text-ink-muted transition-colors hover:text-ink"
+        className="flex items-center gap-2 self-start text-[14.5px] font-semibold text-ink transition-colors hover:text-ink-muted"
       >
         <ChevronDown
-          size={15}
+          size={17}
           strokeWidth={2.2}
           className={`transition-transform ${open ? "" : "-rotate-90"}`}
         />
         {t("Download dictionaries")}
       </button>
       {open && (
-        <div className="flex flex-col gap-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <label className="flex items-center gap-2 text-[12.5px] text-ink-muted">
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <label className="flex items-center gap-2 text-[13.5px] text-ink-muted">
               {t("Language you study")}
               <select
                 value={studied}
@@ -250,7 +250,7 @@ export function DictionaryDownloads({
                 ))}
               </select>
             </label>
-            <label className="flex items-center gap-2 text-[12.5px] text-ink-muted">
+            <label className="flex items-center gap-2 text-[13.5px] text-ink-muted">
               {t("Explanations in")}
               <select
                 value={explains}
@@ -268,31 +268,31 @@ export function DictionaryDownloads({
 
           {recommended.length > 0 && (
             <>
-              <span className="mt-1 text-[12px] font-semibold uppercase tracking-wide text-ink-subtle">
+              <span className="mt-1 text-[12.5px] font-semibold uppercase tracking-wide text-ink-subtle">
                 {t("Recommended")}
               </span>
               {recommended.map(row)}
             </>
           )}
 
-          <span className="mt-1 text-[12px] font-semibold uppercase tracking-wide text-ink-subtle">
+          <span className="mt-1 text-[12.5px] font-semibold uppercase tracking-wide text-ink-subtle">
             {t("From Wiktionary")}
           </span>
           {metaError ? (
-            <span className="text-[12.5px] text-ink-subtle">
+            <span className="text-[13px] text-ink-subtle">
               {t("Could not load the Wiktionary dictionary list.")}
             </span>
           ) : !meta ? (
-            <span className="text-[12.5px] text-ink-subtle">{t("Loading…")}</span>
+            <span className="text-[13px] text-ink-subtle">{t("Loading…")}</span>
           ) : wiktionary.length === 0 ? (
-            <span className="text-[12.5px] text-ink-subtle">
+            <span className="text-[13px] text-ink-subtle">
               {t("No Wiktionary dictionary for these two languages.")}
             </span>
           ) : (
             wiktionary.map(row)
           )}
 
-          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12.5px] text-ink-subtle">
+          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[13px] text-ink-subtle">
             {t("More dictionaries:")}
             {MORE_DICTIONARIES.map(([label, url]) => (
               <button
@@ -302,7 +302,7 @@ export function DictionaryDownloads({
                 className="flex items-center gap-1 text-ink-muted underline-offset-2 hover:text-ink hover:underline"
               >
                 {t(label)}
-                <ExternalLink size={12} strokeWidth={2.2} />
+                <ExternalLink size={14} strokeWidth={2.2} />
               </button>
             ))}
           </div>
