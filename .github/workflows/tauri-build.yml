@@ -77,8 +77,11 @@ jobs:
           # Make pkg-config find libmpv from homebrew
           echo "PKG_CONFIG_PATH=$(brew --prefix mpv)/lib/pkgconfig:${PKG_CONFIG_PATH:-}" >> $GITHUB_ENV
 
-      - uses: dtolnay/rust-toolchain@stable
+      # Rust 1.100 moved build-script output folders, so ort-sys 2.0.0-rc.10
+      # copies DirectML.dll to a folder that no longer exists.
+      - uses: dtolnay/rust-toolchain@master
         with:
+          toolchain: "1.99.1"
           targets: ${{ matrix.platform.target }}
 
       - uses: Swatinem/rust-cache@v2
