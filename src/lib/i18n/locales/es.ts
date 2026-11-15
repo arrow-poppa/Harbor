@@ -1,3 +1,4 @@
+import clearShortcut from "./es/clear-shortcut";
 import reviews from "./es/reviews";
 import playOrders from "./es/play-orders";
 import gameRomLibrary from "./es/game-rom-library";
@@ -410,6 +411,7 @@ const es: Record<string, string> = {
   ...reviews,
   ...queueBasket,
   ...liveWeb,
+  ...clearShortcut,
 };
 
 export default es;

@@ -39,27 +39,41 @@ export function PlayerInteractionLockControls({
           data-player-unlock-control
           onClick={onUnlock}
           className="pointer-events-auto absolute left-1/2 top-5 flex min-h-11 -translate-x-1/2 cursor-pointer items-center gap-2.5 rounded-full border border-white/15 bg-black/70 px-4 text-sm font-semibold text-white shadow-[0_12px_36px_rgba(0,0,0,0.35)] backdrop-blur-xl transition-[background-color,border-color,transform] duration-150 hover:border-white/25 hover:bg-black/80 active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-black motion-reduce:transition-none"
-          aria-label={t("Unlock player controls ({binding})", {
-            binding: formatBindingForDisplay(binding),
-          })}
+          aria-label={
+            binding
+              ? t("Unlock player controls ({binding})", {
+                  binding: formatBindingForDisplay(binding),
+                })
+              : t("Unlock controls")
+          }
         >
           <Unlock aria-hidden="true" className="size-4" strokeWidth={2} />
           <span>{t("Unlock controls")}</span>
-          <kbd className="rounded-md border border-white/10 bg-white/10 px-2 py-0.5 text-[11px] font-medium text-white/65">
-            {formatBindingForDisplay(binding)}
-          </kbd>
+          {binding && (
+            <kbd className="rounded-md border border-white/10 bg-white/10 px-2 py-0.5 text-[11px] font-medium text-white/65">
+              {formatBindingForDisplay(binding)}
+            </kbd>
+          )}
         </button>
       ) : !locked ? (
         <button
           type="button"
           onClick={onLock}
           className="pointer-events-auto absolute left-1/2 top-5 grid size-11 -translate-x-1/2 cursor-pointer place-items-center rounded-full border border-white/10 bg-black/45 text-white/85 shadow-lg backdrop-blur-xl transition-[background-color,border-color,color,transform] duration-150 hover:border-white/20 hover:bg-black/65 hover:text-white active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-black motion-reduce:transition-none"
-          aria-label={t("Lock player controls ({binding})", {
-            binding: formatBindingForDisplay(binding),
-          })}
-          title={t("Lock controls · {binding}", {
-            binding: formatBindingForDisplay(binding),
-          })}
+          aria-label={
+            binding
+              ? t("Lock player controls ({binding})", {
+                  binding: formatBindingForDisplay(binding),
+                })
+              : t("Lock player controls")
+          }
+          title={
+            binding
+              ? t("Lock controls · {binding}", {
+                  binding: formatBindingForDisplay(binding),
+                })
+              : t("Lock player controls")
+          }
         >
           <Lock aria-hidden="true" className="size-4" strokeWidth={2} />
         </button>
