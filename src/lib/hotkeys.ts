@@ -582,7 +582,8 @@ export function shouldHandleGlobalKeyboardEvent(e: KeyboardEvent): boolean {
 
 function bindingOverride(id: HotkeyId, overrides: Record<string, string>): string | undefined {
   const override = overrides[id];
-  return typeof override === "string" && override.length > 0 ? override : undefined;
+  // An empty override is a shortcut the user cleared: no key at all.
+  return typeof override === "string" ? override : undefined;
 }
 
 export function effectiveBinding(id: HotkeyId, overrides: Record<string, string>): string {
@@ -590,6 +591,8 @@ export function effectiveBinding(id: HotkeyId, overrides: Record<string, string>
 }
 
 export function formatBindingForDisplay(binding: string): string {
+  // A shortcut with no key (such as a new action left unbound by default).
+  if (!binding) return "—";
   return binding
     .split("+")
     .map((p) => {
@@ -703,7 +706,7 @@ export function createHotkeyMatcher(
 
   return (id) =>
     isEligible(id) &&
-    !bindingOverride(id, overrides) &&
+    bindingOverride(id, overrides) === undefined &&
     fallbacks.includes(HOTKEY_MAP[id].defaultBinding);
 }
 

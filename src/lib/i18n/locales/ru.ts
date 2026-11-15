@@ -1,3 +1,4 @@
+import clearShortcut from "./ru/clear-shortcut";
 import reviews from "./ru/reviews";
 import playOrders from "./ru/play-orders";
 import gameRomLibrary from "./ru/game-rom-library";
@@ -430,6 +431,7 @@ const ru: Record<string, string> = {
   ...reviews,
   ...queueBasket,
   ...liveWeb,
+  ...clearShortcut,
 };
 
 export default ru;
