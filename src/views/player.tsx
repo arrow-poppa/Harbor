@@ -838,7 +838,7 @@ function NativePlayerView({ src }: { src: PlayerSrc }) {
     mediaKey: `${src.meta.id}|${src.episode?.season ?? ""}|${src.episode?.episode ?? ""}`,
   });
 
-  const { rememberSubChoice, cycleSubtitles, playPauseToggle, seekStep, seekTo } =
+  const { rememberSubChoice, cycleSubtitles, toggleSubtitles, playPauseToggle, seekStep, seekTo } =
     usePlaybackControls({
       bridgeRef,
       snapRef,
@@ -1109,6 +1109,9 @@ function NativePlayerView({ src }: { src: PlayerSrc }) {
     clip,
     videoFill,
     onVolumeFeedback: showVolumeFeedback,
+    onToggleSubtitles: () => {
+      toggleSubtitles();
+    },
   });
 
   useEffect(() => {

@@ -1,3 +1,4 @@
+import subtitleLineHotkeys from "./id/subtitle-line-hotkeys";
 import reviews from "./id/reviews";
 import playOrders from "./id/play-orders";
 import gameRomLibrary from "./id/game-rom-library";
@@ -379,6 +380,7 @@ const id: Record<string, string> = {
   ...reviews,
   ...queueBasket,
   ...liveWeb,
+  ...subtitleLineHotkeys,
 };
 
 export default id;

@@ -1058,11 +1058,16 @@ export function createMpvBridge(mpvOptions?: MpvOptions): PlayerBridge {
       if (name === "audio-delay" && typeof data === "number") snap.audioDelaySec = data;
       if (name === "sub-fps" && typeof data === "number" && Number.isFinite(data))
         snap.subtitleFps = data;
+      if (name === "container-fps" && typeof data === "number" && Number.isFinite(data))
+        snap.videoFps = data;
       if (name === "sub-text") {
         snap.subText = !primarySubtitleOff && typeof data === "string" ? data : "";
       }
       if (name === "sub-start") {
         snap.subStartSec = !primarySubtitleOff && typeof data === "number" ? data : 0;
+      }
+      if (name === "sub-end") {
+        snap.subEndSec = !primarySubtitleOff && typeof data === "number" ? data : undefined;
       }
       if (name === "secondary-sub-text") {
         snap.secondarySubText = typeof data === "string" ? data : "";
@@ -1268,6 +1273,7 @@ export function createMpvBridge(mpvOptions?: MpvOptions): PlayerBridge {
       snap.audioTracks = [];
       snap.subtitleTracks = [];
       snap.subtitleFps = undefined;
+      snap.videoFps = undefined;
       // mpv sub-delay is global; it must not bleed into another title or subtitle.
       snap.subDelaySec = 0;
       primarySubtitleOff = false;
