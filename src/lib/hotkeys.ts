@@ -18,6 +18,10 @@ export type HotkeyId =
   | "playerPip"
   | "playerSubtitleCycle"
   | "playerSubtitleCycleAlt"
+  | "playerSubtitleToggle"
+  | "playerSubNext"
+  | "playerSubPrev"
+  | "playerSubReplay"
   | "playerAudioCycle"
   | "playerSubSizeDown"
   | "playerSubSizeUp"
@@ -397,6 +401,40 @@ export const HOTKEYS: HotkeyDef[] = [
     defaultBinding: "shift+}",
   },
   {
+    id: "playerSubtitleToggle",
+    scope: "Player",
+    group: "Tracks",
+    label: "Toggle subtitles on/off",
+    description:
+      "Hide every subtitle (primary and secondary), or show the primary again. Hidden subtitles still work for line seeking and replay.",
+    defaultBinding: "",
+  },
+  {
+    id: "playerSubNext",
+    scope: "Player",
+    group: "Tracks",
+    label: "Next subtitle line",
+    description: "Jump to the start of the next subtitle line.",
+    defaultBinding: "",
+  },
+  {
+    id: "playerSubPrev",
+    scope: "Player",
+    group: "Tracks",
+    label: "Previous subtitle line",
+    description: "Jump to the start of the previous subtitle line.",
+    defaultBinding: "",
+  },
+  {
+    id: "playerSubReplay",
+    scope: "Player",
+    group: "Tracks",
+    label: "Replay current subtitle",
+    description:
+      "Go back to the start of the line on screen and play it again, or of the last line shown when there is none.",
+    defaultBinding: "",
+  },
+  {
     id: "playerSubDelayDown",
     scope: "Player",
     group: "Tracks",
@@ -590,6 +628,8 @@ export function effectiveBinding(id: HotkeyId, overrides: Record<string, string>
 }
 
 export function formatBindingForDisplay(binding: string): string {
+  // A shortcut with no key (such as a new action left unbound by default).
+  if (!binding) return "—";
   return binding
     .split("+")
     .map((p) => {

@@ -1,3 +1,4 @@
+import subtitleLineHotkeys from "./ru/subtitle-line-hotkeys";
 import reviews from "./ru/reviews";
 import playOrders from "./ru/play-orders";
 import gameRomLibrary from "./ru/game-rom-library";
@@ -430,6 +431,7 @@ const ru: Record<string, string> = {
   ...reviews,
   ...queueBasket,
   ...liveWeb,
+  ...subtitleLineHotkeys,
 };
 
 export default ru;

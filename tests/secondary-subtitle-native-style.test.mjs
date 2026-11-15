@@ -143,6 +143,7 @@ function hookHarness() {
     "@/lib/player/secondary-sub": { resetSecondarySub() {}, useSecondarySubChoice: () => "auto" },
     "@/lib/player/sub-format": formats,
     "@/lib/subtitles/language": { pickBestTrack },
+    "@/lib/player/subs-hidden": { useSubsHidden: () => false },
     "@/lib/player/sub-style": {
       applySecondarySubNative: async (...args) => {
         calls.push(args);

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type RefObject } from "react";
+import { invoke } from "@tauri-apps/api/core";
 import type { PlayerBridge, PlayerSnapshot } from "@/lib/player/bridge";
 import { writePlayerPrefs } from "@/lib/player-prefs";
 import { writePlayerVolume } from "@/lib/player-volume";
@@ -15,6 +16,9 @@ import { isPlayerInteractionLocked } from "@/lib/player/interaction-lock";
 import { HOLD_SPEED_DELAY_MS, holdSpeedRate } from "@/lib/player/hold-speed";
 import { tracePlayback } from "@/lib/player/pause-trace";
 import { round2 } from "../player-utils";
+import { subCueSeekTarget } from "@/lib/player/sub-seek";
+import { lineFromSnapshot, playbackToSubTime, subToPlaybackTime } from "@/lib/player/sub-timing";
+import { getPlaybackPosition } from "@/lib/player/playback-clock";
 import { SFX } from "@/lib/sfx";
 
 export function useKeyboardShortcuts(params: {
@@ -62,6 +66,7 @@ export function useKeyboardShortcuts(params: {
   onReloadSource?: () => void;
   onRestartServer?: () => void;
   onVolumeFeedback?: (volume: number, muted: boolean) => void;
+  onToggleSubtitles?: () => void;
 }) {
   const {
     bridgeRef,
@@ -107,6 +112,7 @@ export function useKeyboardShortcuts(params: {
     onReloadSource,
     onRestartServer,
     onVolumeFeedback,
+    onToggleSubtitles,
   } = params;
   const { settings, update } = useSettings();
   const overrides = settings.hotkeys ?? {};
@@ -114,6 +120,13 @@ export function useKeyboardShortcuts(params: {
   const seekForwardStepSec = settings.seekForwardStepSec;
   const seekBackStepShortSec = settings.seekBackStepShortSec;
   const seekForwardStepShortSec = settings.seekForwardStepShortSec;
+  // Where the last line seek went, so pressing it again quickly steps on
+  // from a position the player has not reported yet.
+  const subSeekRef = useRef<{ target: number; at: number } | null>(null);
+  // The last line shown, so replay still works in the gap after it ends.
+  const lastLineRef = useRef<{ start: number; end: number } | null>(null);
+  const currentLine = lineFromSnapshot(snap);
+  if (currentLine) lastLineRef.current = currentLine;
   const [subtitleOffsetSec, setSubtitleOffsetSec] = useState<number | null>(null);
   const subtitleOffsetTimerRef = useRef<number | null>(null);
   const showSubtitleOffset = (delaySec: number) => {
@@ -294,6 +307,29 @@ export function useKeyboardShortcuts(params: {
         seekStep(30);
         return;
       }
+      if (match("playerSubNext") || match("playerSubPrev")) {
+        e.preventDefault();
+        const dir = match("playerSubNext") ? 1 : -1;
+        const bridge = bridgeRef.current;
+        if (!bridge) return;
+        const cues = bridge.getSelectedTrackCues();
+        if (cues?.length) {
+          const last = subSeekRef.current;
+          const now = getPlaybackPosition();
+          const from = last && performance.now() - last.at < 1500 ? last.target : now;
+          const target = subCueSeekTarget(cues, playbackToSubTime(from, snap), dir);
+          if (target == null) return;
+          const at = subToPlaybackTime(target, snap);
+          subSeekRef.current = { target: at, at: performance.now() };
+          seekStep(at - now);
+          return;
+        }
+        // Embedded tracks have no cue list here; mpv steps through them itself.
+        if (bridge.capabilities().engine === "mpv") {
+          invoke("mpv_command", { cmd: ["sub-seek", dir] }).catch(() => {});
+        }
+        return;
+      }
       if (match("playerFrameForward") && onFrameStep) {
         e.preventDefault();
         onFrameStep(1);
@@ -397,6 +433,21 @@ export function useKeyboardShortcuts(params: {
       if (match("playerPrevChannel") && onPrevChannel) {
         e.preventDefault();
         onPrevChannel();
+        return;
+      }
+      if (match("playerSubReplay")) {
+        e.preventDefault();
+        if (e.repeat) return;
+        const line = lastLineRef.current;
+        if (!line) return;
+        seekStep(line.start - getPlaybackPosition());
+        if (mediaRef.current.status !== "playing") mediaRef.current.playPauseToggle();
+        return;
+      }
+      if (match("playerSubtitleToggle") && onToggleSubtitles) {
+        e.preventDefault();
+        if (e.repeat) return;
+        onToggleSubtitles();
         return;
       }
       if (match("playerSubtitleCycle") || match("playerSubtitleCycleAlt")) {
@@ -607,6 +658,8 @@ export function useKeyboardShortcuts(params: {
     snap.rate,
     snap.durationSec,
     snap.subDelaySec,
+    snap.subtitleFps,
+    snap.videoFps,
     overrides,
     seekBackStepSec,
     seekForwardStepSec,
@@ -632,6 +685,7 @@ export function useKeyboardShortcuts(params: {
     onRestartServer,
     onFrameStep,
     onVolumeFeedback,
+    onToggleSubtitles,
     settings.playerEscExitsFullscreen,
     settings.playerConfirmLeave,
     settings.playerVolumeSfx,

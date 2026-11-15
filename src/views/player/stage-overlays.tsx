@@ -8,6 +8,7 @@ import { SubStyleBar } from "@/components/player/sub-style-bar";
 import { PictureBar } from "@/components/player/picture-bar";
 import { SubSyncBar } from "@/components/player/sub-sync-bar";
 import { SubtitleOverlay } from "@/components/player/subtitle-overlay";
+import { useSubsHidden } from "@/lib/player/subs-hidden";
 import {
   VolumeIndicator,
   type VolumeHudPosition,
@@ -71,6 +72,7 @@ export const StageOverlays = memo(function StageOverlays({
 }) {
   const t = useT();
   const captionsPopout = useCaptionsPopoutOpen();
+  const subsHidden = useSubsHidden();
   const showVolumeIndicator = volumeIndicator.visible;
   const topVolumeShowing = showVolumeIndicator && volumeHudPosition === "top";
   const primarySubtitleVisible =
@@ -79,6 +81,7 @@ export const StageOverlays = memo(function StageOverlays({
     <>
       {(!pipMode || subShowInPip) &&
         !captionsPopout &&
+        !subsHidden &&
         (!subAssNative || snap.secondarySubText) && (
           <SubtitleOverlay
             text={primarySubtitleVisible ? snap.subText : ""}
