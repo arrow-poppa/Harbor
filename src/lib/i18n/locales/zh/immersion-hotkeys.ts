@@ -148,6 +148,10 @@ const immersionHotkeys: Record<string, string> = {
     "打开或关闭所选单词的词典弹窗。移到其他单词时会关闭。",
   "Clear the shortcut for {name}": "清除“{name}”的快捷键",
   "Clear the shortcut": "清除快捷键",
+  "Down step": "减速步长",
+  "Up step": "加速步长",
+  "1 second": "1 秒",
+  "{n} seconds": "{n} 秒",
 };
 
 export default immersionHotkeys;

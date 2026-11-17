@@ -845,6 +845,8 @@ export function effectiveBinding(id: HotkeyId, overrides: Record<string, string>
 }
 
 export function formatBindingForDisplay(binding: string): string {
+  // A shortcut with no key (such as a new action left unbound by default).
+  if (!binding) return "—";
   return binding
     .split("+")
     .map((p) => {

@@ -148,6 +148,11 @@ const immersionHotkeys: Record<string, string> = {
     "يفتح نافذة القاموس المنبثقة للكلمة المحددة أو يغلقها. الانتقال إلى كلمة أخرى يغلقها.",
   "Clear the shortcut for {name}": "مسح اختصار {name}",
   "Clear the shortcut": "مسح الاختصار",
+  "Down step": "خطوة الإبطاء",
+  "Up step": "خطوة التسريع",
+  "1 second": "ثانية واحدة",
+  "{n} seconds": "{n} ثانية",
+  "{n} seconds#few": "{n} ثوانٍ",
 };
 
 export default immersionHotkeys;

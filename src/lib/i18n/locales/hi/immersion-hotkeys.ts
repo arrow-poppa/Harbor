@@ -148,6 +148,10 @@ const immersionHotkeys: Record<string, string> = {
     "चुने गए शब्द का शब्दकोश पॉपअप खोलता या बंद करता है. दूसरे शब्द पर जाने से यह बंद हो जाता है.",
   "Clear the shortcut for {name}": "{name} का शॉर्टकट हटाएँ",
   "Clear the shortcut": "शॉर्टकट हटाएँ",
+  "Down step": "धीमा करने का कदम",
+  "Up step": "तेज़ करने का कदम",
+  "1 second": "1 सेकंड",
+  "{n} seconds": "{n} सेकंड",
 };
 
 export default immersionHotkeys;

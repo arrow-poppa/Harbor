@@ -31,13 +31,33 @@ export function formatSeekStep(seconds: number): string {
   return `${Number(seconds.toFixed(1))}s`;
 }
 
+// Below 1x, so the Toggle slow speed shortcut always has somewhere to go.
 export const HALF_SPEED_MIN = 0.1;
-export const HALF_SPEED_MAX = 4;
+export const HALF_SPEED_MAX = 0.99;
 
 export function sanitizeHalfSpeedRate(value: unknown, fallback: number): number {
   if (typeof value !== "number" || !Number.isFinite(value)) return fallback;
   if (value < HALF_SPEED_MIN || value > HALF_SPEED_MAX) return fallback;
   return Math.round(value * 100) / 100;
+}
+
+/** The rate the Toggle slow speed shortcut switches to: back to normal from the
+ *  slow speed, otherwise to the slow speed. */
+export function slowSpeedToggleRate(rate: number, slow: number): number {
+  return Math.abs(rate - slow) < 0.001 ? 1 : slow;
+}
+
+// The range Speed down and Speed up step within.
+export const PLAYBACK_RATE_MIN = 0.25;
+export const PLAYBACK_RATE_MAX = 3;
+
+/** One Speed down (negative step) or Speed up press. A rate already outside
+ *  the range (such as a slower slow speed) is never moved the other way. */
+export function stepPlaybackRate(rate: number, step: number): number {
+  const next = +(rate + step).toFixed(2);
+  return step < 0
+    ? Math.max(Math.min(PLAYBACK_RATE_MIN, rate), next)
+    : Math.min(Math.max(PLAYBACK_RATE_MAX, rate), next);
 }
 
 export const SPEED_STEP_MIN = 0.01;

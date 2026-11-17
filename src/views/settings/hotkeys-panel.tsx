@@ -8,6 +8,7 @@ import {
   eventToBinding,
   formatBindingForDisplay,
   isModifierOnly,
+  isTypingTarget,
   setBindingCapture,
   type HotkeyDef,
   type HotkeyId,
@@ -21,7 +22,6 @@ import {
   SEEK_STEP_MIN_SEC,
   SPEED_STEP_MAX,
   SPEED_STEP_MIN,
-  formatSeekStep,
   sanitizeHalfSpeedRate,
   sanitizeSeekStep,
   sanitizeSpeedStep,
@@ -128,6 +128,9 @@ export function HotkeysPanel() {
     if (!capturing) return;
     setBindingCapture(true);
     const onKey = (e: KeyboardEvent) => {
+      // A capture left running on the other tab must not take the keys typed
+      // into its fields.
+      if (isTypingTarget(e)) return;
       e.preventDefault();
       e.stopPropagation();
       if (isBackKey(e)) {
@@ -421,7 +424,7 @@ export function HotkeysPanel() {
                 value={settings.halfSpeedRate}
                 min={HALF_SPEED_MIN}
                 max={HALF_SPEED_MAX}
-                step={0.05}
+                step={0.01}
                 suffix="x"
                 presets={[0.4, 0.5, 0.6, 0.75]}
                 format={(n) => `${n}x`}
@@ -437,12 +440,12 @@ export function HotkeysPanel() {
             >
               <div className="flex flex-wrap items-end gap-x-10 gap-y-4">
                 <SpeedStepPicker
-                  label={t("Speed down")}
+                  label={t("Down step")}
                   value={settings.speedDownStep}
                   onChange={(speedDownStep) => update({ speedDownStep })}
                 />
                 <SpeedStepPicker
-                  label={t("Speed up")}
+                  label={t("Up step")}
                   value={settings.speedUpStep}
                   onChange={(speedUpStep) => update({ speedUpStep })}
                 />
@@ -490,6 +493,7 @@ function SeekStepPicker({
   value: number;
   onChange: (seconds: number) => void;
 }) {
+  const t = useT();
   return (
     <div className="flex min-w-0 flex-col gap-2">
       <span className={GROUP_LABEL}>{label}</span>
@@ -497,10 +501,10 @@ function SeekStepPicker({
         value={value}
         min={SEEK_STEP_MIN_SEC}
         max={SEEK_STEP_MAX_SEC}
-        step={0.5}
+        step={0.1}
         suffix="s"
         presets={[1, 2, 3, 5, 10, 30]}
-        format={formatSeekStep}
+        format={(n) => (n === 1 ? t("1 second") : t("{n} seconds", { n }))}
         sanitize={(n) => sanitizeSeekStep(n, value)}
         ariaLabel={label}
         onChange={onChange}
@@ -525,7 +529,7 @@ function SpeedStepPicker({
         value={value}
         min={SPEED_STEP_MIN}
         max={SPEED_STEP_MAX}
-        step={0.05}
+        step={0.01}
         suffix="x"
         presets={[0.05, 0.1, 0.25, 0.5]}
         format={(n) => `${n}x`}

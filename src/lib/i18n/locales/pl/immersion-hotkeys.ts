@@ -154,6 +154,12 @@ const immersionHotkeys: Record<string, string> = {
     "Otwiera lub zamyka okienko słownika dla zaznaczonego słowa. Przejście do innego słowa je zamyka.",
   "Clear the shortcut for {name}": "Wyczyść skrót dla {name}",
   "Clear the shortcut": "Wyczyść skrót",
+  "Down step": "Krok w dół",
+  "Up step": "Krok w górę",
+  "1 second": "1 sekunda",
+  "{n} seconds": "{n} sekund",
+  "{n} seconds#one": "{n} sekunda",
+  "{n} seconds#few": "{n} sekundy",
 };
 
 export default immersionHotkeys;

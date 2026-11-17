@@ -148,6 +148,10 @@ const immersionHotkeys: Record<string, string> = {
     "선택한 단어의 사전 팝업을 열거나 닫습니다. 다른 단어로 이동하면 닫힙니다.",
   "Clear the shortcut for {name}": "{name} 단축키 지우기",
   "Clear the shortcut": "단축키 지우기",
+  "Down step": "낮출 때 간격",
+  "Up step": "높일 때 간격",
+  "1 second": "1초",
+  "{n} seconds": "{n}초",
 };
 
 export default immersionHotkeys;

@@ -156,6 +156,10 @@ const immersionHotkeys: Record<string, string> = {
     "Öffnet oder schließt das Wörterbuch-Popup für das gewählte Wort. Der Wechsel zu einem anderen Wort schließt es.",
   "Clear the shortcut for {name}": "Tastenkürzel für {name} entfernen",
   "Clear the shortcut": "Tastenkürzel entfernen",
+  "Down step": "Schritt langsamer",
+  "Up step": "Schritt schneller",
+  "1 second": "1 Sekunde",
+  "{n} seconds": "{n} Sekunden",
 };
 
 export default immersionHotkeys;

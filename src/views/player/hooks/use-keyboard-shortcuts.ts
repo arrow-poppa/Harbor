@@ -36,6 +36,7 @@ import {
   sendLookupCommand,
 } from "@/lib/player/lookup-nav";
 import { PLAYER_HOTKEY_EVENT, type PlayerHotkeyDetail } from "@/lib/gamepad/dispatch";
+import { slowSpeedToggleRate, stepPlaybackRate } from "@/lib/seek-step";
 
 import { SFX } from "@/lib/sfx";
 
@@ -590,14 +591,14 @@ export function useKeyboardShortcuts(params: {
       }
       if (match("playerSpeedDown")) {
         e.preventDefault();
-        const r = Math.max(0.25, +(snap.rate - settings.speedDownStep).toFixed(2));
+        const r = stepPlaybackRate(snap.rate, -settings.speedDownStep);
         bridgeRef.current?.setRate(r);
         writePlayerPrefs(metaId, { rate: r });
         return;
       }
       if (match("playerSpeedUp")) {
         e.preventDefault();
-        const r = Math.min(3, +(snap.rate + settings.speedUpStep).toFixed(2));
+        const r = stepPlaybackRate(snap.rate, settings.speedUpStep);
         bridgeRef.current?.setRate(r);
         writePlayerPrefs(metaId, { rate: r });
         return;
@@ -605,8 +606,7 @@ export function useKeyboardShortcuts(params: {
       if (match("playerHalfSpeed")) {
         e.preventDefault();
         if (e.repeat) return;
-        const slow = settings.halfSpeedRate || 0.5;
-        const r = Math.abs(snap.rate - slow) < 0.001 ? 1 : slow;
+        const r = slowSpeedToggleRate(snap.rate, settings.halfSpeedRate || 0.5);
         bridgeRef.current?.setRate(r);
         writePlayerPrefs(metaId, { rate: r });
         return;

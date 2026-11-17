@@ -148,6 +148,10 @@ const immersionHotkeys: Record<string, string> = {
     "Mở hoặc đóng cửa sổ từ điển cho từ đã chọn. Chuyển sang từ khác sẽ đóng nó.",
   "Clear the shortcut for {name}": "Xóa phím tắt của {name}",
   "Clear the shortcut": "Xóa phím tắt",
+  "Down step": "Bước giảm",
+  "Up step": "Bước tăng",
+  "1 second": "1 giây",
+  "{n} seconds": "{n} giây",
 };
 
 export default immersionHotkeys;

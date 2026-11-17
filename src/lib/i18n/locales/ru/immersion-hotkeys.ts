@@ -153,6 +153,12 @@ const immersionHotkeys: Record<string, string> = {
     "Открывает или закрывает окно словаря для выделенного слова. Переход к другому слову закрывает его.",
   "Clear the shortcut for {name}": "Очистить сочетание для «{name}»",
   "Clear the shortcut": "Очистить сочетание",
+  "Down step": "Шаг вниз",
+  "Up step": "Шаг вверх",
+  "1 second": "1 секунда",
+  "{n} seconds": "{n} секунд",
+  "{n} seconds#one": "{n} секунда",
+  "{n} seconds#few": "{n} секунды",
 };
 
 export default immersionHotkeys;

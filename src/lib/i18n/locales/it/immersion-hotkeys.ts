@@ -156,6 +156,10 @@ const immersionHotkeys: Record<string, string> = {
     "Apre o chiude il popup del dizionario per la parola selezionata. Passare a un’altra parola lo chiude.",
   "Clear the shortcut for {name}": "Cancella la scorciatoia di {name}",
   "Clear the shortcut": "Cancella la scorciatoia",
+  "Down step": "Passo in giù",
+  "Up step": "Passo in su",
+  "1 second": "1 secondo",
+  "{n} seconds": "{n} secondi",
 };
 
 export default immersionHotkeys;

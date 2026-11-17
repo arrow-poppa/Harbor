@@ -148,6 +148,10 @@ const immersionHotkeys: Record<string, string> = {
     "選んだ単語の辞書ポップアップを開閉します。別の単語へ移動すると閉じます。",
   "Clear the shortcut for {name}": "{name} のショートカットを解除",
   "Clear the shortcut": "ショートカットを解除",
+  "Down step": "下げる刻み",
+  "Up step": "上げる刻み",
+  "1 second": "1秒",
+  "{n} seconds": "{n}秒",
 };
 
 export default immersionHotkeys;

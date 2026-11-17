@@ -151,6 +151,10 @@ const immersionHotkeys: Record<string, string> = {
     "Seçili kelimenin sözlük penceresini açar veya kapatır. Başka bir kelimeye geçmek onu kapatır.",
   "Clear the shortcut for {name}": "{name} kısayolunu temizle",
   "Clear the shortcut": "Kısayolu temizle",
+  "Down step": "Azaltma adımı",
+  "Up step": "Artırma adımı",
+  "1 second": "1 saniye",
+  "{n} seconds": "{n} saniye",
 };
 
 export default immersionHotkeys;

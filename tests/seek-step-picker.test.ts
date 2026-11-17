@@ -9,7 +9,10 @@ import {
   sanitizeHalfSpeedRate,
   sanitizeSeekStep,
   seekStepChoices,
+  slowSpeedToggleRate,
+  stepPlaybackRate,
 } from "../src/lib/seek-step.ts";
+import { formatBindingForDisplay } from "../src/lib/hotkeys.ts";
 
 const at = (p: string) => new URL(`../${p}`, import.meta.url);
 const btn = readFileSync(at("src/components/player/transport/seek-step-btn.tsx"), "utf8");
@@ -59,11 +62,36 @@ test("a custom step stays visible among the presets", () => {
   assert.deepEqual(seekStepChoices(10, [5, 10, 30]), [5, 10, 30]);
 });
 
-test("the slow speed accepts any rate in range", () => {
+test("the slow speed accepts any rate below 1x", () => {
   assert.equal(sanitizeHalfSpeedRate(0.4, 0.5), 0.4);
   assert.equal(sanitizeHalfSpeedRate(0.755, 0.5), 0.76);
+  assert.equal(sanitizeHalfSpeedRate(0.99, 0.5), 0.99);
+  assert.equal(sanitizeHalfSpeedRate(1, 0.5), 0.5, "1x would leave the toggle nothing to do");
+  assert.equal(sanitizeHalfSpeedRate(1.5, 0.5), 0.5, "the slow speed never speeds up");
   assert.equal(sanitizeHalfSpeedRate(0, 0.5), 0.5);
   assert.equal(sanitizeHalfSpeedRate("0.4", 0.5), 0.5);
+});
+
+test("the slow speed toggle goes to the slow speed and back to normal", () => {
+  assert.equal(slowSpeedToggleRate(1, 0.5), 0.5);
+  assert.equal(slowSpeedToggleRate(1.5, 0.5), 0.5, "from any other speed it goes slow");
+  assert.equal(slowSpeedToggleRate(0.5, 0.5), 1);
+  assert.equal(slowSpeedToggleRate(0.5004, 0.5), 1, "a rate within the tolerance counts as slow");
+  assert.equal(slowSpeedToggleRate(0.51, 0.5), 0.5);
+});
+
+test("speed down and up never move the rate the other way", () => {
+  assert.equal(stepPlaybackRate(1, -0.25), 0.75);
+  assert.equal(stepPlaybackRate(1, 0.25), 1.25);
+  assert.equal(stepPlaybackRate(0.3, -0.25), 0.25, "stops at the lowest rate");
+  assert.equal(stepPlaybackRate(0.1, -0.25), 0.1, "a slower slow speed is not raised");
+  assert.equal(stepPlaybackRate(2.9, 0.25), 3, "stops at the highest rate");
+  assert.equal(stepPlaybackRate(0.1, 0.25), 0.35);
+});
+
+test("a shortcut with no key shows a dash", () => {
+  assert.equal(formatBindingForDisplay(""), "—");
+  assert.equal(formatBindingForDisplay("shift+ArrowLeft"), "Shift + ←");
 });
 
 test("the long seek hotkeys read their own settings", () => {
