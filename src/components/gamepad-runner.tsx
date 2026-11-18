@@ -6,6 +6,11 @@ import { useGamepadCapture } from "@/lib/gamepad/capture";
 import { useLiveGamepad } from "@/lib/gamepad/live";
 import { useGamepads } from "@/lib/gamepad/store";
 import { useGamepad } from "@/lib/gamepad/use-gamepad";
+import {
+  POINTER_SHOWN_ATTR,
+  POINTER_YIELD_EVENT,
+  pointerShown,
+} from "@/lib/gamepad/pointer-target";
 import { useSettings } from "@/lib/settings";
 import { useT } from "@/lib/i18n";
 
@@ -21,6 +26,13 @@ function hoverCss(rules: CSSRuleList): string {
       return inner ? `${rule.cssText.slice(0, rule.cssText.indexOf("{"))}{${inner}}` : "";
     })
     .join("");
+}
+
+// The pointer's opacity, mirrored on the root so input handlers can tell
+// whether A and the left stick are aimed at what it points at.
+function showPointer(cursor: HTMLDivElement | null, shown: boolean) {
+  cursor?.style.setProperty("opacity", shown ? "1" : "0");
+  document.documentElement.toggleAttribute(POINTER_SHOWN_ATTR, shown);
 }
 
 type TextField = HTMLInputElement | HTMLTextAreaElement;
@@ -91,7 +103,7 @@ export function GamepadRunner() {
   useEffect(() => {
     if (pads.length === 0) {
       active.current = false;
-      cursor.current?.style.setProperty("opacity", "0");
+      showPointer(cursor.current, false);
       return;
     }
     let frame = 0;
@@ -105,7 +117,7 @@ export function GamepadRunner() {
       const dt = Math.min((now - previous) / 1000, 0.05);
       previous = now;
       if (capturedRef.current) {
-        cursor.current?.style.setProperty("opacity", "0");
+        showPointer(cursor.current, false);
         frame = requestAnimationFrame(tick);
         return;
       }
@@ -175,23 +187,24 @@ export function GamepadRunner() {
           tvHover((hovered.current = target));
         }
       }
-      cursor.current?.style.setProperty(
-        "opacity",
+      showPointer(
+        cursor.current,
         cursorEnabled.current &&
           active.current &&
           now - lastActivity.current < cursorHideMs.current &&
           !(
             document.documentElement.hasAttribute("data-player-chrome-mounted") &&
             !document.documentElement.hasAttribute("data-player-chrome-visible")
-          )
-          ? "1"
-          : "0",
+          ),
       );
       cursor.current?.style.setProperty(
         "transform",
         `translate(${position.current.x}px,${position.current.y}px) translate(-50%,-50%)`,
       );
-      if (Math.abs(ly) >= deadzone) {
+      // In the player the left stick moves around the controls, so it only
+      // scrolls under a pointer that is on screen.
+      const inPlayer = document.documentElement.hasAttribute("data-player-chrome-mounted");
+      if (Math.abs(ly) >= deadzone && (!inPlayer || pointerShown())) {
         let el = document.elementFromPoint(
           position.current.x,
           position.current.y,
@@ -211,23 +224,28 @@ export function GamepadRunner() {
     return () => {
       cancelAnimationFrame(frame);
       window.removeEventListener("blur", refresh);
+      document.documentElement.removeAttribute(POINTER_SHOWN_ATTR);
     };
   }, [pads.length, settings.controllerDeadzone, settings.controllerCursorSpeed]);
 
-  // Yield the pointer to the mouse/keyboard. Only real user input counts: the
-  // runner dispatches synthetic events itself, filtered via `isTrusted`.
+  // Yield the pointer to the mouse/keyboard, and in the player to the left
+  // stick. Only real user input counts: the runner dispatches synthetic events
+  // itself, filtered via `isTrusted`.
   useEffect(() => {
-    const hide = (e: Event) => {
-      if (!e.isTrusted) return;
+    const yieldPointer = () => {
       if (!active.current) return;
       active.current = false;
       lastActivity.current = 0;
-      cursor.current?.style.setProperty("opacity", "0");
+      showPointer(cursor.current, false);
       for (const el of hoverPath.current) el.removeAttribute("data-gamepad-hover");
       hoverPath.current = [];
       hovered.current = null;
       tvHover(null);
     };
+    const hide = (e: Event) => {
+      if (e.isTrusted) yieldPointer();
+    };
+    window.addEventListener(POINTER_YIELD_EVENT, yieldPointer);
     window.addEventListener("mousemove", hide, true);
     window.addEventListener("mousedown", hide, true);
     window.addEventListener("keydown", hide, true);
@@ -241,6 +259,7 @@ export function GamepadRunner() {
       window.removeEventListener("pointerdown", hide, true);
       window.removeEventListener("wheel", hide, true);
       window.removeEventListener("touchstart", hide, true);
+      window.removeEventListener(POINTER_YIELD_EVENT, yieldPointer);
     };
   }, []);
 
@@ -332,7 +351,7 @@ export function GamepadRunner() {
   useEffect(() => {
     if (pads.length > 0) return;
     active.current = false;
-    cursor.current?.style.setProperty("opacity", "0");
+    showPointer(cursor.current, false);
     for (const el of hoverPath.current) el.removeAttribute("data-gamepad-hover");
     hoverPath.current = [];
     hovered.current = null;

@@ -5,15 +5,18 @@ import { makeSafeTauriUnlisten } from "@/lib/tauri-unlisten";
 import { useSettings } from "@/lib/settings";
 import { useView } from "@/lib/view";
 import { dispatchTvNav } from "@/lib/keyboard-navigation";
+import { isBigPictureActive } from "@/lib/big-picture";
 import { HOTKEY_MAP } from "@/lib/hotkeys";
 import { PAD_MODIFIERS, isDefaultPadBinding, modifierInUse, padAction } from "./bindings";
 import { runPadAction } from "./dispatch";
+import { POINTER_YIELD_EVENT, pointerShown } from "./pointer-target";
 import { isGamepadCaptured } from "./capture";
 import { publishGamepads } from "./store";
 import { resetLiveGamepad, setLiveAxis, setLiveButton } from "./live";
 import { startWebGamepadSource } from "./web-source";
 import type { GamepadEventPayload, GamepadInfo, GpAxis, GpButton } from "./protocol";
 import {
+  NAV_ARROW,
   NAV_AXIS,
   NAV_BUTTON,
   NAV_REPEATABLE,
@@ -26,7 +29,7 @@ import {
 const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 
 const CONTROLLER_ACTIVITY = "harbor:controller-activity";
-const NAV_WHEN_CONTROLS_UP = new Set<GpButton>(["dup", "ddown", "dleft", "dright", "south"]);
+const DPAD = new Set<GpButton>(["dup", "ddown", "dleft", "dright"]);
 
 function controlsUp(): boolean {
   return (
@@ -116,6 +119,10 @@ export function useGamepad(): void {
 
   const playerRef = useRef(!!player);
   playerRef.current = !!player;
+  const desktopUiRef = useRef(settings.bigPicturePlayerUi === "desktop");
+  desktopUiRef.current = settings.bigPicturePlayerUi === "desktop";
+  const cursorRef = useRef(settings.controllerCursorEnabled);
+  cursorRef.current = settings.controllerCursorEnabled;
 
   const bindRef = useRef({ pad: settings.gamepadHotkeys ?? {}, keys: settings.hotkeys ?? {} });
   bindRef.current = { pad: settings.gamepadHotkeys ?? {}, keys: settings.hotkeys ?? {} };
@@ -165,14 +172,30 @@ export function useGamepad(): void {
       const { pad, keys } = bindRef.current;
       const plain = chord === button;
       if (playerRef.current && !contentOverlayOpen()) {
-        window.dispatchEvent(new Event(CONTROLLER_ACTIVITY));
-        if (!(plain && controlsUp() && NAV_WHEN_CONTROLS_UP.has(button))) {
-          const id = padAction(pad, chord);
+        // While the pointer is on screen A is its click, as the mouse button
+        // (gamepad-runner); the left stick hides it to hand A back.
+        if (plain && button === "south" && pointerShown()) return;
+        // The on-screen keyboard still takes the D-pad.
+        const dir = NAV_BUTTON[button];
+        if (plain && DPAD.has(button) && dir && keyboardNav(dir)) return;
+        const id = padAction(pad, chord);
+        const isDefault = plain && isDefaultPadBinding(pad, chord);
+        // A button the user bound acts like a keyboard hotkey: it does its
+        // job without bringing up the controls. So does the D-pad always, as
+        // the arrow keys do.
+        if (!DPAD.has(button) && (!id || isDefault)) {
+          window.dispatchEvent(new Event(CONTROLLER_ACTIVITY));
+        }
+        // With the controls up, A presses the focused control unless it was
+        // rebound. The D-pad never moves around them; the left stick does.
+        const navigates = button === "south" && (!id || isDefault);
+        if (!(plain && controlsUp() && navigates)) {
           if (!id) return;
           // Untouched defaults still press the key they always pressed, so
           // menus that listen for Escape or Space behave exactly as before.
-          const legacy =
-            plain && isDefaultPadBinding(pad, chord) ? PLAYER_BUTTON[button] : undefined;
+          // The D-pad runs its action directly, so the arrow keys it used to
+          // press cannot move around the controls.
+          const legacy = isDefault && !DPAD.has(button) ? PLAYER_BUTTON[button] : undefined;
           if (legacy) synthKey(legacy);
           else runPadAction(id, keys, repeat);
           return;
@@ -198,6 +221,17 @@ export function useGamepad(): void {
       if (isGamepadCaptured()) return;
       if (playerRef.current && !contentOverlayOpen()) {
         window.dispatchEvent(new Event(CONTROLLER_ACTIVITY));
+        // Moving around the controls starts from the focused one, not from
+        // where the pointer last was, and A then presses it.
+        if (axis === "lx" || axis === "ly") window.dispatchEvent(new Event(POINTER_YIELD_EVENT));
+        // Big Picture's own player chrome moves on the arrow keys, which the
+        // D-pad used to press there.
+        const arrow =
+          isBigPictureActive() && !desktopUiRef.current ? NAV_AXIS[axis]?.[dir] : undefined;
+        if (arrow && (axis === "lx" || axis === "ly")) {
+          if (!keyboardNav(arrow)) synthKey(NAV_ARROW[arrow as keyof typeof NAV_ARROW]);
+          return;
+        }
         if (!axisNavigates(axis)) {
           const key = PLAYER_AXIS[axis]?.[dir];
           if (key) synthKey(key);
@@ -205,7 +239,9 @@ export function useGamepad(): void {
         }
       }
       const nav = NAV_AXIS[axis]?.[dir];
-      if (nav) dispatchTvNav(nav, repeat);
+      // In the player the left stick is what moves around the on-screen
+      // keyboard, since the D-pad keeps its actions there.
+      if (nav && !(playerRef.current && keyboardNav(nav))) dispatchTvNav(nav, repeat);
     };
 
     // A shoulder or trigger that a binding combines with waits for its
@@ -244,9 +280,20 @@ export function useGamepad(): void {
       !playerRef.current ||
       contentOverlayOpen() ||
       (controlsUp() && !!NAV_AXIS[axis] && axis !== "ry");
+    // In the player the left stick also brings the hidden controls up, since
+    // it is what moves around them.
+    const axisWakes = (axis: GpAxis) => playerRef.current && (axis === "lx" || axis === "ly");
+
+    // In the player the right stick is only the pointer, when there is one.
+    const pointerAxis = (axis: GpAxis) =>
+      playerRef.current && cursorRef.current && (axis === "rx" || axis === "ry");
 
     const onAxis = (axis: GpAxis, value: number) => {
-      const mapped = axisNavigates(axis) ? NAV_AXIS[axis] : PLAYER_AXIS[axis];
+      const mapped = pointerAxis(axis)
+        ? undefined
+        : axisNavigates(axis) || axisWakes(axis)
+          ? NAV_AXIS[axis]
+          : PLAYER_AXIS[axis];
       const dz = Math.max(0.05, cfgRef.current.deadzone);
       const dir: "neg" | "pos" | null = !mapped
         ? null
