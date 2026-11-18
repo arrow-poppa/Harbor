@@ -65,7 +65,7 @@ export const DEFAULT_PAD_BINDINGS: Readonly<Record<string, HotkeyId>> = {
 };
 
 export function padModeOf(scope: HotkeyScope): PadMode {
-  return scope === "Lookup" ? "lookup" : "normal";
+  return scope === "Word lookup" ? "lookup" : "normal";
 }
 
 export function padStorageKey(mode: PadMode, chord: string): string {

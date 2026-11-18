@@ -207,7 +207,7 @@ function DictionarySection() {
           }}
         />
       )}
-      <Row label={t("Subtitle size")} sub={t("Same setting as Player → Subtitles.")}>
+      <Row label={t("Subtitle font size")} sub={t("Same setting as Player → Subtitles.")}>
         <RangeInput
           value={settings.subFontSize}
           min={16}

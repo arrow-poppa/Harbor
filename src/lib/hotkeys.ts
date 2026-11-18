@@ -1,6 +1,6 @@
 // Lookup bindings apply only while picking a word in the subtitles, so they
 // can reuse keys the player already uses (the arrows, Enter, Escape).
-export type HotkeyScope = "Player" | "Global" | "Manga" | "Lookup";
+export type HotkeyScope = "Player" | "Global" | "Manga" | "Word lookup";
 
 export type HotkeyId =
   | "playerClose"
@@ -607,7 +607,7 @@ export const HOTKEYS: HotkeyDef[] = [
 
   {
     id: "lookupNextWord",
-    scope: "Lookup",
+    scope: "Word lookup",
     group: "Words",
     label: "Next word",
     description: "Select and look up the next word.",
@@ -615,7 +615,7 @@ export const HOTKEYS: HotkeyDef[] = [
   },
   {
     id: "lookupPrevWord",
-    scope: "Lookup",
+    scope: "Word lookup",
     group: "Words",
     label: "Previous word",
     description: "Select and look up the previous word.",
@@ -623,7 +623,7 @@ export const HOTKEYS: HotkeyDef[] = [
   },
   {
     id: "lookupPrevLine",
-    scope: "Lookup",
+    scope: "Word lookup",
     group: "Words",
     label: "Line above",
     description: "Go to the first word of the subtitle line above.",
@@ -631,7 +631,7 @@ export const HOTKEYS: HotkeyDef[] = [
   },
   {
     id: "lookupNextLine",
-    scope: "Lookup",
+    scope: "Word lookup",
     group: "Words",
     label: "Line below",
     description: "Go to the first word of the subtitle line below.",
@@ -639,7 +639,7 @@ export const HOTKEYS: HotkeyDef[] = [
   },
   {
     id: "lookupOpenPopup",
-    scope: "Lookup",
+    scope: "Word lookup",
     group: "Popup",
     label: "Show the popup",
     description:
@@ -648,7 +648,7 @@ export const HOTKEYS: HotkeyDef[] = [
   },
   {
     id: "lookupAddAnki",
-    scope: "Lookup",
+    scope: "Word lookup",
     group: "Popup",
     label: "Add to Anki",
     description: "Add the selected word to Anki, like the Anki button in the popup.",
@@ -656,7 +656,7 @@ export const HOTKEYS: HotkeyDef[] = [
   },
   {
     id: "lookupAiExplain",
-    scope: "Lookup",
+    scope: "Word lookup",
     group: "Popup",
     label: "Generate AI explanation",
     description: "Generate the AI explanation of the word, or generate it again.",
@@ -664,7 +664,7 @@ export const HOTKEYS: HotkeyDef[] = [
   },
   {
     id: "lookupWordAudio",
-    scope: "Lookup",
+    scope: "Word lookup",
     group: "Popup",
     label: "Play word audio",
     description: "Play the word's local audio; press again for the next voice.",
@@ -672,7 +672,7 @@ export const HOTKEYS: HotkeyDef[] = [
   },
   {
     id: "lookupScrollDown",
-    scope: "Lookup",
+    scope: "Word lookup",
     group: "Popup",
     label: "Scroll popup down",
     description: "Scroll the definitions down. On a controller the right stick scrolls too.",
@@ -680,7 +680,7 @@ export const HOTKEYS: HotkeyDef[] = [
   },
   {
     id: "lookupScrollUp",
-    scope: "Lookup",
+    scope: "Word lookup",
     group: "Popup",
     label: "Scroll popup up",
     description: "Scroll the definitions up.",
@@ -688,7 +688,7 @@ export const HOTKEYS: HotkeyDef[] = [
   },
   {
     id: "lookupExit",
-    scope: "Lookup",
+    scope: "Word lookup",
     group: "Popup",
     label: "Leave word lookup",
     description:

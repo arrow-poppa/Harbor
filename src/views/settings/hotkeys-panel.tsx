@@ -108,7 +108,7 @@ export function HotkeysPanel() {
     const scopes: Record<HotkeyScope, HotkeyDef[]> = {
       Global: [],
       Player: [],
-      Lookup: [],
+      "Word lookup": [],
       Manga: [],
     };
     for (const def of HOTKEYS) scopes[def.scope].push(def);
@@ -246,11 +246,11 @@ export function HotkeysPanel() {
             return (
               <Section
                 key={scope}
-                title={scope === "Lookup" ? t("Word lookup") : t(scope)}
+                title={t(scope)}
                 subtitle={
                   scope === "Player"
                     ? t("Inside the playback view.")
-                    : scope === "Lookup"
+                    : scope === "Word lookup"
                       ? t(
                           "While picking a word in the subtitles with the Pick a word in the subtitles shortcut. These keys take over only then, so they can reuse the player's.",
                         )

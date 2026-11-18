@@ -228,7 +228,7 @@ export function useGamepad(): void {
         // rebound. The D-pad never moves around them; the left stick does.
         const navigates = button === "south" && (!id || isDefault);
         if (!(plain && !lookupMode() && controlsUp() && navigates)) {
-          if (!id || HOTKEY_MAP[id].scope === "Lookup") return;
+          if (!id || HOTKEY_MAP[id].scope === "Word lookup") return;
           // Untouched defaults still press the key they always pressed, so
           // menus that listen for Escape or Space behave exactly as before.
           // The D-pad runs its action directly, so the arrow keys it used to
@@ -240,7 +240,7 @@ export function useGamepad(): void {
         }
       } else {
         const id = padAction(pad, "normal", chord);
-        if (id && HOTKEY_MAP[id].scope !== "Player" && HOTKEY_MAP[id].scope !== "Lookup") {
+        if (id && HOTKEY_MAP[id].scope !== "Player" && HOTKEY_MAP[id].scope !== "Word lookup") {
           runPadAction(id, keys, repeat);
           return;
         }
