@@ -9271,6 +9271,8 @@ const SETTINGS_OPTIONS: SettingsOption[] = [
     tab: "behaviour",
     anchorTitle: "Behavior",
     keywords: ["speed step", "playback rate step", "speed increment", "0.25x", "bracket keys"],
+  },
+  {
     label: "Toggle subtitles on/off",
     section: "hotkeys",
     tab: "keys",
