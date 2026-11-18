@@ -1,3 +1,4 @@
+import controllerTouchpad from "./ar/controller-touchpad";
 import controllerHotkeys from "./ar/controller-hotkeys";
 import reviews from "./ar/reviews";
 import playOrders from "./ar/play-orders";
@@ -422,6 +423,7 @@ const ar: Record<string, string> = {
   ...queueBasket,
   ...liveWeb,
   ...controllerHotkeys,
+  ...controllerTouchpad,
 };
 
 export default ar;

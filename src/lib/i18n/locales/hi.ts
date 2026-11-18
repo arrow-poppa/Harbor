@@ -1,3 +1,4 @@
+import controllerTouchpad from "./hi/controller-touchpad";
 import controllerHotkeys from "./hi/controller-hotkeys";
 import reviews from "./hi/reviews";
 import playOrders from "./hi/play-orders";
@@ -364,6 +365,7 @@ const hi: Record<string, string> = {
   ...queueBasket,
   ...liveWeb,
   ...controllerHotkeys,
+  ...controllerTouchpad,
 };
 
 export default hi;

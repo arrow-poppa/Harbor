@@ -11,6 +11,8 @@ import {
   POINTER_YIELD_EVENT,
   pointerShown,
 } from "@/lib/gamepad/pointer-target";
+import { takeTouchDelta } from "@/lib/gamepad/touchpad";
+import { padAction } from "@/lib/gamepad/bindings";
 import { useSettings } from "@/lib/settings";
 import { useT } from "@/lib/i18n";
 
@@ -34,6 +36,12 @@ function showPointer(cursor: HTMLDivElement | null, shown: boolean) {
   cursor?.style.setProperty("opacity", shown ? "1" : "0");
   document.documentElement.toggleAttribute(POINTER_SHOWN_ATTR, shown);
 }
+
+// A finger sliding across the whole touchpad moves the cursor about one and a
+// half window widths at the default cursor speed; the pad is 16:9.
+const TOUCH_GAIN = 1.5;
+const TOUCH_ASPECT = 1080 / 1920;
+const DEFAULT_CURSOR_SPEED = 900;
 
 type TextField = HTMLInputElement | HTMLTextAreaElement;
 const isTextField = (el: unknown): el is TextField =>
@@ -117,6 +125,7 @@ export function GamepadRunner() {
       const dt = Math.min((now - previous) / 1000, 0.05);
       previous = now;
       if (capturedRef.current) {
+        takeTouchDelta();
         showPointer(cursor.current, false);
         frame = requestAnimationFrame(tick);
         return;
@@ -125,16 +134,21 @@ export function GamepadRunner() {
       const deadzone = settings.controllerDeadzone;
       const x = Math.abs(rx) < deadzone ? 0 : rx;
       const y = Math.abs(ry) < deadzone ? 0 : ry;
-      if (cursorEnabled.current && (x || y)) {
+      const touch = takeTouchDelta();
+      const touchScale =
+        innerWidth * TOUCH_GAIN * (settings.controllerCursorSpeed / DEFAULT_CURSOR_SPEED);
+      const tx = touch.x * touchScale;
+      const ty = touch.y * touchScale * TOUCH_ASPECT;
+      if (cursorEnabled.current && (x || y || tx || ty)) {
         active.current = true;
         lastActivity.current = now;
         position.current.x = Math.max(
           0,
-          Math.min(innerWidth, position.current.x + x * settings.controllerCursorSpeed * dt),
+          Math.min(innerWidth, position.current.x + x * settings.controllerCursorSpeed * dt + tx),
         );
         position.current.y = Math.max(
           0,
-          Math.min(innerHeight, position.current.y + y * settings.controllerCursorSpeed * dt),
+          Math.min(innerHeight, position.current.y + y * settings.controllerCursorSpeed * dt + ty),
         );
         const hit = document.elementFromPoint(
           position.current.x,
@@ -263,8 +277,15 @@ export function GamepadRunner() {
     };
   }, []);
 
+  // The touchpad's click clicks under the cursor too, unless it was bound to
+  // an action in Hotkeys.
+  const touchClick =
+    settings.controllerTouchpadPointer &&
+    !!live.buttons.touchpad &&
+    !padAction(settings.gamepadHotkeys, "touchpad");
+  const clickPressed = !!live.buttons.south || touchClick;
   useEffect(() => {
-    if (captured || !live.buttons.south) return;
+    if (captured || !clickPressed) return;
     const selectedField =
       document.activeElement === controllerField.current ? controllerField.current : null;
     if (!active.current && !selectedField) return;
@@ -322,7 +343,7 @@ export function GamepadRunner() {
       "button,a,input,select,textarea,[role='button'],[tabindex]",
     );
     (clickable ?? (target instanceof HTMLElement ? target : null))?.click();
-  }, [live.buttons.south, captured]);
+  }, [clickPressed, captured]);
 
   useEffect(() => {
     if (!captured && live.buttons.west && keyboard) typeInto(keyboard, "Backspace");

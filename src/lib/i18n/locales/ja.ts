@@ -1,3 +1,4 @@
+import controllerTouchpad from "./ja/controller-touchpad";
 import controllerHotkeys from "./ja/controller-hotkeys";
 import reviews from "./ja/reviews";
 import playOrders from "./ja/play-orders";
@@ -418,6 +419,7 @@ const ja: Record<string, string> = {
   ...queueBasket,
   ...liveWeb,
   ...controllerHotkeys,
+  ...controllerTouchpad,
 };
 
 export default ja;

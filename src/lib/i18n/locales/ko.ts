@@ -1,3 +1,4 @@
+import controllerTouchpad from "./ko/controller-touchpad";
 import controllerHotkeys from "./ko/controller-hotkeys";
 import reviews from "./ko/reviews";
 import playOrders from "./ko/play-orders";
@@ -377,6 +378,7 @@ const ko: Record<string, string> = {
   ...queueBasket,
   ...liveWeb,
   ...controllerHotkeys,
+  ...controllerTouchpad,
 };
 
 export default ko;

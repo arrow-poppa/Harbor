@@ -1,3 +1,4 @@
+import controllerTouchpad from "./tr/controller-touchpad";
 import controllerHotkeys from "./tr/controller-hotkeys";
 import reviews from "./tr/reviews";
 import playOrders from "./tr/play-orders";
@@ -378,6 +379,7 @@ const tr: Record<string, string> = {
   ...queueBasket,
   ...liveWeb,
   ...controllerHotkeys,
+  ...controllerTouchpad,
 };
 
 export default tr;

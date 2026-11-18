@@ -1,3 +1,4 @@
+import controllerTouchpad from "./es/controller-touchpad";
 import controllerHotkeys from "./es/controller-hotkeys";
 import reviews from "./es/reviews";
 import playOrders from "./es/play-orders";
@@ -412,6 +413,7 @@ const es: Record<string, string> = {
   ...queueBasket,
   ...liveWeb,
   ...controllerHotkeys,
+  ...controllerTouchpad,
 };
 
 export default es;

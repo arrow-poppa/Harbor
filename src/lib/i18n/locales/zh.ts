@@ -1,3 +1,4 @@
+import controllerTouchpad from "./zh/controller-touchpad";
 import controllerHotkeys from "./zh/controller-hotkeys";
 import reviews from "./zh/reviews";
 import playOrders from "./zh/play-orders";
@@ -371,6 +372,7 @@ const zh: Record<string, string> = {
   ...queueBasket,
   ...liveWeb,
   ...controllerHotkeys,
+  ...controllerTouchpad,
 };
 
 export default zh;

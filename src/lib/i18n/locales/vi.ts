@@ -1,3 +1,4 @@
+import controllerTouchpad from "./vi/controller-touchpad";
 import controllerHotkeys from "./vi/controller-hotkeys";
 import reviews from "./vi/reviews";
 import playOrders from "./vi/play-orders";
@@ -418,6 +419,7 @@ const vi: Record<string, string> = {
   ...queueBasket,
   ...liveWeb,
   ...controllerHotkeys,
+  ...controllerTouchpad,
 };
 
 export default vi;

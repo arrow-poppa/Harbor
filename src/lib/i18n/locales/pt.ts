@@ -1,3 +1,4 @@
+import controllerTouchpad from "./pt/controller-touchpad";
 import controllerHotkeys from "./pt/controller-hotkeys";
 import reviews from "./pt/reviews";
 import playOrders from "./pt/play-orders";
@@ -425,6 +426,7 @@ const pt: Record<string, string> = {
   ...queueBasket,
   ...liveWeb,
   ...controllerHotkeys,
+  ...controllerTouchpad,
 };
 
 export default pt;

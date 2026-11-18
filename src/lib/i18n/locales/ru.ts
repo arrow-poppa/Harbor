@@ -1,3 +1,4 @@
+import controllerTouchpad from "./ru/controller-touchpad";
 import controllerHotkeys from "./ru/controller-hotkeys";
 import reviews from "./ru/reviews";
 import playOrders from "./ru/play-orders";
@@ -432,6 +433,7 @@ const ru: Record<string, string> = {
   ...queueBasket,
   ...liveWeb,
   ...controllerHotkeys,
+  ...controllerTouchpad,
 };
 
 export default ru;

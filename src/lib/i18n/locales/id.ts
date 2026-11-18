@@ -1,3 +1,4 @@
+import controllerTouchpad from "./id/controller-touchpad";
 import controllerHotkeys from "./id/controller-hotkeys";
 import reviews from "./id/reviews";
 import playOrders from "./id/play-orders";
@@ -381,6 +382,7 @@ const id: Record<string, string> = {
   ...queueBasket,
   ...liveWeb,
   ...controllerHotkeys,
+  ...controllerTouchpad,
 };
 
 export default id;

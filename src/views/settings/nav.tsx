@@ -9350,6 +9350,13 @@ const SETTINGS_OPTIONS: SettingsOption[] = [
     ],
   },
   {
+    label: "Touchpad moves the cursor",
+    section: "controllers",
+    tab: "setup",
+    anchorTitle: "Controller cursor",
+    keywords: ["touchpad", "dualsense", "dualshock", "ps5 touchpad", "trackpad cursor"],
+  },
+  {
     label: "Controller cursor",
     section: "controllers",
     tab: "setup",
