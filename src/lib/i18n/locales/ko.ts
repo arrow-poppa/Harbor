@@ -1,3 +1,4 @@
+import controllerHotkeys from "./ko/controller-hotkeys";
 import reviews from "./ko/reviews";
 import playOrders from "./ko/play-orders";
 import gameRomLibrary from "./ko/game-rom-library";
@@ -375,6 +376,7 @@ const ko: Record<string, string> = {
   ...reviews,
   ...queueBasket,
   ...liveWeb,
+  ...controllerHotkeys,
 };
 
 export default ko;

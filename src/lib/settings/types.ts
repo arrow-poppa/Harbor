@@ -731,6 +731,9 @@ export type Settings = {
     renamed: Record<string, string>;
   };
   hotkeys: Record<string, string>;
+  // Controller buttons bound to hotkey actions, by chord ("south",
+  // "lt+south"); "" unbinds a default. See lib/gamepad/bindings.
+  gamepadHotkeys: Record<string, string>;
   animeFavoriteGenres: number[];
   animeExcludeOrigins: string[];
   animeHideWatchedPicks: boolean;

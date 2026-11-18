@@ -1,3 +1,4 @@
+import controllerHotkeys from "./hi/controller-hotkeys";
 import reviews from "./hi/reviews";
 import playOrders from "./hi/play-orders";
 import gameRomLibrary from "./hi/game-rom-library";
@@ -362,6 +363,7 @@ const hi: Record<string, string> = {
   ...reviews,
   ...queueBasket,
   ...liveWeb,
+  ...controllerHotkeys,
 };
 
 export default hi;

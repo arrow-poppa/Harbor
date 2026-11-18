@@ -5,6 +5,9 @@ import { makeSafeTauriUnlisten } from "@/lib/tauri-unlisten";
 import { useSettings } from "@/lib/settings";
 import { useView } from "@/lib/view";
 import { dispatchTvNav } from "@/lib/keyboard-navigation";
+import { HOTKEY_MAP } from "@/lib/hotkeys";
+import { PAD_MODIFIERS, isDefaultPadBinding, modifierInUse, padAction } from "./bindings";
+import { runPadAction } from "./dispatch";
 import { isGamepadCaptured } from "./capture";
 import { publishGamepads } from "./store";
 import { resetLiveGamepad, setLiveAxis, setLiveButton } from "./live";
@@ -114,6 +117,9 @@ export function useGamepad(): void {
   const playerRef = useRef(!!player);
   playerRef.current = !!player;
 
+  const bindRef = useRef({ pad: settings.gamepadHotkeys ?? {}, keys: settings.hotkeys ?? {} });
+  bindRef.current = { pad: settings.gamepadHotkeys ?? {}, keys: settings.hotkeys ?? {} };
+
   const backgroundInputRef = useRef(backgroundInput);
   backgroundInputRef.current = backgroundInput;
 
@@ -152,15 +158,32 @@ export function useGamepad(): void {
 
     const contentOverlayOpen = () =>
       !!document.querySelector("[data-harbor-context-layer],[data-harbor-image-viewer]");
-    const fireButton = (button: GpButton, repeat = false) => {
+    // `chord` is the button, or "modifier+button" while a shoulder or trigger
+    // that some binding combines with is held.
+    const fireButton = (button: GpButton, repeat = false, chord: string = button) => {
       if (isGamepadCaptured()) return;
+      const { pad, keys } = bindRef.current;
+      const plain = chord === button;
       if (playerRef.current && !contentOverlayOpen()) {
         window.dispatchEvent(new Event(CONTROLLER_ACTIVITY));
-        if (!(controlsUp() && NAV_WHEN_CONTROLS_UP.has(button))) {
-          const key = PLAYER_BUTTON[button];
-          if (key) synthKey(key);
+        if (!(plain && controlsUp() && NAV_WHEN_CONTROLS_UP.has(button))) {
+          const id = padAction(pad, chord);
+          if (!id) return;
+          // Untouched defaults still press the key they always pressed, so
+          // menus that listen for Escape or Space behave exactly as before.
+          const legacy =
+            plain && isDefaultPadBinding(pad, chord) ? PLAYER_BUTTON[button] : undefined;
+          if (legacy) synthKey(legacy);
+          else runPadAction(id, keys, repeat);
           return;
         }
+      } else {
+        const id = padAction(pad, chord);
+        if (id && HOTKEY_MAP[id].scope !== "Player") {
+          runPadAction(id, keys, repeat);
+          return;
+        }
+        if (!plain) return;
       }
       const nav = NAV_BUTTON[button];
       if (nav && !keyboardNav(nav)) {
@@ -185,17 +208,36 @@ export function useGamepad(): void {
       if (nav) dispatchTvNav(nav, repeat);
     };
 
+    // A shoulder or trigger that a binding combines with waits for its
+    // release: alone it does its own job then, held with another button it
+    // forms the chord. One no binding combines with acts on press, as before.
+    const heldModifiers = new Map<GpButton, boolean>();
+
     const onButton = (button: GpButton, pressed: boolean) => {
       if (!pressed) {
         stopRepeat(`btn:${button}`);
+        if (heldModifiers.has(button)) {
+          const used = heldModifiers.get(button);
+          heldModifiers.delete(button);
+          if (!used) fireButton(button);
+        }
         return;
       }
+      if (isGamepadCaptured()) return;
+      const { pad } = bindRef.current;
+      const modifier = PAD_MODIFIERS.find((m) => m !== button && heldModifiers.has(m));
+      if (!modifier && PAD_MODIFIERS.includes(button) && modifierInUse(pad, button)) {
+        heldModifiers.set(button, false);
+        return;
+      }
+      if (modifier) heldModifiers.set(modifier, true);
+      const chord = modifier ? `${modifier}+${button}` : button;
       const repeatable =
         playerRef.current && !contentOverlayOpen()
           ? PLAYER_REPEATABLE.has(button)
           : NAV_REPEATABLE.has(button);
-      if (repeatable) startRepeat(`btn:${button}`, (r) => fireButton(button, r));
-      else fireButton(button);
+      if (repeatable) startRepeat(`btn:${button}`, (r) => fireButton(button, r, chord));
+      else fireButton(button, false, chord);
     };
 
     const axisNavigates = (axis: GpAxis) =>
@@ -269,6 +311,7 @@ export function useGamepad(): void {
     return () => {
       cancelled = true;
       stopAll();
+      heldModifiers.clear();
       stopWebSource();
       axisDir.clear();
       webPads = [];

@@ -1,3 +1,4 @@
+import controllerHotkeys from "./id/controller-hotkeys";
 import reviews from "./id/reviews";
 import playOrders from "./id/play-orders";
 import gameRomLibrary from "./id/game-rom-library";
@@ -379,6 +380,7 @@ const id: Record<string, string> = {
   ...reviews,
   ...queueBasket,
   ...liveWeb,
+  ...controllerHotkeys,
 };
 
 export default id;

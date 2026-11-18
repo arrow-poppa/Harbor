@@ -1,3 +1,4 @@
+import controllerHotkeys from "./ar/controller-hotkeys";
 import reviews from "./ar/reviews";
 import playOrders from "./ar/play-orders";
 import gameRomLibrary from "./ar/game-rom-library";
@@ -420,6 +421,7 @@ const ar: Record<string, string> = {
   ...reviews,
   ...queueBasket,
   ...liveWeb,
+  ...controllerHotkeys,
 };
 
 export default ar;

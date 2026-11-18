@@ -1,5 +1,5 @@
 import { useSubTabs } from "./sub-tabs";
-import { Keyboard, RotateCcw } from "./icons";
+import { Gamepad2, Keyboard, RotateCcw, X } from "./icons";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   HOTKEYS,
@@ -8,6 +8,7 @@ import {
   eventToBinding,
   formatBindingForDisplay,
   isModifierOnly,
+  setBindingCapture,
   type HotkeyDef,
   type HotkeyId,
   type HotkeyScope,
@@ -17,6 +18,18 @@ import { SEEK_STEP_OPTIONS } from "@/lib/seek-step";
 import { useSettings } from "@/lib/settings";
 import { useT } from "@/lib/i18n";
 import { Dropdown } from "@/components/dropdown";
+import {
+  bindPad,
+  formatPadChord,
+  padAction,
+  padChordsFor,
+  padCustomized,
+  resetPadFor,
+  unbindPad,
+} from "@/lib/gamepad/bindings";
+import { detectLayout, type Layout } from "@/lib/gamepad/layout";
+import { useGamepads } from "@/lib/gamepad/store";
+import { usePadCapture } from "@/lib/gamepad/use-pad-capture";
 import { Section, ToggleRow } from "./shared";
 import { ModalButton, ROW_DESC, SettingRow, SettingsModal } from "./kit";
 import { SSection } from "./ui";
@@ -56,6 +69,28 @@ export function HotkeysPanel() {
     binding: string;
   } | null>(null);
   const [resetOpen, setResetOpen] = useState(false);
+  const pad = settings.gamepadHotkeys ?? {};
+  const pads = useGamepads();
+  const layout: Layout = detectLayout(pads.map((p) => p.name)) ?? "xbox";
+  const [padCapturing, setPadCapturing] = useState<HotkeyId | null>(null);
+  const [padConflict, setPadConflict] = useState<{
+    target: HotkeyId;
+    existing: HotkeyId;
+    chord: string;
+  } | null>(null);
+
+  usePadCapture(padCapturing != null, (chord) => {
+    const target = padCapturing;
+    setPadCapturing(null);
+    if (!target) return;
+    const existing = padAction(pad, chord);
+    if (existing === target) return;
+    if (existing) {
+      setPadConflict({ target, existing, chord });
+      return;
+    }
+    update({ gamepadHotkeys: bindPad(pad, chord, target) });
+  });
 
   const grouped = useMemo(() => {
     const scopes: Record<HotkeyScope, HotkeyDef[]> = { Global: [], Player: [], Manga: [] };
@@ -70,10 +105,11 @@ export function HotkeysPanel() {
     update({ hotkeys: next });
   };
 
-  const resetAll = () => update({ hotkeys: {} });
+  const resetAll = () => update({ hotkeys: {}, gamepadHotkeys: {} });
 
   useEffect(() => {
     if (!capturing) return;
+    setBindingCapture(true);
     const onKey = (e: KeyboardEvent) => {
       e.preventDefault();
       e.stopPropagation();
@@ -100,10 +136,15 @@ export function HotkeysPanel() {
       setCapturing(null);
     };
     window.addEventListener("keydown", onKey, true);
-    return () => window.removeEventListener("keydown", onKey, true);
+    return () => {
+      window.removeEventListener("keydown", onKey, true);
+      setBindingCapture(false);
+    };
   }, [capturing, overrides]);
 
-  const overrideCount = Object.keys(overrides).length;
+  const overrideCount =
+    Object.keys(overrides).length +
+    HOTKEYS.filter((h) => !(h.id in overrides) && padCustomized(pad, h.id)).length;
 
   usePageActions(
     tab === "keys" && overrideCount > 0
@@ -159,8 +200,18 @@ export function HotkeysPanel() {
           <p className={`max-w-[70ch] ${ROW_DESC}`}>
             {t(
               "Click any binding to rebind it. Press Esc while capturing to cancel. Letters ignore Shift (so K and Shift+K trigger the same action).",
+            )}{" "}
+            {t(
+              "Controller buttons go next to each key: press one, or hold LB, RB, LT or RT and press another for a combination. A shoulder or trigger used in a combination does its own job when you let go of it.",
             )}
           </p>
+          {(!settings.controllerSupportEnabled || pads.length === 0) && (
+            <p className={`max-w-[70ch] ${ROW_DESC}`}>
+              {t(
+                "To bind controller buttons, connect a controller and turn on controller support under Controllers.",
+              )}
+            </p>
+          )}
 
           {(Object.keys(grouped) as HotkeyScope[]).map((scope) => {
             const defs = grouped[scope];
@@ -191,7 +242,7 @@ export function HotkeysPanel() {
                         key={def.id}
                         def={def}
                         binding={effectiveBinding(def.id, overrides)}
-                        isCustom={def.id in overrides}
+                        isCustom={def.id in overrides || padCustomized(pad, def.id)}
                         isCapturing={capturing === def.id}
                         conflict={
                           conflict?.target === def.id
@@ -205,10 +256,39 @@ export function HotkeysPanel() {
                           setConflict(null);
                           setCapturing(def.id);
                         }}
-                        onReset={() => setBinding(def.id, null)}
+                        onReset={() => {
+                          setBinding(def.id, null);
+                          update({ gamepadHotkeys: resetPadFor(pad, def.id) });
+                        }}
                         onCancel={() => {
                           setCapturing(null);
                           setConflict(null);
+                        }}
+                        pad={{
+                          chords: padChordsFor(pad, def.id),
+                          layout,
+                          capturing: padCapturing === def.id,
+                          conflict:
+                            padConflict?.target === def.id
+                              ? t("{key} is used for {action}.", {
+                                  key: formatPadChord(padConflict.chord, layout),
+                                  action: t(HOTKEY_MAP[padConflict.existing].label),
+                                })
+                              : undefined,
+                          onCapture: () => {
+                            setPadConflict(null);
+                            setPadCapturing(def.id);
+                          },
+                          onCancel: () => {
+                            setPadCapturing(null);
+                            setPadConflict(null);
+                          },
+                          onRemove: (chord) => update({ gamepadHotkeys: unbindPad(pad, chord) }),
+                          onConfirmConflict: () => {
+                            if (!padConflict) return;
+                            update({ gamepadHotkeys: bindPad(pad, padConflict.chord, def.id) });
+                            setPadConflict(null);
+                          },
                         }}
                       />
                     ))}
@@ -354,6 +434,83 @@ function SeekStepPicker({
   );
 }
 
+type PadRowProps = {
+  chords: string[];
+  layout: Layout;
+  capturing: boolean;
+  conflict?: string;
+  onCapture: () => void;
+  onCancel: () => void;
+  onRemove: (chord: string) => void;
+  onConfirmConflict: () => void;
+};
+
+const PAD_CHIP =
+  "group flex h-11 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-[8px] border border-edge-soft bg-elevated pl-3 pr-1.5 text-[14px] font-semibold text-ink";
+
+// The controller buttons bound to one action, each removable, plus a button
+// that waits for the next controller press.
+function PadBindings({
+  chords,
+  layout,
+  capturing,
+  conflict,
+  onCapture,
+  onCancel,
+  onRemove,
+  onConfirmConflict,
+  label,
+}: PadRowProps & { label: string }) {
+  const t = useT();
+  return (
+    <div className="flex min-w-0 flex-wrap items-center justify-end gap-1.5">
+      {chords.map((chord) => (
+        <span key={chord} className={PAD_CHIP}>
+          <Gamepad2 size={15} strokeWidth={2.2} className="text-ink-subtle" />
+          {formatPadChord(chord, layout)}
+          <button
+            type="button"
+            onClick={() => onRemove(chord)}
+            aria-label={t("Remove {key} from {name}", {
+              key: formatPadChord(chord, layout),
+              name: label,
+            })}
+            className="flex h-7 w-7 items-center justify-center rounded-[6px] text-ink-subtle transition-colors hover:bg-raised hover:text-ink"
+          >
+            <X size={14} strokeWidth={2.4} />
+          </button>
+        </span>
+      ))}
+      {conflict && !capturing && (
+        <button type="button" onClick={onConfirmConflict} className={QUIET_ACTION}>
+          {t("Use it here")}
+        </button>
+      )}
+      {capturing ? (
+        <>
+          <button type="button" onClick={onCancel} className={QUIET_ACTION}>
+            {t("Cancel")}
+          </button>
+          <span className={BINDING_CAPTURING}>
+            <Gamepad2 size={18} strokeWidth={2.2} />
+            {t("Press a button…")}
+          </span>
+        </>
+      ) : (
+        <button
+          type="button"
+          onClick={onCapture}
+          aria-label={t("Add a controller button for {name}", { name: label })}
+          className={QUIET_ACTION}
+        >
+          <Gamepad2 size={17} strokeWidth={2.2} />
+          {chords.length ? "+" : t("Controller")}
+        </button>
+      )}
+    </div>
+  );
+}
+
 function ReadOnlyHotkeyRow({
   label,
   description,
@@ -379,6 +536,7 @@ function HotkeyRow({
   onStartCapture,
   onReset,
   onCancel,
+  pad,
 }: {
   def: HotkeyDef;
   binding: string;
@@ -388,6 +546,7 @@ function HotkeyRow({
   onStartCapture: () => void;
   onReset: () => void;
   onCancel: () => void;
+  pad: PadRowProps;
 }) {
   const t = useT();
   const pillRef = useRef<HTMLButtonElement>(null);
@@ -405,8 +564,9 @@ function HotkeyRow({
         </span>
       }
       desc={t(def.description)}
-      warn={conflict}
+      warn={conflict ?? pad.conflict}
     >
+      <PadBindings {...pad} label={t(def.label)} />
       {isCapturing && (
         <button type="button" onClick={onCancel} className={QUIET_ACTION}>
           {t("Cancel")}

@@ -1,3 +1,4 @@
+import controllerHotkeys from "./pl/controller-hotkeys";
 import reviews from "./pl/reviews";
 import playOrders from "./pl/play-orders";
 import gameRomLibrary from "./pl/game-rom-library";
@@ -383,6 +384,7 @@ const pl: Record<string, string> = {
   ...reviews,
   ...queueBasket,
   ...liveWeb,
+  ...controllerHotkeys,
 };
 
 export default pl;
