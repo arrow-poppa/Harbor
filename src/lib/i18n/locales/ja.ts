@@ -1,3 +1,4 @@
+import seekSteps from "./ja/seek-steps";
 import reviews from "./ja/reviews";
 import playOrders from "./ja/play-orders";
 import gameRomLibrary from "./ja/game-rom-library";
@@ -416,6 +417,7 @@ const ja: Record<string, string> = {
   ...reviews,
   ...queueBasket,
   ...liveWeb,
+  ...seekSteps,
 };
 
 export default ja;

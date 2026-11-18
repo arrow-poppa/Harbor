@@ -536,6 +536,14 @@ export type Settings = {
   seekForwardStepSec: number;
   seekBackStepShortSec: number;
   seekForwardStepShortSec: number;
+  // The "long seek" hotkeys (30s by default).
+  seekBackStepLongSec: number;
+  seekForwardStepLongSec: number;
+  // Slow rate the Toggle slow speed hotkey switches to from normal speed.
+  halfSpeedRate: number;
+  // How much the Speed down / Speed up hotkeys change the rate per press.
+  speedDownStep: number;
+  speedUpStep: number;
   shareWatchPresence: boolean;
   playerHdrOpaqueWindow: boolean;
   playerEscExitsFullscreen: boolean;

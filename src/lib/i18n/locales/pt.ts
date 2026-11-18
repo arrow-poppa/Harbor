@@ -1,3 +1,4 @@
+import seekSteps from "./pt/seek-steps";
 import reviews from "./pt/reviews";
 import playOrders from "./pt/play-orders";
 import gameRomLibrary from "./pt/game-rom-library";
@@ -423,6 +424,7 @@ const pt: Record<string, string> = {
   ...reviews,
   ...queueBasket,
   ...liveWeb,
+  ...seekSteps,
 };
 
 export default pt;
