@@ -1539,6 +1539,8 @@ const miscA: Record<string, string> = {
   'Giving "two weeks\' notice" at a job means:':
     'Bir işte "iki hafta önceden bildirimde bulunmak" ne anlama gelir?',
   "Glow and title": "Parıltı ve başlık",
+  "Episode pages": "Bölüm sayfaları",
+  "Go to page": "Sayfaya git",
   "Go to page {page}": "{page}. sayfaya git",
   "Go to pages {pages}": "{pages} sayfalarına git",
   "Golden Bear": "Altın Ayı",

@@ -17,6 +17,7 @@ import {
   Suspense,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -151,6 +152,7 @@ import { CharacterFavoritesProvider } from "@/lib/character-favorites";
 import { MangaFavoritesProvider } from "@/lib/manga-favorites";
 import { LocalWatchlistProvider } from "@/lib/local-watchlist";
 import { useSettings } from "@/lib/settings";
+import { mountHarborCursor } from "@/lib/harbor-cursor";
 import {
   flushPendingTorrentRemovals,
   reconcilePendingTorrentRemovals,
@@ -491,9 +493,28 @@ function useIdleEvict(active: boolean, pin = false): boolean {
   return alive || active || pin;
 }
 
+function HarborMouseCursor() {
+  const { settings } = useSettings();
+  const cursor = useRef<ReturnType<typeof mountHarborCursor> | null>(null);
+  useLayoutEffect(() => {
+    if (!settings.harborCursor) return;
+    const session = mountHarborCursor(window);
+    cursor.current = session;
+    return () => {
+      session.dispose();
+      cursor.current = null;
+    };
+  }, [settings.harborCursor]);
+  useLayoutEffect(() => {
+    if (settings.harborCursor) cursor.current?.setScale(settings.harborCursorScale);
+  }, [settings.harborCursor, settings.harborCursorScale]);
+  return null;
+}
+
 export function App({ onReady }: { onReady?: () => void }) {
   return (
     <SettingsProvider syncTorrentEnginePolicy>
+      {!isMobileWeb() && !isRemoteRoute() && <HarborMouseCursor />}
       <ProfilesProvider>
         <ParentalProvider>
           <TraktProvider>
@@ -1677,9 +1698,14 @@ function Shell({ onReady }: { onReady?: () => void }) {
   const wrappedAlive = useIdleEvict(wrappedTop);
   const queueAlive = useKeepAlive(queueTop, queueTop);
   const serviceAlive = useKeepAlive(serviceTop, serviceTop && !!service);
-  // Keep a detail page mounted while Settings is open. Otherwise the keep-alive timer
-  // drops it after 1.5s, and returning refetches the whole title from its addons.
-  const detailAlive = useKeepAlive(detailTop, !!meta, topKind === "settings");
+  // Keep detail state while a child playback or episode-detail screen is on top.
+  // Otherwise the keep-alive timer drops the page during playback and Back starts it over.
+  const keepDetailAlive =
+    topKind === "settings" ||
+    stackKinds.includes("episode-detail") ||
+    stackKinds.includes("picker") ||
+    stackKinds.includes("player");
+  const detailAlive = useKeepAlive(detailTop, !!meta, keepDetailAlive);
   const personAlive = useKeepAlive(personTop, personId !== null);
   const profileAlive = useKeepAlive(profileTop, profileHandle !== null);
   const feedAlive = useKeepAlive(feedTop, feedOpen, stackKinds.includes("feed"));

@@ -452,7 +452,7 @@ test("reading a completed persisted order preserves its expiry", async () => {
   const f = fixture();
   const order = await f.fetchTvdbOrderBySeriesId("test-key", 1, "aired", "eng");
   await f.waitForTvdbSeasonNames(order);
-  const [key, value] = [...f.storage.entries()].find(([k]) => k.startsWith("v1:tvdb-order:"));
+  const [key, value] = [...f.storage.entries()].find(([k]) => k.startsWith("v1:tvdb-order-v2:"));
   const saved = JSON.parse(value);
   saved.storedAt = Date.now() - 10000;
   f.storage.set(key, JSON.stringify(saved));
@@ -589,7 +589,9 @@ test("fresh and cached proxy orders do not give missing special stills another s
   assert.deepEqual(Array.from(ordering.imageByAbs.keys()), [1]);
   assert.equal(ordering.absByEpId.get(11), 0, "playback mappings remain unchanged");
 
-  const [key, value] = [...fresh.storage.entries()].find(([k]) => k.startsWith("v1:tvdb-order:"));
+  const [key, value] = [...fresh.storage.entries()].find(([k]) =>
+    k.startsWith("v1:tvdb-order-v2:"),
+  );
   const saved = JSON.parse(value);
   saved.value.imageByAbs.push(
     [0, "https://wrong/last-special.jpg"],

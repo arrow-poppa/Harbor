@@ -12,7 +12,8 @@ import {
 } from "@/lib/media-cache";
 
 // Preserve existing entries; older language evidence is normalized on read.
-const PREFIX = "harbor.tvdbo.v8.";
+const PREFIX = "harbor.tvdbo.v9.";
+const MEDIA_CACHE_NAMESPACE = "tvdb-order-v2";
 const TTL = 3 * 24 * 60 * 60 * 1000;
 onMediaCacheClear(() => {
   try {
@@ -121,7 +122,7 @@ export async function loadOrderCache(
 ): Promise<{ value: TvdbOrder | null; storedAt?: number; refresh?: Promise<TvdbOrder | null> }> {
   const scope = [apiKey, seriesId, type, apiKey.trim() ? true : allowProxyNames];
   const generation = mediaCacheGeneration();
-  if (!(await readMedia("tvdb-order", scope))) {
+  if (!(await readMedia(MEDIA_CACHE_NAMESPACE, scope))) {
     const legacy = readOrderCache(seriesId, type);
     if (legacy) {
       const keys = [
@@ -132,7 +133,7 @@ export async function loadOrderCache(
       const storedAt = raw ? (JSON.parse(raw) as Serialized).t : Date.now();
       if (
         await saveMedia(
-          "tvdb-order",
+          MEDIA_CACHE_NAMESPACE,
           scope,
           serialize(legacy, storedAt),
           { ...policy, ttl: 0 },
@@ -146,7 +147,7 @@ export async function loadOrderCache(
   }
   if (generation !== mediaCacheGeneration()) return { value: null };
   const result = await loadMedia(
-    "tvdb-order",
+    MEDIA_CACHE_NAMESPACE,
     scope,
     async () => {
       const order = await loader();
@@ -171,7 +172,7 @@ export async function persistOrderCache(
   allowProxyNames = false,
 ) {
   return saveMedia(
-    "tvdb-order",
+    MEDIA_CACHE_NAMESPACE,
     [apiKey, seriesId, type, apiKey.trim() ? true : allowProxyNames],
     serialize(order, storedAt),
     policy,

@@ -4,6 +4,7 @@ import type { ThemeSettings } from "@/lib/theme";
 import type { CustomList } from "@/lib/lists/types";
 import type { SourceRow } from "@/lib/custom-sources";
 import type { CustomStreamFilter } from "@/lib/streams/custom-filters";
+import type { SourceSort } from "@/lib/streams/source-sort";
 import type { SyncIndicatorPosition } from "@/lib/sync-toast-position";
 import type { FullscreenClockFormat, FullscreenClockStyle } from "@/lib/local-time";
 import type { SubtitleOffsetPosition, SubtitleOffsetSize } from "@/lib/player/subtitle-offset";
@@ -219,6 +220,8 @@ export type Settings = {
   playerTitleSeriesFirst: boolean;
   playerTitleLogo: boolean;
   uiScale: number;
+  harborCursor: boolean;
+  harborCursorScale: number;
   serveWebUi: boolean;
   remoteControlEnabled: boolean;
   controllerSupportEnabled: boolean;
@@ -755,6 +758,7 @@ export type Settings = {
   syncIndicatorPosition: SyncIndicatorPosition;
   pickerLayout: "condensed" | "stremio";
   streamSort: "harbor" | "addon";
+  sourceSort: SourceSort;
   streamPriority: StreamPriorityEntry[];
   fullStreamDescription: boolean;
   pickerShowFilename: boolean;
