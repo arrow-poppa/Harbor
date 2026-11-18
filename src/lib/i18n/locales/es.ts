@@ -1,4 +1,5 @@
 import seekSteps from "./es/seek-steps";
+import subtitleLineHotkeys from "./es/subtitle-line-hotkeys";
 import reviews from "./es/reviews";
 import playOrders from "./es/play-orders";
 import gameRomLibrary from "./es/game-rom-library";
@@ -412,6 +413,7 @@ const es: Record<string, string> = {
   ...queueBasket,
   ...liveWeb,
   ...seekSteps,
+  ...subtitleLineHotkeys,
 };
 
 export default es;
