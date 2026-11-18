@@ -1,5 +1,6 @@
 import seekSteps from "./zh/seek-steps";
 import subtitleLineHotkeys from "./zh/subtitle-line-hotkeys";
+import clearShortcut from "./zh/clear-shortcut";
 import reviews from "./zh/reviews";
 import playOrders from "./zh/play-orders";
 import gameRomLibrary from "./zh/game-rom-library";
@@ -373,6 +374,7 @@ const zh: Record<string, string> = {
   ...liveWeb,
   ...seekSteps,
   ...subtitleLineHotkeys,
+  ...clearShortcut,
 };
 
 export default zh;

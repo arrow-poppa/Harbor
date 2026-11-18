@@ -1,5 +1,6 @@
 import seekSteps from "./de/seek-steps";
 import subtitleLineHotkeys from "./de/subtitle-line-hotkeys";
+import clearShortcut from "./de/clear-shortcut";
 import reviews from "./de/reviews";
 import playOrders from "./de/play-orders";
 import gameRomLibrary from "./de/game-rom-library";
@@ -425,6 +426,7 @@ const de: Record<string, string> = {
   ...liveWeb,
   ...seekSteps,
   ...subtitleLineHotkeys,
+  ...clearShortcut,
 };
 
 export default de;
