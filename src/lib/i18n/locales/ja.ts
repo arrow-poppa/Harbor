@@ -1,6 +1,8 @@
 import seekSteps from "./ja/seek-steps";
 import subtitleLineHotkeys from "./ja/subtitle-line-hotkeys";
 import clearShortcut from "./ja/clear-shortcut";
+import controllerTouchpad from "./ja/controller-touchpad";
+import controllerHotkeys from "./ja/controller-hotkeys";
 import reviews from "./ja/reviews";
 import playOrders from "./ja/play-orders";
 import gameRomLibrary from "./ja/game-rom-library";
@@ -422,6 +424,8 @@ const ja: Record<string, string> = {
   ...seekSteps,
   ...subtitleLineHotkeys,
   ...clearShortcut,
+  ...controllerHotkeys,
+  ...controllerTouchpad,
 };
 
 export default ja;

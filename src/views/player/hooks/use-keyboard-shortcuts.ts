@@ -3,7 +3,13 @@ import { invoke } from "@tauri-apps/api/core";
 import type { PlayerBridge, PlayerSnapshot } from "@/lib/player/bridge";
 import { writePlayerPrefs } from "@/lib/player-prefs";
 import { writePlayerVolume } from "@/lib/player-volume";
-import { createHotkeyMatcher, isPlayerHotkeyTarget, isTypingTarget } from "@/lib/hotkeys";
+import {
+  createHotkeyMatcher,
+  isPlayerHotkeyTarget,
+  isTypingTarget,
+  type HotkeyId,
+} from "@/lib/hotkeys";
+import { PLAYER_HOTKEY_EVENT, type PlayerHotkeyDetail } from "@/lib/gamepad/dispatch";
 import { isWindowsDesktop } from "@/lib/platform";
 import { isRtxHdrBlocked, isRtxVsrBlocked } from "@/lib/player/rtx-video-policy";
 import { mediaKeyGate } from "@/lib/media-session";
@@ -183,15 +189,28 @@ export function useKeyboardShortcuts(params: {
   };
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (!e.key.startsWith("Media") && !isPlayerHotkeyTarget(e)) return;
+    // `forced` runs one action by id: a controller button bound to it, which
+    // works even when the action has no keyboard key.
+    const onKey = (e: KeyboardEvent, forced?: HotkeyId) => {
+      if (!e.key.startsWith("Media") && !isPlayerHotkeyTarget(e)) {
+        // A controller button still reaches a docked player, never a detached one.
+        const detached = document.querySelector('[data-harbor-player][data-detached="true"]');
+        if (!forced || detached) return;
+      }
       if (isPlayerInteractionLocked()) {
         if (e.cancelable) e.preventDefault();
         return;
       }
       if (isTypingTarget(e)) return;
 
-      const match = createHotkeyMatcher(e, overrides, "Player");
+      const hotkeyMatch = createHotkeyMatcher(e, overrides, "Player");
+      const match = (id: HotkeyId): boolean => (forced ? id === forced : hotkeyMatch(id));
+      // Hold-to-speed-up needs the key's release, which a controller event
+      // does not have.
+      if (forced === "playerPlayPause") {
+        playPauseToggle();
+        return;
+      }
 
       if (e.key.startsWith("Media")) tracePlayback(`media-key-dom ${e.key}`);
 
@@ -648,11 +667,18 @@ export function useKeyboardShortcuts(params: {
     const onBlur = () => {
       if (holdRef.current.key != null) releaseHold();
     };
-    window.addEventListener("keydown", onKey);
+    const onForced = (ev: Event) => {
+      const { id, repeat } = (ev as CustomEvent<PlayerHotkeyDetail>).detail;
+      onKey(new KeyboardEvent("keydown", { repeat, cancelable: true }), id);
+    };
+    const onKeyDown = (e: KeyboardEvent) => onKey(e);
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener(PLAYER_HOTKEY_EVENT, onForced);
     window.addEventListener("keyup", onKeyUp);
     window.addEventListener("blur", onBlur);
     return () => {
-      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener(PLAYER_HOTKEY_EVENT, onForced);
       window.removeEventListener("keyup", onKeyUp);
       window.removeEventListener("blur", onBlur);
     };

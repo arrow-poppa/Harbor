@@ -1,6 +1,8 @@
 import seekSteps from "./ko/seek-steps";
 import subtitleLineHotkeys from "./ko/subtitle-line-hotkeys";
 import clearShortcut from "./ko/clear-shortcut";
+import controllerTouchpad from "./ko/controller-touchpad";
+import controllerHotkeys from "./ko/controller-hotkeys";
 import reviews from "./ko/reviews";
 import playOrders from "./ko/play-orders";
 import gameRomLibrary from "./ko/game-rom-library";
@@ -381,6 +383,8 @@ const ko: Record<string, string> = {
   ...seekSteps,
   ...subtitleLineHotkeys,
   ...clearShortcut,
+  ...controllerHotkeys,
+  ...controllerTouchpad,
 };
 
 export default ko;

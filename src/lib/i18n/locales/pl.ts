@@ -1,6 +1,8 @@
 import seekSteps from "./pl/seek-steps";
 import subtitleLineHotkeys from "./pl/subtitle-line-hotkeys";
 import clearShortcut from "./pl/clear-shortcut";
+import controllerTouchpad from "./pl/controller-touchpad";
+import controllerHotkeys from "./pl/controller-hotkeys";
 import reviews from "./pl/reviews";
 import playOrders from "./pl/play-orders";
 import gameRomLibrary from "./pl/game-rom-library";
@@ -389,6 +391,8 @@ const pl: Record<string, string> = {
   ...seekSteps,
   ...subtitleLineHotkeys,
   ...clearShortcut,
+  ...controllerHotkeys,
+  ...controllerTouchpad,
 };
 
 export default pl;

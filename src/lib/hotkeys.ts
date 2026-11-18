@@ -623,7 +623,20 @@ export function isTypingTarget(e: KeyboardEvent): boolean {
   return role === "textbox" || role === "searchbox" || role === "combobox";
 }
 
+// While the settings panel records a new binding, every key belongs to it:
+// navigation and other hotkeys must not act on the key being recorded.
+let bindingCapture = false;
+
+export function setBindingCapture(on: boolean): void {
+  bindingCapture = on;
+}
+
+export function isBindingCapture(): boolean {
+  return bindingCapture;
+}
+
 export function shouldHandleGlobalKeyboardEvent(e: KeyboardEvent): boolean {
+  if (bindingCapture) return false;
   if (typeof document !== "undefined" && !document.hasFocus()) return false;
   return !e.isComposing && e.key !== "Process" && !isTypingTarget(e);
 }
