@@ -1,6 +1,8 @@
 import seekSteps from "./hi/seek-steps";
 import subtitleLineHotkeys from "./hi/subtitle-line-hotkeys";
 import clearShortcut from "./hi/clear-shortcut";
+import controllerTouchpad from "./hi/controller-touchpad";
+import controllerHotkeys from "./hi/controller-hotkeys";
 import reviews from "./hi/reviews";
 import playOrders from "./hi/play-orders";
 import gameRomLibrary from "./hi/game-rom-library";
@@ -368,6 +370,8 @@ const hi: Record<string, string> = {
   ...seekSteps,
   ...subtitleLineHotkeys,
   ...clearShortcut,
+  ...controllerHotkeys,
+  ...controllerTouchpad,
 };
 
 export default hi;

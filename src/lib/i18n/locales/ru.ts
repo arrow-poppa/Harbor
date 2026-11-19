@@ -1,6 +1,8 @@
 import seekSteps from "./ru/seek-steps";
 import subtitleLineHotkeys from "./ru/subtitle-line-hotkeys";
 import clearShortcut from "./ru/clear-shortcut";
+import controllerTouchpad from "./ru/controller-touchpad";
+import controllerHotkeys from "./ru/controller-hotkeys";
 import reviews from "./ru/reviews";
 import playOrders from "./ru/play-orders";
 import gameRomLibrary from "./ru/game-rom-library";
@@ -436,6 +438,8 @@ const ru: Record<string, string> = {
   ...seekSteps,
   ...subtitleLineHotkeys,
   ...clearShortcut,
+  ...controllerHotkeys,
+  ...controllerTouchpad,
 };
 
 export default ru;

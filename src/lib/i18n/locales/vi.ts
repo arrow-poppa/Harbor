@@ -1,6 +1,8 @@
 import seekSteps from "./vi/seek-steps";
 import subtitleLineHotkeys from "./vi/subtitle-line-hotkeys";
 import clearShortcut from "./vi/clear-shortcut";
+import controllerTouchpad from "./vi/controller-touchpad";
+import controllerHotkeys from "./vi/controller-hotkeys";
 import reviews from "./vi/reviews";
 import playOrders from "./vi/play-orders";
 import gameRomLibrary from "./vi/game-rom-library";
@@ -422,6 +424,8 @@ const vi: Record<string, string> = {
   ...seekSteps,
   ...subtitleLineHotkeys,
   ...clearShortcut,
+  ...controllerHotkeys,
+  ...controllerTouchpad,
 };
 
 export default vi;

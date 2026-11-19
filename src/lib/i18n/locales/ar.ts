@@ -1,6 +1,8 @@
 import seekSteps from "./ar/seek-steps";
 import subtitleLineHotkeys from "./ar/subtitle-line-hotkeys";
 import clearShortcut from "./ar/clear-shortcut";
+import controllerTouchpad from "./ar/controller-touchpad";
+import controllerHotkeys from "./ar/controller-hotkeys";
 import reviews from "./ar/reviews";
 import playOrders from "./ar/play-orders";
 import gameRomLibrary from "./ar/game-rom-library";
@@ -426,6 +428,8 @@ const ar: Record<string, string> = {
   ...seekSteps,
   ...subtitleLineHotkeys,
   ...clearShortcut,
+  ...controllerHotkeys,
+  ...controllerTouchpad,
 };
 
 export default ar;
