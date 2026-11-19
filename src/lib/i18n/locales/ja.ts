@@ -1,4 +1,5 @@
 import seekSteps from "./ja/seek-steps";
+import subtitleLineHotkeys from "./ja/subtitle-line-hotkeys";
 import reviews from "./ja/reviews";
 import playOrders from "./ja/play-orders";
 import gameRomLibrary from "./ja/game-rom-library";
@@ -418,6 +419,7 @@ const ja: Record<string, string> = {
   ...queueBasket,
   ...liveWeb,
   ...seekSteps,
+  ...subtitleLineHotkeys,
 };
 
 export default ja;

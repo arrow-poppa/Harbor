@@ -1,4 +1,5 @@
 import seekSteps from "./vi/seek-steps";
+import subtitleLineHotkeys from "./vi/subtitle-line-hotkeys";
 import reviews from "./vi/reviews";
 import playOrders from "./vi/play-orders";
 import gameRomLibrary from "./vi/game-rom-library";
@@ -418,6 +419,7 @@ const vi: Record<string, string> = {
   ...queueBasket,
   ...liveWeb,
   ...seekSteps,
+  ...subtitleLineHotkeys,
 };
 
 export default vi;

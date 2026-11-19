@@ -312,6 +312,9 @@ const OBSERVED_PROPS: &[(&str, u64, PropertyKind)] = &[
     ("width", 22, PropertyKind::Int64),
     ("height", 23, PropertyKind::Int64),
     ("sub-fps", 24, PropertyKind::Double),
+    ("sub-end", 25, PropertyKind::Double),
+    // With sub-fps, what subtitle times are scaled by (see lib/player/sub-timing).
+    ("container-fps", 26, PropertyKind::Double),
 ];
 
 // Display-info publishes this user-data property after the video window opens.
@@ -2880,6 +2883,7 @@ const MPV_ALLOWED_COMMANDS: &[&str] = &[
     "af",
     "vf",
     "seek",
+    "sub-seek",
     "stop",
     "frame-step",
     "frame-back-step",
