@@ -148,6 +148,10 @@ notify-rust = "4"
 reqwest = { version = "0.12", default-features = false, features = ["native-tls"] }
 rusqlite = { version = "0.32.0", features = ["bundled"] }
 async-trait = { version = "0.1", optional = true }
+# Subtitle dictionary lookups: Manatan's MIT Yomitan engine, vendored to share
+# the app's rusqlite (see vendor/manatan-yomitan-server/Cargo.toml).
+manatan-yomitan-server = { path = "vendor/manatan-yomitan-server" }
+unicode-normalization = "0.1"
 md5 = "0.7"
 sha2 = "0.10"
 futures = "0.3"
