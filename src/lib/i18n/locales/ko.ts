@@ -1,5 +1,6 @@
 import seekSteps from "./ko/seek-steps";
 import subtitleLineHotkeys from "./ko/subtitle-line-hotkeys";
+import clearShortcut from "./ko/clear-shortcut";
 import reviews from "./ko/reviews";
 import playOrders from "./ko/play-orders";
 import gameRomLibrary from "./ko/game-rom-library";
@@ -379,6 +380,7 @@ const ko: Record<string, string> = {
   ...liveWeb,
   ...seekSteps,
   ...subtitleLineHotkeys,
+  ...clearShortcut,
 };
 
 export default ko;

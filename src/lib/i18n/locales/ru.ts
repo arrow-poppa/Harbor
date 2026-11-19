@@ -1,5 +1,6 @@
 import seekSteps from "./ru/seek-steps";
 import subtitleLineHotkeys from "./ru/subtitle-line-hotkeys";
+import clearShortcut from "./ru/clear-shortcut";
 import reviews from "./ru/reviews";
 import playOrders from "./ru/play-orders";
 import gameRomLibrary from "./ru/game-rom-library";
@@ -434,6 +435,7 @@ const ru: Record<string, string> = {
   ...liveWeb,
   ...seekSteps,
   ...subtitleLineHotkeys,
+  ...clearShortcut,
 };
 
 export default ru;

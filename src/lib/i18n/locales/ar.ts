@@ -1,5 +1,6 @@
 import seekSteps from "./ar/seek-steps";
 import subtitleLineHotkeys from "./ar/subtitle-line-hotkeys";
+import clearShortcut from "./ar/clear-shortcut";
 import reviews from "./ar/reviews";
 import playOrders from "./ar/play-orders";
 import gameRomLibrary from "./ar/game-rom-library";
@@ -424,6 +425,7 @@ const ar: Record<string, string> = {
   ...liveWeb,
   ...seekSteps,
   ...subtitleLineHotkeys,
+  ...clearShortcut,
 };
 
 export default ar;

@@ -1,5 +1,5 @@
 import { useSubTabs } from "./sub-tabs";
-import { Keyboard, RotateCcw } from "./icons";
+import { Keyboard, RotateCcw, X } from "./icons";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   HOTKEYS,
@@ -217,6 +217,10 @@ export function HotkeysPanel() {
                         onStartCapture={() => {
                           setConflict(null);
                           setCapturing(def.id);
+                        }}
+                        onClear={() => {
+                          setConflict(null);
+                          setBinding(def.id, "");
                         }}
                         onReset={() => setBinding(def.id, null)}
                         onCancel={() => {
@@ -537,6 +541,7 @@ function HotkeyRow({
   isCapturing,
   conflict,
   onStartCapture,
+  onClear,
   onReset,
   onCancel,
 }: {
@@ -546,6 +551,7 @@ function HotkeyRow({
   isCapturing: boolean;
   conflict?: string;
   onStartCapture: () => void;
+  onClear: () => void;
   onReset: () => void;
   onCancel: () => void;
 }) {
@@ -594,6 +600,17 @@ function HotkeyRow({
           formatBindingForDisplay(binding)
         )}
       </button>
+      {binding && !isCapturing && (
+        <button
+          type="button"
+          onClick={onClear}
+          aria-label={t("Clear the shortcut for {name}", { name: t(def.label) })}
+          title={t("Clear the shortcut")}
+          className={QUIET_ACTION}
+        >
+          <X size={17} strokeWidth={2.2} />
+        </button>
+      )}
     </SettingRow>
   );
 }
