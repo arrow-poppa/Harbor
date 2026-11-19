@@ -3,6 +3,8 @@ import subtitleLineHotkeys from "./ko/subtitle-line-hotkeys";
 import clearShortcut from "./ko/clear-shortcut";
 import controllerTouchpad from "./ko/controller-touchpad";
 import controllerHotkeys from "./ko/controller-hotkeys";
+import controllerPlayer from "./ko/controller-player";
+import immersionHotkeys from "./ko/immersion-hotkeys";
 import subtitleDictionary from "./ko/subtitle-dictionary";
 import aiExplanation from "./ko/ai-explanation";
 import ankiMining from "./ko/anki-mining";
@@ -391,6 +393,8 @@ const ko: Record<string, string> = {
   ...subtitleDictionary,
   ...aiExplanation,
   ...ankiMining,
+  ...immersionHotkeys,
+  ...controllerPlayer,
 };
 
 export default ko;

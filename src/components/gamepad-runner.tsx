@@ -9,6 +9,7 @@ import { useGamepad } from "@/lib/gamepad/use-gamepad";
 import {
   POINTER_SHOWN_ATTR,
   POINTER_YIELD_EVENT,
+  isLookupTarget,
   pointerShown,
 } from "@/lib/gamepad/pointer-target";
 import { takeTouchDelta } from "@/lib/gamepad/touchpad";
@@ -201,22 +202,25 @@ export function GamepadRunner() {
           tvHover((hovered.current = target));
         }
       }
+      // Over a subtitle or its popup the pointer stays visible when the
+      // player controls hide, as the mouse cursor does while reading.
       showPointer(
         cursor.current,
         cursorEnabled.current &&
           active.current &&
           now - lastActivity.current < cursorHideMs.current &&
-          !(
+          (!(
             document.documentElement.hasAttribute("data-player-chrome-mounted") &&
             !document.documentElement.hasAttribute("data-player-chrome-visible")
-          ),
+          ) ||
+            hoverPath.current.some(isLookupTarget)),
       );
       cursor.current?.style.setProperty(
         "transform",
         `translate(${position.current.x}px,${position.current.y}px) translate(-50%,-50%)`,
       );
       // In the player the left stick moves around the controls, so it only
-      // scrolls under a pointer that is on screen.
+      // scrolls under a pointer that is on screen (the dictionary popup).
       const inPlayer = document.documentElement.hasAttribute("data-player-chrome-mounted");
       if (Math.abs(ly) >= deadzone && (!inPlayer || pointerShown())) {
         let el = document.elementFromPoint(
@@ -282,7 +286,7 @@ export function GamepadRunner() {
   const touchClick =
     settings.controllerTouchpadPointer &&
     !!live.buttons.touchpad &&
-    !padAction(settings.gamepadHotkeys, "touchpad");
+    !padAction(settings.gamepadHotkeys, "normal", "touchpad");
   const clickPressed = !!live.buttons.south || touchClick;
   useEffect(() => {
     if (captured || !clickPressed) return;
@@ -298,6 +302,12 @@ export function GamepadRunner() {
       return;
     }
     const target = document.elementFromPoint(position.current.x, position.current.y);
+    // A pointer that faded out over the subtitle leaves A to the player.
+    if (
+      target?.closest("[data-hb-subtitle], .hb-lookup-popup") &&
+      !document.documentElement.hasAttribute(POINTER_SHOWN_ATTR)
+    )
+      return;
     const field = isTextField(target) ? target : selectedField;
     if (field) {
       // A page-owned keyboard must not stack with the generic controller one.
@@ -342,7 +352,18 @@ export function GamepadRunner() {
     const clickable = target?.closest<HTMLElement>(
       "button,a,input,select,textarea,[role='button'],[tabindex]",
     );
-    (clickable ?? (target instanceof HTMLElement ? target : null))?.click();
+    if (clickable) clickable.click();
+    // With the pointer's position, as a mouse click has: a subtitle looks up
+    // the word under it.
+    else if (target instanceof HTMLElement)
+      target.dispatchEvent(
+        new MouseEvent("click", {
+          bubbles: true,
+          cancelable: true,
+          clientX: position.current.x,
+          clientY: position.current.y,
+        }),
+      );
   }, [clickPressed, captured]);
 
   useEffect(() => {

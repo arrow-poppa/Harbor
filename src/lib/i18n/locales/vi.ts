@@ -3,6 +3,8 @@ import subtitleLineHotkeys from "./vi/subtitle-line-hotkeys";
 import clearShortcut from "./vi/clear-shortcut";
 import controllerTouchpad from "./vi/controller-touchpad";
 import controllerHotkeys from "./vi/controller-hotkeys";
+import controllerPlayer from "./vi/controller-player";
+import immersionHotkeys from "./vi/immersion-hotkeys";
 import subtitleDictionary from "./vi/subtitle-dictionary";
 import aiExplanation from "./vi/ai-explanation";
 import ankiMining from "./vi/anki-mining";
@@ -432,6 +434,8 @@ const vi: Record<string, string> = {
   ...subtitleDictionary,
   ...aiExplanation,
   ...ankiMining,
+  ...immersionHotkeys,
+  ...controllerPlayer,
 };
 
 export default vi;

@@ -1,4 +1,6 @@
-export type HotkeyScope = "Player" | "Global" | "Manga";
+// Lookup bindings apply only while picking a word in the subtitles, so they
+// can reuse keys the player already uses (the arrows, Enter, Escape).
+export type HotkeyScope = "Player" | "Global" | "Manga" | "Word lookup";
 
 export type HotkeyId =
   | "playerClose"
@@ -25,6 +27,31 @@ export type HotkeyId =
   | "playerAudioCycle"
   | "playerSubSizeDown"
   | "playerSubSizeUp"
+  | "playerSubtitleToggle"
+  | "playerSubNext"
+  | "playerSubPrev"
+  | "playerSubReplay"
+  | "playerHalfSpeed"
+  | "playerAnkiNewCard"
+  | "playerAnkiUpdateLast"
+  | "playerAnkiAudioCard"
+  | "playerRecordNew"
+  | "playerRecordUpdate"
+  | "playerRecordAudio"
+  | "playerLookupMode"
+  | "playerPopupBigger"
+  | "playerPopupSmaller"
+  | "lookupNextWord"
+  | "lookupPrevWord"
+  | "lookupPrevLine"
+  | "lookupNextLine"
+  | "lookupOpenPopup"
+  | "lookupAddAnki"
+  | "lookupAiExplain"
+  | "lookupWordAudio"
+  | "lookupScrollDown"
+  | "lookupScrollUp"
+  | "lookupExit"
   | "playerNextEpisode"
   | "playerPrevEpisode"
   | "playerPrevChannel"
@@ -407,7 +434,7 @@ export const HOTKEYS: HotkeyDef[] = [
     group: "Tracks",
     label: "Toggle subtitles on/off",
     description:
-      "Hide every subtitle (primary and secondary), or show the primary again. Hidden subtitles still work for line seeking and replay.",
+      "Hide every subtitle (primary and secondary), or show the primary again. Hidden subtitles still work for line seeking, replay and Anki cards.",
     defaultBinding: "",
   },
   {
@@ -501,6 +528,177 @@ export const HOTKEYS: HotkeyDef[] = [
     description:
       "Switch between normal speed and the slow speed set under Behavior (0.5x by default).",
     defaultBinding: "",
+  },
+
+  {
+    id: "playerAnkiNewCard",
+    scope: "Player",
+    group: "Immersion",
+    label: "Anki: card from the subtitle",
+    description:
+      "Add a card from the line on screen with its sentence, audio and picture, using the deck and fields under Dictionary & Anki. With a word selected in the subtitles, the word and its definitions go on the card too. mpv only.",
+    defaultBinding: "",
+  },
+  {
+    id: "playerAnkiUpdateLast",
+    scope: "Player",
+    group: "Immersion",
+    label: "Anki: update last card",
+    description:
+      "Put the line on screen (sentence, audio, picture) into the newest card of the deck, if it was added in the last few minutes. With a word selected, the word and its definitions too. mpv only.",
+    defaultBinding: "",
+  },
+  {
+    id: "playerAnkiAudioCard",
+    scope: "Player",
+    group: "Immersion",
+    label: "Anki: audio card",
+    description:
+      "Add an audio-only card from the line on screen, using the audio card deck. mpv only.",
+    defaultBinding: "",
+  },
+  {
+    id: "playerRecordNew",
+    scope: "Player",
+    group: "Immersion",
+    label: "Record → new card",
+    description:
+      "Press once to start recording, again to stop and add a card with that stretch. Works without subtitles. With a word selected when you stop, the word and its definitions go on the card too. mpv only.",
+    defaultBinding: "",
+  },
+  {
+    id: "playerRecordUpdate",
+    scope: "Player",
+    group: "Immersion",
+    label: "Record → update last card",
+    description:
+      "Press once to start recording, again to stop and put that stretch into the newest card. Works without subtitles. With a word selected when you stop, the word and its definitions too. mpv only.",
+    defaultBinding: "",
+  },
+  {
+    id: "playerRecordAudio",
+    scope: "Player",
+    group: "Immersion",
+    label: "Record → audio card",
+    description:
+      "Press once to start recording, again to stop and add an audio card with that stretch. Works without subtitles. mpv only.",
+    defaultBinding: "",
+  },
+  {
+    id: "playerLookupMode",
+    scope: "Player",
+    group: "Immersion",
+    label: "Pick a word in the subtitles",
+    description:
+      "Pause and select the first word of the subtitle to look it up without the mouse. Move between words with the Word lookup keys; press again to leave.",
+    defaultBinding: "",
+  },
+  {
+    id: "playerPopupBigger",
+    scope: "Player",
+    group: "Immersion",
+    label: "Bigger dictionary popup",
+    description: "Make the subtitle dictionary popup 10% bigger. Saved as the Popup size setting.",
+    defaultBinding: "",
+  },
+  {
+    id: "playerPopupSmaller",
+    scope: "Player",
+    group: "Immersion",
+    label: "Smaller dictionary popup",
+    description: "Make the subtitle dictionary popup 10% smaller. Saved as the Popup size setting.",
+    defaultBinding: "",
+  },
+
+  {
+    id: "lookupNextWord",
+    scope: "Word lookup",
+    group: "Words",
+    label: "Next word",
+    description: "Select and look up the next word.",
+    defaultBinding: "ArrowRight",
+  },
+  {
+    id: "lookupPrevWord",
+    scope: "Word lookup",
+    group: "Words",
+    label: "Previous word",
+    description: "Select and look up the previous word.",
+    defaultBinding: "ArrowLeft",
+  },
+  {
+    id: "lookupPrevLine",
+    scope: "Word lookup",
+    group: "Words",
+    label: "Line above",
+    description: "Go to the first word of the subtitle line above.",
+    defaultBinding: "ArrowUp",
+  },
+  {
+    id: "lookupNextLine",
+    scope: "Word lookup",
+    group: "Words",
+    label: "Line below",
+    description: "Go to the first word of the subtitle line below.",
+    defaultBinding: "ArrowDown",
+  },
+  {
+    id: "lookupOpenPopup",
+    scope: "Word lookup",
+    group: "Popup",
+    label: "Show the popup",
+    description:
+      "Open or close the dictionary popup for the selected word. Moving to another word closes it.",
+    defaultBinding: "Enter",
+  },
+  {
+    id: "lookupAddAnki",
+    scope: "Word lookup",
+    group: "Popup",
+    label: "Add to Anki",
+    description: "Add the selected word to Anki, like the Anki button in the popup.",
+    defaultBinding: "a",
+  },
+  {
+    id: "lookupAiExplain",
+    scope: "Word lookup",
+    group: "Popup",
+    label: "Generate AI explanation",
+    description: "Generate the AI explanation of the word, or generate it again.",
+    defaultBinding: "g",
+  },
+  {
+    id: "lookupWordAudio",
+    scope: "Word lookup",
+    group: "Popup",
+    label: "Play word audio",
+    description: "Play the word's local audio; press again for the next voice.",
+    defaultBinding: "p",
+  },
+  {
+    id: "lookupScrollDown",
+    scope: "Word lookup",
+    group: "Popup",
+    label: "Scroll popup down",
+    description: "Scroll the definitions down. On a controller the right stick scrolls too.",
+    defaultBinding: "shift+ArrowDown",
+  },
+  {
+    id: "lookupScrollUp",
+    scope: "Word lookup",
+    group: "Popup",
+    label: "Scroll popup up",
+    description: "Scroll the definitions up.",
+    defaultBinding: "shift+ArrowUp",
+  },
+  {
+    id: "lookupExit",
+    scope: "Word lookup",
+    group: "Popup",
+    label: "Leave word lookup",
+    description:
+      "Close the popup and resume playback if picking a word paused it. Also closes a popup opened with the mouse or the controller pointer.",
+    defaultBinding: "Escape",
   },
 
   {

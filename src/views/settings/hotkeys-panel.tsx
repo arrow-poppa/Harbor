@@ -34,6 +34,7 @@ import {
   padAction,
   padChordsFor,
   padCustomized,
+  padModeOf,
   resetPadFor,
   unbindPad,
 } from "@/lib/gamepad/bindings";
@@ -93,17 +94,23 @@ export function HotkeysPanel() {
     const target = padCapturing;
     setPadCapturing(null);
     if (!target) return;
-    const existing = padAction(pad, chord);
+    const mode = padModeOf(HOTKEY_MAP[target].scope);
+    const existing = padAction(pad, mode, chord);
     if (existing === target) return;
     if (existing) {
       setPadConflict({ target, existing, chord });
       return;
     }
-    update({ gamepadHotkeys: bindPad(pad, chord, target) });
+    update({ gamepadHotkeys: bindPad(pad, mode, chord, target) });
   });
 
   const grouped = useMemo(() => {
-    const scopes: Record<HotkeyScope, HotkeyDef[]> = { Global: [], Player: [], Manga: [] };
+    const scopes: Record<HotkeyScope, HotkeyDef[]> = {
+      Global: [],
+      Player: [],
+      "Word lookup": [],
+      Manga: [],
+    };
     for (const def of HOTKEYS) scopes[def.scope].push(def);
     return scopes;
   }, []);
@@ -243,9 +250,13 @@ export function HotkeysPanel() {
                 subtitle={
                   scope === "Player"
                     ? t("Inside the playback view.")
-                    : scope === "Manga"
-                      ? t("In the manga reader.")
-                      : t("Anywhere in Harbor.")
+                    : scope === "Word lookup"
+                      ? t(
+                          "While picking a word in the subtitles with the Pick a word in the subtitles shortcut. These keys take over only then, so they can reuse the player's.",
+                        )
+                      : scope === "Manga"
+                        ? t("In the manga reader.")
+                        : t("Anywhere in Harbor.")
                 }
               >
                 {Array.from(subgroups.entries()).map(([groupName, items]) => (
@@ -282,7 +293,7 @@ export function HotkeysPanel() {
                           setConflict(null);
                         }}
                         pad={{
-                          chords: padChordsFor(pad, def.id),
+                          chords: padChordsFor(pad, def.id, padModeOf(def.scope)),
                           layout,
                           capturing: padCapturing === def.id,
                           conflict:
@@ -300,10 +311,18 @@ export function HotkeysPanel() {
                             setPadCapturing(null);
                             setPadConflict(null);
                           },
-                          onRemove: (chord) => update({ gamepadHotkeys: unbindPad(pad, chord) }),
+                          onRemove: (chord) =>
+                            update({ gamepadHotkeys: unbindPad(pad, padModeOf(def.scope), chord) }),
                           onConfirmConflict: () => {
                             if (!padConflict) return;
-                            update({ gamepadHotkeys: bindPad(pad, padConflict.chord, def.id) });
+                            update({
+                              gamepadHotkeys: bindPad(
+                                pad,
+                                padModeOf(def.scope),
+                                padConflict.chord,
+                                def.id,
+                              ),
+                            });
                             setPadConflict(null);
                           },
                         }}
@@ -756,8 +775,10 @@ function HotkeyRow({
             <Keyboard size={18} strokeWidth={2.2} />
             {t("Press a key…")}
           </>
-        ) : (
+        ) : binding ? (
           formatBindingForDisplay(binding)
+        ) : (
+          <span className="text-ink-subtle">{t("Not set")}</span>
         )}
       </button>
       {binding && !isCapturing && (

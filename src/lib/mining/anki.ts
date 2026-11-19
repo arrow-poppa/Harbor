@@ -86,6 +86,9 @@ export type MiningContext = {
   subStartSec?: number;
   subEndSec?: number;
   subTiming?: () => SubTiming;
+  // Exact stretch to cut, in playback time, instead of the subtitle line
+  // (a recording made with the immersion hotkeys).
+  audioRange?: { start: number; end: number; pad: number };
   mpvEngine: boolean;
   // Final AI explanation text ("" when unavailable); may generate it first.
   aiExplanation?: () => Promise<string>;
@@ -116,15 +119,19 @@ function markedSentence(ctx: MiningContext, cloze: boolean): string {
   return escapeHtml(s.slice(0, a)) + mid + escapeHtml(s.slice(b));
 }
 
-function stamp(): string {
+export function stamp(): string {
   return `${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
 }
 
-async function storeMedia(settings: Settings, filename: string, base64: string): Promise<string> {
+export async function storeMedia(
+  settings: Settings,
+  filename: string,
+  base64: string,
+): Promise<string> {
   return ankiInvoke<string>(settings, "storeMediaFile", { filename, data: base64 });
 }
 
-function dataUrlBase64(url: string): string {
+export function dataUrlBase64(url: string): string {
   const i = url.indexOf(",");
   return i >= 0 ? url.slice(i + 1) : url;
 }
@@ -132,11 +139,16 @@ function dataUrlBase64(url: string): string {
 // mpv's sub-start/sub-end leave sub-delay and the frame-rate correction out,
 // so a cut from them would miss the line. null lets the native side read the
 // line itself.
-function linePlaybackTime(ctx: MiningContext): { start: number | null; end: number | null } {
+function linePlaybackTime(
+  settings: Settings,
+  ctx: MiningContext,
+): { start: number | null; end: number | null; pad: number } {
+  if (ctx.audioRange) return ctx.audioRange;
   const timing = ctx.subTiming?.() ?? { subDelaySec: 0 };
   return {
     start: ctx.subStartSec != null ? subToPlaybackTime(ctx.subStartSec, timing) : null,
     end: ctx.subEndSec != null ? subToPlaybackTime(ctx.subEndSec, timing) : null,
+    pad: settings.ankiAudioPadSec,
   };
 }
 
@@ -157,6 +169,10 @@ async function fieldValue(
   warn: (m: string) => void,
 ): Promise<string> {
   const t = ctx.term;
+  // A word no dictionary knows (shown for the AI explanation) has no
+  // definitions, so its definition fields take the explanation instead.
+  const definitions = (firstOnly: boolean) =>
+    t.synthetic ? aiExplanationField(ctx, warn) : termGlossaryHtml(t, firstOnly);
   switch (src) {
     case "expression":
       return escapeHtml(t.headword);
@@ -165,9 +181,9 @@ async function fieldValue(
     case "furigana":
       return escapeHtml(furiganaAnki(t));
     case "glossary":
-      return termGlossaryHtml(t);
+      return definitions(false);
     case "glossary-first":
-      return termGlossaryHtml(t, true);
+      return definitions(true);
     case "sentence-plain":
       return escapeHtml(ctx.sentence);
     case "sentence":
@@ -186,13 +202,13 @@ async function fieldValue(
     case "title":
       return escapeHtml(ctx.title);
     case "glossary-selected":
-      return ctx.definitionFromAi ? aiExplanationField(ctx, warn) : termGlossaryHtml(t);
+      return ctx.definitionFromAi ? aiExplanationField(ctx, warn) : definitions(false);
     case "ai-explanation":
       return aiExplanationField(ctx, warn);
     case "popup-selection":
       return ctx.popupSelection
         ? escapeHtml(ctx.popupSelection).replace(/\r?\n/g, "<br>")
-        : termGlossaryHtml(t, true);
+        : definitions(true);
     case "picture": {
       if (!ctx.mpvEngine) {
         warn("Screenshot needs the mpv player");
@@ -203,7 +219,7 @@ async function fieldValue(
       return `<img src="${escapeHtml(name)}">`;
     }
     case "clip": {
-      const line = linePlaybackTime(ctx);
+      const line = linePlaybackTime(settings, ctx);
       if (!ctx.mpvEngine) {
         warn("Animated clips need the mpv player");
         return "";
@@ -213,8 +229,8 @@ async function fieldValue(
         {
           start: line.start,
           end: line.end,
-          padBefore: settings.ankiAudioPadSec,
-          padAfter: settings.ankiAudioPadSec,
+          padBefore: line.pad,
+          padAfter: line.pad,
           format: settings.ankiClipFormat || "avif",
           width: settings.ankiClipWidth || 480,
           fps: settings.ankiClipFps || 12,
@@ -230,7 +246,7 @@ async function fieldValue(
       return `<img src="${escapeHtml(name)}">`;
     }
     case "sentence-audio": {
-      const line = linePlaybackTime(ctx);
+      const line = linePlaybackTime(settings, ctx);
       if (!ctx.mpvEngine) {
         warn("Sentence audio needs the mpv player");
         return "";
@@ -238,8 +254,8 @@ async function fieldValue(
       const clip = await invoke<{ dataBase64: string; ext: string }>("mpv_sentence_audio", {
         start: line.start,
         end: line.end,
-        padBefore: settings.ankiAudioPadSec,
-        padAfter: settings.ankiAudioPadSec,
+        padBefore: line.pad,
+        padAfter: line.pad,
       });
       const name = await storeMedia(settings, `harbor_${stamp()}.${clip.ext}`, clip.dataBase64);
       return `[sound:${name}]`;
@@ -327,6 +343,27 @@ export async function findDuplicateNotes(
 /** Opens Anki's card browser on the given notes. */
 export function openNotesInAnki(settings: Settings, noteIds: number[]): Promise<unknown> {
   return ankiInvoke(settings, "guiBrowse", { query: `nid:${noteIds.join(",")}` });
+}
+
+/** Every mapped field for this lookup, media included, without adding a
+ *  note. Used to fill an existing card. */
+export async function noteFieldsFromLookup(
+  settings: Settings,
+  ctx: MiningContext,
+): Promise<{ fields: Record<string, string>; warnings: string[] }> {
+  const warnings: string[] = [];
+  const entries = Object.entries(settings.ankiFieldMap || {}).filter(([, src]) => !!src);
+  const resolved = await Promise.all(
+    entries.map(async ([field, src]) => {
+      try {
+        return [field, await fieldValue(settings, src, ctx, (m) => warnings.push(m))] as const;
+      } catch (e) {
+        warnings.push(`${field}: ${String(e)}`);
+        return [field, ""] as const;
+      }
+    }),
+  );
+  return { fields: Object.fromEntries(resolved), warnings };
 }
 
 export async function addNoteFromLookup(

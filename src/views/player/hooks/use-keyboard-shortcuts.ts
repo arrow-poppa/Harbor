@@ -9,7 +9,6 @@ import {
   isTypingTarget,
   type HotkeyId,
 } from "@/lib/hotkeys";
-import { PLAYER_HOTKEY_EVENT, type PlayerHotkeyDetail } from "@/lib/gamepad/dispatch";
 import { isWindowsDesktop } from "@/lib/platform";
 import { isRtxHdrBlocked, isRtxVsrBlocked } from "@/lib/player/rtx-video-policy";
 import { mediaKeyGate } from "@/lib/media-session";
@@ -22,10 +21,23 @@ import { isPlayerInteractionLocked } from "@/lib/player/interaction-lock";
 import { HOLD_SPEED_DELAY_MS, holdSpeedRate } from "@/lib/player/hold-speed";
 import { tracePlayback } from "@/lib/player/pause-trace";
 import { round2 } from "../player-utils";
-import { slowSpeedToggleRate, stepPlaybackRate } from "@/lib/seek-step";
+import type { ImmersionAction } from "./use-immersion";
 import { subCueSeekTarget } from "@/lib/player/sub-seek";
-import { lineFromSnapshot, playbackToSubTime, subToPlaybackTime } from "@/lib/player/sub-timing";
+import {
+  lineFromSnapshot,
+  playbackToSubTime,
+  subToPlaybackTime,
+} from "@/lib/player/sub-timing";
 import { getPlaybackPosition } from "@/lib/player/playback-clock";
+import {
+  LOOKUP_ACTIONS,
+  isLookupNavActive,
+  isLookupPopupOpen,
+  sendLookupCommand,
+} from "@/lib/player/lookup-nav";
+import { PLAYER_HOTKEY_EVENT, type PlayerHotkeyDetail } from "@/lib/gamepad/dispatch";
+import { slowSpeedToggleRate, stepPlaybackRate } from "@/lib/seek-step";
+
 import { SFX } from "@/lib/sfx";
 
 export function useKeyboardShortcuts(params: {
@@ -74,6 +86,9 @@ export function useKeyboardShortcuts(params: {
   onRestartServer?: () => void;
   onVolumeFeedback?: (volume: number, muted: boolean) => void;
   onToggleSubtitles?: () => void;
+  onImmersion?: (action: ImmersionAction) => void;
+  onLookupMode?: () => void;
+  onPopupSize?: (dir: 1 | -1) => void;
 }) {
   const {
     bridgeRef,
@@ -120,6 +135,9 @@ export function useKeyboardShortcuts(params: {
     onRestartServer,
     onVolumeFeedback,
     onToggleSubtitles,
+    onImmersion,
+    onLookupMode,
+    onPopupSize,
   } = params;
   const { settings, update } = useSettings();
   const overrides = settings.hotkeys ?? {};
@@ -129,10 +147,7 @@ export function useKeyboardShortcuts(params: {
   const seekForwardStepShortSec = settings.seekForwardStepShortSec;
   const seekBackStepLongSec = settings.seekBackStepLongSec;
   const seekForwardStepLongSec = settings.seekForwardStepLongSec;
-  const speedDownStep = settings.speedDownStep;
-  const speedUpStep = settings.speedUpStep;
-  const halfSpeedRate = settings.halfSpeedRate;
-  // Where the last line seek went, so pressing it again quickly steps on
+  // Rapid presses step line by line from where the last jump was headed, not
   // from a position the player has not reported yet.
   const subSeekRef = useRef<{ target: number; at: number } | null>(null);
   // The last line shown, so replay still works in the gap after it ends.
@@ -205,6 +220,36 @@ export function useKeyboardShortcuts(params: {
 
       const hotkeyMatch = createHotkeyMatcher(e, overrides, "Player");
       const match = (id: HotkeyId): boolean => (forced ? id === forced : hotkeyMatch(id));
+
+      // While picking a word, its keys come first; the rest of the player
+      // keeps working (play/pause, seeking with other keys).
+      if (!forced && isLookupNavActive()) {
+        const hit = LOOKUP_ACTIONS.find(([id]) => match(id));
+        if (hit) {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          sendLookupCommand(hit[1]);
+          return;
+        }
+      }
+      // A popup opened with the mouse or the controller pointer closes with
+      // the same key, instead of the key also leaving the player.
+      if (!forced && isLookupPopupOpen() && match("lookupExit")) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        sendLookupCommand("exit");
+        return;
+      }
+      if (match("playerLookupMode") && onLookupMode) {
+        e.preventDefault();
+        if (!e.repeat) onLookupMode();
+        return;
+      }
+      if (onPopupSize && (match("playerPopupBigger") || match("playerPopupSmaller"))) {
+        e.preventDefault();
+        onPopupSize(match("playerPopupBigger") ? 1 : -1);
+        return;
+      }
       // Hold-to-speed-up needs the key's release, which a controller event
       // does not have.
       if (forced === "playerPlayPause") {
@@ -475,6 +520,22 @@ export function useKeyboardShortcuts(params: {
         onToggleSubtitles();
         return;
       }
+      if (onImmersion) {
+        const immersion: [HotkeyId, ImmersionAction][] = [
+          ["playerAnkiNewCard", "new"],
+          ["playerAnkiUpdateLast", "update"],
+          ["playerAnkiAudioCard", "audio"],
+          ["playerRecordNew", "record-new"],
+          ["playerRecordUpdate", "record-update"],
+          ["playerRecordAudio", "record-audio"],
+        ];
+        const hit = immersion.find(([id]) => match(id));
+        if (hit) {
+          e.preventDefault();
+          if (!e.repeat) onImmersion(hit[1]);
+          return;
+        }
+      }
       if (match("playerSubtitleCycle") || match("playerSubtitleCycleAlt")) {
         e.preventDefault();
         cycleSubtitles();
@@ -530,14 +591,14 @@ export function useKeyboardShortcuts(params: {
       }
       if (match("playerSpeedDown")) {
         e.preventDefault();
-        const r = stepPlaybackRate(snap.rate, -speedDownStep);
+        const r = stepPlaybackRate(snap.rate, -settings.speedDownStep);
         bridgeRef.current?.setRate(r);
         writePlayerPrefs(metaId, { rate: r });
         return;
       }
       if (match("playerSpeedUp")) {
         e.preventDefault();
-        const r = stepPlaybackRate(snap.rate, speedUpStep);
+        const r = stepPlaybackRate(snap.rate, settings.speedUpStep);
         bridgeRef.current?.setRate(r);
         writePlayerPrefs(metaId, { rate: r });
         return;
@@ -545,7 +606,7 @@ export function useKeyboardShortcuts(params: {
       if (match("playerHalfSpeed")) {
         e.preventDefault();
         if (e.repeat) return;
-        const r = slowSpeedToggleRate(snap.rate, halfSpeedRate);
+        const r = slowSpeedToggleRate(snap.rate, settings.halfSpeedRate || 0.5);
         bridgeRef.current?.setRate(r);
         writePlayerPrefs(metaId, { rate: r });
         return;
@@ -707,9 +768,6 @@ export function useKeyboardShortcuts(params: {
     seekForwardStepShortSec,
     seekBackStepLongSec,
     seekForwardStepLongSec,
-    speedDownStep,
-    speedUpStep,
-    halfSpeedRate,
     seekTo,
     toggleSwitcher,
     toggleEpisodePanel,
@@ -731,6 +789,12 @@ export function useKeyboardShortcuts(params: {
     onFrameStep,
     onVolumeFeedback,
     onToggleSubtitles,
+    onImmersion,
+    onLookupMode,
+    onPopupSize,
+    settings.halfSpeedRate,
+    settings.speedDownStep,
+    settings.speedUpStep,
     settings.playerEscExitsFullscreen,
     settings.playerConfirmLeave,
     settings.playerVolumeSfx,

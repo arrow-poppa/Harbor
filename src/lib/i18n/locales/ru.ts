@@ -3,6 +3,8 @@ import subtitleLineHotkeys from "./ru/subtitle-line-hotkeys";
 import clearShortcut from "./ru/clear-shortcut";
 import controllerTouchpad from "./ru/controller-touchpad";
 import controllerHotkeys from "./ru/controller-hotkeys";
+import controllerPlayer from "./ru/controller-player";
+import immersionHotkeys from "./ru/immersion-hotkeys";
 import subtitleDictionary from "./ru/subtitle-dictionary";
 import aiExplanation from "./ru/ai-explanation";
 import ankiMining from "./ru/anki-mining";
@@ -446,6 +448,8 @@ const ru: Record<string, string> = {
   ...subtitleDictionary,
   ...aiExplanation,
   ...ankiMining,
+  ...immersionHotkeys,
+  ...controllerPlayer,
 };
 
 export default ru;
