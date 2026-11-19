@@ -1,3 +1,4 @@
+import seekSteps from "./ru/seek-steps";
 import reviews from "./ru/reviews";
 import playOrders from "./ru/play-orders";
 import gameRomLibrary from "./ru/game-rom-library";
@@ -430,6 +431,7 @@ const ru: Record<string, string> = {
   ...reviews,
   ...queueBasket,
   ...liveWeb,
+  ...seekSteps,
 };
 
 export default ru;
