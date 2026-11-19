@@ -93,9 +93,10 @@ export const StageOverlays = memo(function StageOverlays({
             secondaryText={snap.secondarySubText}
             lookup={
               lookupControls && !pipMode && primarySubtitleVisible
-                ? { controls: lookupControls, endSec: snap.subEndSec, chromeVisible }
+                ? { controls: lookupControls, endSec: snap.subEndSec }
                 : undefined
             }
+            hidden={subsHidden}
           />
         )}
       {!pipMode &&
@@ -108,6 +109,7 @@ export const StageOverlays = memo(function StageOverlays({
             text={snap.subText}
             startSec={snap.subStartSec}
             lookup={{ controls: lookupControls, endSec: snap.subEndSec, native: true }}
+            hidden={subsHidden}
           />
         )}
       {showStats && !pipMode && <StatsOverlay snap={snap} engine={engine} />}

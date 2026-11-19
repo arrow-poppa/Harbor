@@ -3,6 +3,8 @@ import subtitleLineHotkeys from "./ar/subtitle-line-hotkeys";
 import clearShortcut from "./ar/clear-shortcut";
 import controllerTouchpad from "./ar/controller-touchpad";
 import controllerHotkeys from "./ar/controller-hotkeys";
+import controllerPlayer from "./ar/controller-player";
+import immersionHotkeys from "./ar/immersion-hotkeys";
 import subtitleDictionary from "./ar/subtitle-dictionary";
 import aiExplanation from "./ar/ai-explanation";
 import ankiMining from "./ar/anki-mining";
@@ -436,6 +438,8 @@ const ar: Record<string, string> = {
   ...subtitleDictionary,
   ...aiExplanation,
   ...ankiMining,
+  ...immersionHotkeys,
+  ...controllerPlayer,
 };
 
 export default ar;

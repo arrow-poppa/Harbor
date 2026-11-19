@@ -3,6 +3,8 @@ import subtitleLineHotkeys from "./ja/subtitle-line-hotkeys";
 import clearShortcut from "./ja/clear-shortcut";
 import controllerTouchpad from "./ja/controller-touchpad";
 import controllerHotkeys from "./ja/controller-hotkeys";
+import controllerPlayer from "./ja/controller-player";
+import immersionHotkeys from "./ja/immersion-hotkeys";
 import subtitleDictionary from "./ja/subtitle-dictionary";
 import aiExplanation from "./ja/ai-explanation";
 import ankiMining from "./ja/anki-mining";
@@ -432,6 +434,8 @@ const ja: Record<string, string> = {
   ...subtitleDictionary,
   ...aiExplanation,
   ...ankiMining,
+  ...immersionHotkeys,
+  ...controllerPlayer,
 };
 
 export default ja;

@@ -3,6 +3,8 @@ import subtitleLineHotkeys from "./zh/subtitle-line-hotkeys";
 import clearShortcut from "./zh/clear-shortcut";
 import controllerTouchpad from "./zh/controller-touchpad";
 import controllerHotkeys from "./zh/controller-hotkeys";
+import controllerPlayer from "./zh/controller-player";
+import immersionHotkeys from "./zh/immersion-hotkeys";
 import subtitleDictionary from "./zh/subtitle-dictionary";
 import aiExplanation from "./zh/ai-explanation";
 import ankiMining from "./zh/anki-mining";
@@ -385,6 +387,8 @@ const zh: Record<string, string> = {
   ...subtitleDictionary,
   ...aiExplanation,
   ...ankiMining,
+  ...immersionHotkeys,
+  ...controllerPlayer,
 };
 
 export default zh;

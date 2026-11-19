@@ -1,4 +1,4 @@
-import type { HotkeyId } from "@/lib/hotkeys";
+import type { HotkeyId, HotkeyScope } from "@/lib/hotkeys";
 import type { Layout } from "./layout";
 import type { GpButton } from "./protocol";
 
@@ -6,6 +6,9 @@ import type { GpButton } from "./protocol";
 // shoulder/trigger plus a button ("lt+south"), the way Ctrl+key works on a
 // keyboard. Bindings are stored per chord, since a pad has few buttons and
 // one action often has two (LT and D-pad left both seek back).
+//
+// Lookup-scope chords live under a "lookup:" prefix: they only apply while
+// picking a word in the subtitles, so they can reuse buttons the player uses.
 
 export const PAD_BUTTONS: readonly GpButton[] = [
   "south",
@@ -30,6 +33,8 @@ export const PAD_BUTTONS: readonly GpButton[] = [
 
 export const PAD_MODIFIERS: readonly GpButton[] = ["lb", "rb", "lt", "rt"];
 
+export type PadMode = "normal" | "lookup";
+
 /** Override map stored in settings: storage key → action, "" = unbound. */
 export type PadOverrides = Record<string, string>;
 
@@ -48,7 +53,30 @@ export const DEFAULT_PAD_BINDINGS: Readonly<Record<string, HotkeyId>> = {
   dright: "playerSeekForward10",
   dup: "playerVolumeUp",
   ddown: "playerVolumeDown",
+  "lookup:dright": "lookupNextWord",
+  "lookup:dleft": "lookupPrevWord",
+  "lookup:dup": "lookupPrevLine",
+  "lookup:ddown": "lookupNextLine",
+  "lookup:south": "lookupOpenPopup",
+  "lookup:rb": "lookupAddAnki",
+  "lookup:north": "lookupAiExplain",
+  "lookup:west": "lookupWordAudio",
+  "lookup:east": "lookupExit",
 };
+
+export function padModeOf(scope: HotkeyScope): PadMode {
+  return scope === "Word lookup" ? "lookup" : "normal";
+}
+
+export function padStorageKey(mode: PadMode, chord: string): string {
+  return mode === "lookup" ? `lookup:${chord}` : chord;
+}
+
+function chordOfKey(key: string): { mode: PadMode; chord: string } {
+  return key.startsWith("lookup:")
+    ? { mode: "lookup", chord: key.slice("lookup:".length) }
+    : { mode: "normal", chord: key };
+}
 
 /** Every bound chord with its action, defaults merged with overrides. */
 export function effectivePadBindings(overrides: PadOverrides | undefined): Map<string, HotkeyId> {
@@ -61,21 +89,35 @@ export function effectivePadBindings(overrides: PadOverrides | undefined): Map<s
   return out;
 }
 
-/** The action a chord triggers, or null. */
-export function padAction(overrides: PadOverrides | undefined, chord: string): HotkeyId | null {
-  return effectivePadBindings(overrides).get(chord) ?? null;
+/** The action a chord triggers in a mode, or null. */
+export function padAction(
+  overrides: PadOverrides | undefined,
+  mode: PadMode,
+  chord: string,
+): HotkeyId | null {
+  return effectivePadBindings(overrides).get(padStorageKey(mode, chord)) ?? null;
 }
 
 /** True when the chord still does what the player always did with it. */
-export function isDefaultPadBinding(overrides: PadOverrides | undefined, chord: string): boolean {
-  return !(chord in (overrides ?? {})) && chord in DEFAULT_PAD_BINDINGS;
+export function isDefaultPadBinding(
+  overrides: PadOverrides | undefined,
+  mode: PadMode,
+  chord: string,
+): boolean {
+  const key = padStorageKey(mode, chord);
+  return !(key in (overrides ?? {})) && key in DEFAULT_PAD_BINDINGS;
 }
 
 /** Chords bound to an action, in a stable order. */
-export function padChordsFor(overrides: PadOverrides | undefined, id: HotkeyId): string[] {
+export function padChordsFor(
+  overrides: PadOverrides | undefined,
+  id: HotkeyId,
+  mode: PadMode,
+): string[] {
   const out: string[] = [];
-  for (const [chord, action] of effectivePadBindings(overrides)) {
-    if (action === id) out.push(chord);
+  for (const [key, action] of effectivePadBindings(overrides)) {
+    const c = chordOfKey(key);
+    if (action === id && c.mode === mode) out.push(c.chord);
   }
   return out.sort((a, b) => chordOrder(a) - chordOrder(b));
 }
@@ -86,10 +128,14 @@ function chordOrder(chord: string): number {
   return (second ? 100 + PAD_MODIFIERS.indexOf(first as GpButton) * 20 : 0) + base;
 }
 
-/** Whether some binding starts with `modifier+`, meaning the button has to
- *  wait for its release before acting on its own. */
-export function modifierInUse(overrides: PadOverrides | undefined, modifier: GpButton): boolean {
-  const prefix = `${modifier}+`;
+/** Whether some binding in this mode starts with `modifier+`, meaning the
+ *  button has to wait for its release before acting on its own. */
+export function modifierInUse(
+  overrides: PadOverrides | undefined,
+  mode: PadMode,
+  modifier: GpButton,
+): boolean {
+  const prefix = padStorageKey(mode, `${modifier}+`);
   for (const key of effectivePadBindings(overrides).keys()) if (key.startsWith(prefix)) return true;
   return false;
 }
@@ -97,20 +143,27 @@ export function modifierInUse(overrides: PadOverrides | undefined, modifier: GpB
 /** Binds a chord to an action, replacing whatever it did before. */
 export function bindPad(
   overrides: PadOverrides | undefined,
+  mode: PadMode,
   chord: string,
   id: HotkeyId,
 ): PadOverrides {
+  const key = padStorageKey(mode, chord);
   const next = { ...overrides };
-  if (DEFAULT_PAD_BINDINGS[chord] === id) delete next[chord];
-  else next[chord] = id;
+  if (DEFAULT_PAD_BINDINGS[key] === id) delete next[key];
+  else next[key] = id;
   return next;
 }
 
 /** Removes a chord from whatever it was bound to. */
-export function unbindPad(overrides: PadOverrides | undefined, chord: string): PadOverrides {
+export function unbindPad(
+  overrides: PadOverrides | undefined,
+  mode: PadMode,
+  chord: string,
+): PadOverrides {
+  const key = padStorageKey(mode, chord);
   const next = { ...overrides };
-  if (chord in DEFAULT_PAD_BINDINGS) next[chord] = "";
-  else delete next[chord];
+  if (key in DEFAULT_PAD_BINDINGS) next[key] = "";
+  else delete next[key];
   return next;
 }
 

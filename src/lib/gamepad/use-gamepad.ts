@@ -7,9 +7,22 @@ import { useView } from "@/lib/view";
 import { dispatchTvNav } from "@/lib/keyboard-navigation";
 import { isBigPictureActive } from "@/lib/big-picture";
 import { HOTKEY_MAP } from "@/lib/hotkeys";
-import { PAD_MODIFIERS, isDefaultPadBinding, modifierInUse, padAction } from "./bindings";
+import {
+  LOOKUP_ACTIONS,
+  isLookupNavActive,
+  isLookupPopupOpen,
+  sendLookupCommand,
+  type LookupCommand,
+} from "@/lib/player/lookup-nav";
+import {
+  PAD_MODIFIERS,
+  isDefaultPadBinding,
+  modifierInUse,
+  padAction,
+  type PadMode,
+} from "./bindings";
 import { runPadAction } from "./dispatch";
-import { POINTER_YIELD_EVENT, pointerShown } from "./pointer-target";
+import { POINTER_YIELD_EVENT, pointerOnLookup, pointerShown } from "./pointer-target";
 import { isGamepadCaptured } from "./capture";
 import { publishGamepads } from "./store";
 import { resetLiveGamepad, setLiveAxis, setLiveButton } from "./live";
@@ -174,6 +187,9 @@ export function useGamepad(): void {
 
     const contentOverlayOpen = () =>
       !!document.querySelector("[data-harbor-context-layer],[data-harbor-image-viewer]");
+    const lookupMode = () => playerRef.current && isLookupNavActive();
+    const padMode = (): PadMode => (lookupMode() ? "lookup" : "normal");
+
     // `chord` is the button, or "modifier+button" while a shoulder or trigger
     // that some binding combines with is held.
     const fireButton = (button: GpButton, repeat = false, chord: string = button) => {
@@ -181,14 +197,27 @@ export function useGamepad(): void {
       const { pad, keys } = bindRef.current;
       const plain = chord === button;
       if (playerRef.current && !contentOverlayOpen()) {
+        if (lookupMode()) {
+          const id = padAction(pad, "lookup", chord);
+          const cmd = id && LOOKUP_ACTIONS.find(([a]) => a === id)?.[1];
+          if (cmd) {
+            window.dispatchEvent(new Event(CONTROLLER_ACTIVITY));
+            sendLookupCommand(cmd);
+            return;
+          }
+        } else if (isLookupPopupOpen() && padAction(pad, "lookup", chord) === "lookupExit") {
+          // A popup opened with the pointer closes with the same button.
+          sendLookupCommand("exit");
+          return;
+        }
         // While the pointer is on screen A is its click, as the mouse button
         // (gamepad-runner); the left stick hides it to hand A back.
-        if (plain && button === "south" && pointerShown()) return;
+        if (plain && button === "south" && !lookupMode() && pointerShown()) return;
         // The on-screen keyboard still takes the D-pad.
         const dir = NAV_BUTTON[button];
         if (plain && DPAD.has(button) && dir && keyboardNav(dir)) return;
-        const id = padAction(pad, chord);
-        const isDefault = plain && isDefaultPadBinding(pad, chord);
+        const id = padAction(pad, "normal", chord);
+        const isDefault = plain && isDefaultPadBinding(pad, "normal", chord);
         // A button the user bound acts like a keyboard hotkey: it does its
         // job without bringing up the controls. So does the D-pad always, as
         // the arrow keys do.
@@ -198,8 +227,8 @@ export function useGamepad(): void {
         // With the controls up, A presses the focused control unless it was
         // rebound. The D-pad never moves around them; the left stick does.
         const navigates = button === "south" && (!id || isDefault);
-        if (!(plain && controlsUp() && navigates)) {
-          if (!id) return;
+        if (!(plain && !lookupMode() && controlsUp() && navigates)) {
+          if (!id || HOTKEY_MAP[id].scope === "Word lookup") return;
           // Untouched defaults still press the key they always pressed, so
           // menus that listen for Escape or Space behave exactly as before.
           // The D-pad runs its action directly, so the arrow keys it used to
@@ -210,8 +239,8 @@ export function useGamepad(): void {
           return;
         }
       } else {
-        const id = padAction(pad, chord);
-        if (id && HOTKEY_MAP[id].scope !== "Player") {
+        const id = padAction(pad, "normal", chord);
+        if (id && HOTKEY_MAP[id].scope !== "Player" && HOTKEY_MAP[id].scope !== "Word lookup") {
           runPadAction(id, keys, repeat);
           return;
         }
@@ -226,9 +255,24 @@ export function useGamepad(): void {
       }
     };
 
+    // While picking a word the sticks move between words and scroll the popup.
+    const LOOKUP_AXIS: Partial<Record<GpAxis, { neg: LookupCommand; pos: LookupCommand }>> = {
+      lx: { neg: "prevWord", pos: "nextWord" },
+      ly: { neg: "prevLine", pos: "nextLine" },
+      ry: { neg: "scrollUp", pos: "scrollDown" },
+    };
+
     const fireAxis = (axis: GpAxis, dir: "neg" | "pos", repeat = false) => {
       if (isGamepadCaptured()) return;
+      const lookupAxis = lookupMode() ? LOOKUP_AXIS[axis] : undefined;
+      if (lookupAxis) {
+        window.dispatchEvent(new Event(CONTROLLER_ACTIVITY));
+        sendLookupCommand(lookupAxis[dir], axis === "ry" ? 0.5 : 1);
+        return;
+      }
       if (playerRef.current && !contentOverlayOpen()) {
+        // The left stick scrolls the popup under the pointer instead.
+        if (axis === "ly" && pointerOnLookup()) return;
         window.dispatchEvent(new Event(CONTROLLER_ACTIVITY));
         // Moving around the controls starts from the focused one, not from
         // where the pointer last was, and A then presses it.
@@ -271,7 +315,7 @@ export function useGamepad(): void {
       if (isGamepadCaptured()) return;
       const { pad } = bindRef.current;
       const modifier = PAD_MODIFIERS.find((m) => m !== button && heldModifiers.has(m));
-      if (!modifier && PAD_MODIFIERS.includes(button) && modifierInUse(pad, button)) {
+      if (!modifier && PAD_MODIFIERS.includes(button) && modifierInUse(pad, padMode(), button)) {
         heldModifiers.set(button, false);
         return;
       }
@@ -298,11 +342,13 @@ export function useGamepad(): void {
       playerRef.current && cursorRef.current && (axis === "rx" || axis === "ry");
 
     const onAxis = (axis: GpAxis, value: number) => {
-      const mapped = pointerAxis(axis)
-        ? undefined
-        : axisNavigates(axis) || axisWakes(axis)
-          ? NAV_AXIS[axis]
-          : PLAYER_AXIS[axis];
+      const mapped =
+        (lookupMode() ? LOOKUP_AXIS[axis] : undefined) ??
+        (pointerAxis(axis)
+          ? undefined
+          : axisNavigates(axis) || axisWakes(axis)
+            ? NAV_AXIS[axis]
+            : PLAYER_AXIS[axis]);
       const dz = Math.max(0.05, cfgRef.current.deadzone);
       const dir: "neg" | "pos" | null = !mapped
         ? null

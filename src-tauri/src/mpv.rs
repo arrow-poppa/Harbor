@@ -3927,9 +3927,16 @@ fn sub_line_time(mpv: &Mpv, name: &str) -> Option<f64> {
     Some(time * scale + mpv_prop_f64(mpv, "sub-delay").unwrap_or(0.0))
 }
 
+// Index into SENTENCE_AUDIO_FORMATS of the last encoder that worked, so later
+// cards go straight to it instead of failing through the missing ones.
+static SENTENCE_AUDIO_FORMAT: std::sync::atomic::AtomicUsize =
+    std::sync::atomic::AtomicUsize::new(0);
+
 /// Encodes the audio between `start` and `end` (defaulting to the current
 /// subtitle line) to AAC for an Anki card, using the playing source and audio
-/// track. Runs a separate mpv so playback is not disturbed.
+/// track. Runs a separate mpv so playback is not disturbed. It reads the
+/// source itself, not the player's cache: mpv 0.41's `dump-cache` loses most
+/// non-key video packets and a dump can stop short of the line's end.
 #[tauri::command]
 pub async fn mpv_sentence_audio(
     state: State<'_, MpvState>,
@@ -3957,9 +3964,12 @@ pub async fn mpv_sentence_audio(
     let from = (line_start - pad_before.unwrap_or(0.0).clamp(0.0, 5.0)).max(0.0);
     let to = line_end + pad_after.unwrap_or(0.0).clamp(0.0, 5.0);
     let dur = to - from;
-    if !(0.2..=60.0).contains(&dur) {
+    // Up to five minutes: a recorded stretch (start/stop hotkeys) can be far
+    // longer than one subtitle line.
+    if !(0.2..=300.0).contains(&dur) {
         return Err(format!("bad sentence range {:.2}..{:.2}", from, to));
     }
+    let (input, seek) = (src.clone(), from);
     let aid = mpv
         .get_property::<String>("aid")
         .ok()
@@ -3975,7 +3985,13 @@ pub async fn mpv_sentence_audio(
 
     let mpv_bin = crate::thumbs::locate_mpv().ok_or_else(|| "mpv binary not found".to_string())?;
     let mut last_exit = None;
-    for (ext, muxer, encoder) in SENTENCE_AUDIO_FORMATS {
+    let first = SENTENCE_AUDIO_FORMAT
+        .load(std::sync::atomic::Ordering::Relaxed)
+        .min(SENTENCE_AUDIO_FORMATS.len() - 1);
+    let order =
+        (0..SENTENCE_AUDIO_FORMATS.len()).map(|i| (first + i) % SENTENCE_AUDIO_FORMATS.len());
+    for idx in order {
+        let (ext, muxer, encoder) = &SENTENCE_AUDIO_FORMATS[idx];
         let out = std::env::temp_dir().join(format!("harbor-sentence-{}.{}", Uuid::new_v4(), ext));
         let mut cmd = tokio::process::Command::new(&mpv_bin);
         cmd.arg("--no-terminal")
@@ -3986,7 +4002,7 @@ pub async fn mpv_sentence_audio(
             .arg("--network-timeout=30")
             .arg("--vid=no")
             .arg("--sid=no")
-            .arg(format!("--start={:.3}", from))
+            .arg(format!("--start={:.3}", seek))
             .arg(format!("--length={:.3}", dur))
             .arg(format!("--o={}", out.to_string_lossy()))
             .arg(format!("--of={}", muxer))
@@ -4001,7 +4017,7 @@ pub async fn mpv_sentence_audio(
         if let Some(h) = &header_fields {
             cmd.arg(format!("--http-header-fields={}", h));
         }
-        cmd.arg(&src);
+        cmd.arg(&input);
         cmd.stdin(std::process::Stdio::null())
             .stdout(std::process::Stdio::null())
             .stderr(std::process::Stdio::null())
@@ -4016,6 +4032,7 @@ pub async fn mpv_sentence_audio(
         let bytes = std::fs::read(&out).unwrap_or_default();
         let _ = std::fs::remove_file(&out);
         if status.success() && !bytes.is_empty() {
+            SENTENCE_AUDIO_FORMAT.store(idx, std::sync::atomic::Ordering::Relaxed);
             return Ok(SentenceAudio {
                 data_base64: B64.encode(&bytes),
                 ext: (*ext).into(),
@@ -4094,7 +4111,8 @@ fn clip_encoders(format: &str) -> Vec<(&'static str, Vec<&'static str>)> {
 /// Encodes the video of the current subtitle line (or `start`..`end`) as an
 /// animated AVIF, WebP or GIF for an Anki card. A separate mpv cuts the
 /// scaled segment from the playing source (so streams, headers and EDL
-/// sources work), then ffmpeg encodes it. Missing encoders fall back to the
+/// sources work; not from the player's cache, see `mpv_sentence_audio`),
+/// then ffmpeg encodes it. Missing encoders fall back to the
 /// next format: AVIF → WebP → GIF.
 #[tauri::command]
 #[allow(clippy::too_many_arguments)]
@@ -4133,6 +4151,7 @@ pub async fn mpv_sentence_clip(
     }
     let width = width.unwrap_or(480).clamp(160, 1280);
     let fps = fps.unwrap_or(12).clamp(4, 30);
+    let (input, seek) = (src.clone(), from);
     let vid = mpv
         .get_property::<String>("vid")
         .ok()
@@ -4169,7 +4188,7 @@ pub async fn mpv_sentence_clip(
         .arg("--network-timeout=30")
         .arg("--aid=no")
         .arg("--sid=no")
-        .arg(format!("--start={:.3}", from))
+        .arg(format!("--start={:.3}", seek))
         .arg(format!("--length={:.3}", dur))
         .arg(format!(
             "--vf=lavfi=[fps={},scale={}:-2:flags=lanczos]",
@@ -4187,7 +4206,7 @@ pub async fn mpv_sentence_clip(
     if let Some(h) = &header_fields {
         cmd.arg(format!("--http-header-fields={}", h));
     }
-    cmd.arg(&src);
+    cmd.arg(&input);
     cmd.stdin(std::process::Stdio::null())
         .stdout(std::process::Stdio::null())
         .stderr(std::process::Stdio::null())
