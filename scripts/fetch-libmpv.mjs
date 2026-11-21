@@ -8,7 +8,7 @@ const SHA256 = "0a81c004aae0ee7d512b9a26e38f66281f9591e84e1663215cc3a36a4bde6f6a
 const TAG = process.env.HARBOR_LIBMPV_TAG ?? "libmpv-windows-x64";
 const url =
   process.env.HARBOR_LIBMPV_URL ??
-  `https://github.com/Harborofficial/Harbor/releases/download/${TAG}/libmpv-2.dll`;
+  `https://github.com/arrow-poppa/Harbor/releases/download/${TAG}/libmpv-2.dll`;
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const dest = join(root, "src-tauri", "libmpv", "libmpv-2.dll");
