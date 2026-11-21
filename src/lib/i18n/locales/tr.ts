@@ -1,3 +1,4 @@
+import forkUpdates from "./tr/fork-updates";
 import seekSteps from "./tr/seek-steps";
 import subtitleLineHotkeys from "./tr/subtitle-line-hotkeys";
 import clearShortcut from "./tr/clear-shortcut";
@@ -400,6 +401,7 @@ const tr: Record<string, string> = {
   ...controllerPlayer,
   ...wordAudioSources,
   ...dictionaryDownloads,
+  ...forkUpdates,
 };
 
 export default tr;

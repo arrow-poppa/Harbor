@@ -1,3 +1,4 @@
+import forkUpdates from "./ar/fork-updates";
 import seekSteps from "./ar/seek-steps";
 import subtitleLineHotkeys from "./ar/subtitle-line-hotkeys";
 import clearShortcut from "./ar/clear-shortcut";
@@ -444,6 +445,7 @@ const ar: Record<string, string> = {
   ...controllerPlayer,
   ...wordAudioSources,
   ...dictionaryDownloads,
+  ...forkUpdates,
 };
 
 export default ar;

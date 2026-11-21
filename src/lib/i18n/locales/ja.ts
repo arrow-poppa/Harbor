@@ -1,3 +1,4 @@
+import forkUpdates from "./ja/fork-updates";
 import seekSteps from "./ja/seek-steps";
 import subtitleLineHotkeys from "./ja/subtitle-line-hotkeys";
 import clearShortcut from "./ja/clear-shortcut";
@@ -440,6 +441,7 @@ const ja: Record<string, string> = {
   ...controllerPlayer,
   ...wordAudioSources,
   ...dictionaryDownloads,
+  ...forkUpdates,
 };
 
 export default ja;

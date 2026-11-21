@@ -60,6 +60,7 @@ export async function probeHandoff(): Promise<HandoffProbe | null> {
 }
 
 export async function readHandoffPlan(init?: RequestInit): Promise<HandoffPlan | null> {
+  if (!__APP_UPDATES_CONFIGURED__) return null;
   const probe = await probeHandoff();
   if (!probe?.supported || !probe.managed) return null;
   const res = await safeFetch(`${HARBOR_API_BASE}/updates/latest.json`, {
@@ -161,6 +162,7 @@ function sameVersion(a: string | null | undefined, b: string): boolean {
 export async function readModifyPlan(
   channel: UpdateChannel = "stable",
 ): Promise<HandoffPlan | null> {
+  if (!__APP_UPDATES_CONFIGURED__) return null;
   const probe = await probeHandoff();
   if (!probe?.supported || !probe.managed) return null;
   const { getVersion } = await import("@tauri-apps/api/app");

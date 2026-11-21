@@ -1,3 +1,4 @@
+import forkUpdates from "./ko/fork-updates";
 import seekSteps from "./ko/seek-steps";
 import subtitleLineHotkeys from "./ko/subtitle-line-hotkeys";
 import clearShortcut from "./ko/clear-shortcut";
@@ -399,6 +400,7 @@ const ko: Record<string, string> = {
   ...controllerPlayer,
   ...wordAudioSources,
   ...dictionaryDownloads,
+  ...forkUpdates,
 };
 
 export default ko;

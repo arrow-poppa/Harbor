@@ -32,7 +32,11 @@ import {
 } from "./beta-return";
 import { launchHandoff, probeHandoff, stageHandoff, type HandoffPlan } from "./handoff";
 
-const IS_TAURI = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
+// No update server configured (empty updater endpoints): every check,
+// download and handoff below stays off.
+export const APP_UPDATES_CONFIGURED = __APP_UPDATES_CONFIGURED__;
+const IS_TAURI =
+  APP_UPDATES_CONFIGURED && typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 const DISMISS_KEY = "harbor.update.dismissed";
 const PENDING_KEY = "harbor.update.pending";
 const CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000;
@@ -658,6 +662,7 @@ function cmpVersion(a: string, b: string): number {
 }
 
 export async function openManualDownload(): Promise<void> {
+  if (!APP_UPDATES_CONFIGURED) return;
   // Experimental downloads must go through signature verification in the app.
   if (selectedUpdateChannel() === "experimental" || state.channel === "experimental") {
     await checkForUpdate(true);
@@ -669,6 +674,7 @@ export async function openManualDownload(): Promise<void> {
 }
 
 export async function openHandoffDownload(): Promise<void> {
+  if (!APP_UPDATES_CONFIGURED) return;
   if (state.channel === "experimental") {
     await checkForUpdate(true);
     return;

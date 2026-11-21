@@ -1,3 +1,4 @@
+import forkUpdates from "./zh/fork-updates";
 import seekSteps from "./zh/seek-steps";
 import subtitleLineHotkeys from "./zh/subtitle-line-hotkeys";
 import clearShortcut from "./zh/clear-shortcut";
@@ -393,6 +394,7 @@ const zh: Record<string, string> = {
   ...controllerPlayer,
   ...wordAudioSources,
   ...dictionaryDownloads,
+  ...forkUpdates,
 };
 
 export default zh;

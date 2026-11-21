@@ -401,6 +401,8 @@ function harness(
     {
       __DEV__: options.dev,
       __APP_VERSION__: "1.0.1",
+      // The updater logic itself, as built with an update server configured.
+      __APP_UPDATES_CONFIGURED__: true,
       localStorage,
       window: {
         __TAURI_INTERNALS__: {},

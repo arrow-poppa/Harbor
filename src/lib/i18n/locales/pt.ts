@@ -1,3 +1,4 @@
+import forkUpdates from "./pt/fork-updates";
 import seekSteps from "./pt/seek-steps";
 import subtitleLineHotkeys from "./pt/subtitle-line-hotkeys";
 import clearShortcut from "./pt/clear-shortcut";
@@ -447,6 +448,7 @@ const pt: Record<string, string> = {
   ...controllerPlayer,
   ...wordAudioSources,
   ...dictionaryDownloads,
+  ...forkUpdates,
 };
 
 export default pt;

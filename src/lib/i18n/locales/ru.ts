@@ -1,3 +1,4 @@
+import forkUpdates from "./ru/fork-updates";
 import seekSteps from "./ru/seek-steps";
 import subtitleLineHotkeys from "./ru/subtitle-line-hotkeys";
 import clearShortcut from "./ru/clear-shortcut";
@@ -454,6 +455,7 @@ const ru: Record<string, string> = {
   ...controllerPlayer,
   ...wordAudioSources,
   ...dictionaryDownloads,
+  ...forkUpdates,
 };
 
 export default ru;

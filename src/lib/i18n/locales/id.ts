@@ -1,3 +1,4 @@
+import forkUpdates from "./id/fork-updates";
 import seekSteps from "./id/seek-steps";
 import subtitleLineHotkeys from "./id/subtitle-line-hotkeys";
 import clearShortcut from "./id/clear-shortcut";
@@ -403,6 +404,7 @@ const id: Record<string, string> = {
   ...controllerPlayer,
   ...wordAudioSources,
   ...dictionaryDownloads,
+  ...forkUpdates,
 };
 
 export default id;

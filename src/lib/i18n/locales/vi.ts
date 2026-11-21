@@ -1,3 +1,4 @@
+import forkUpdates from "./vi/fork-updates";
 import seekSteps from "./vi/seek-steps";
 import subtitleLineHotkeys from "./vi/subtitle-line-hotkeys";
 import clearShortcut from "./vi/clear-shortcut";
@@ -440,6 +441,7 @@ const vi: Record<string, string> = {
   ...controllerPlayer,
   ...wordAudioSources,
   ...dictionaryDownloads,
+  ...forkUpdates,
 };
 
 export default vi;

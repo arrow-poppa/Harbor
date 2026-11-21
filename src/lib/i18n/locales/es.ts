@@ -1,3 +1,4 @@
+import forkUpdates from "./es/fork-updates";
 import seekSteps from "./es/seek-steps";
 import subtitleLineHotkeys from "./es/subtitle-line-hotkeys";
 import clearShortcut from "./es/clear-shortcut";
@@ -434,6 +435,7 @@ const es: Record<string, string> = {
   ...controllerPlayer,
   ...wordAudioSources,
   ...dictionaryDownloads,
+  ...forkUpdates,
 };
 
 export default es;

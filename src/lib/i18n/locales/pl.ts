@@ -1,3 +1,4 @@
+import forkUpdates from "./pl/fork-updates";
 import seekSteps from "./pl/seek-steps";
 import subtitleLineHotkeys from "./pl/subtitle-line-hotkeys";
 import clearShortcut from "./pl/clear-shortcut";
@@ -407,6 +408,7 @@ const pl: Record<string, string> = {
   ...controllerPlayer,
   ...wordAudioSources,
   ...dictionaryDownloads,
+  ...forkUpdates,
 };
 
 export default pl;
